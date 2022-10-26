@@ -2,42 +2,57 @@
 importing modules
 """
 import time
-from tlog_parser import PrismTlogParser
-from input_validation import InputValidation
-from daemonlog_parser import PrismDaemonLogParser
 import logging
+from input_validation import InputValidation
+from path_initializer import LogPathFinder
+from processor import PROCESSOR
 
 class Main:
 
-    def process(self):
+    def init(self):
         logging.basicConfig(filename='log_aggregator.log', filemode='w', format='[%(asctime)s,%(msecs)d]%(pathname)s:(%(lineno)d)-%(levelname)s - %(message)s', datefmt='%y-%m-%d %H:%M:%S', level=logging.DEBUG)
+        
+        start = time.time()
+        logging.debug(start)
 
         logging.info('Log aggregation started')
         logging.info("******************************")
 
-        dictionary_of_tlogs = {}
-        tlog_record_list = []
-        worker_log_recod_list = []
-        dictionary_of_search_value = {"TIMESTAMP" : "","THREAD" : "","MSISDN" : "","SUB_TYPE" : ""}
 
-        start = time.time()
         validation = InputValidation()
+
         msisdn = validation.validate_msisdn()
         input_date = validation.validate_date()
 
+        if validation.is_input_valid:
+            initializePath = LogPathFinder()
+            try:
+                initializePath.initialize_tomcat_path()
+                logging.debug("Tomcat path initialized")
+            except ValueError as error:
+                logging.warning("Tomcat path not initialized")
+                logging.debug(error)
 
-        tlogParser = PrismTlogParser(msisdn, input_date, dictionary_of_tlogs, tlog_record_list)
+            try:
+                initializePath.initialize_prism_path()
+                logging.debug("Prism path initialized")
+            except ValueError as error:
+                logging.warning("Prism path not initialized")
+                logging.debug(error)
 
-        if tlogParser.parse():
-            logging.debug('Prism tlog parsed successfully')
-            daemonLogParser = PrismDaemonLogParser(tlogParser.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list)
-            daemonLogParser.parse()
-        end = time.time()
-        duration = end - start
-        print(duration)
+            proc = PROCESSOR()
+            proc.process()
+
         logging.info('Log aggregation finished')
         logging.info("**********************************")
 
+        end = time.time()
+        logging.debug(end)
+        
+        duration = end - start
+        logging.debug('Total time taken %s', duration)
+
+
 if __name__ == '__main__':
     main = Main()
-    main.process()
+    main.init()

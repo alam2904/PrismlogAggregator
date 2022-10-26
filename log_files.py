@@ -23,7 +23,7 @@ class LogFileFinder():
         
         log_path = LogPathFinder()
         try:
-            log_path.initialize_path()
+            log_path.initialize_prism_path()
             prism_tlog_path = f"{log_path.prism_log_path_dict[log_path.prism_tlog_log_path]}/BILLING"
             path = Path(rf"{prism_tlog_path}")
 
@@ -53,7 +53,7 @@ class LogFileFinder():
         function to find prism daemon log file path
         """
         log_path = LogPathFinder()
-        log_path.initialize_path()
+        log_path.initialize_prism_path()
         
         # if self.get_prism_path():
         prism_daemon_log_path = f"{log_path.prism_log_path_dict[log_path.prism_daemon_log_path]}"

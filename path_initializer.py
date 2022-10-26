@@ -21,6 +21,12 @@ class LogPathFinder():
         self.is_tomcat_process_directory = False
         self.is_prsim_process_directory = False
         self.is_sms_process_directory = False
+
+        self.is_tomcat_tlog_path = False
+        self.is_prism_tlog_path = False
+        self.is_sms_tlog_path = False
+
+
         
         self.dict_of_process = {}
         self.dict_of_process_dir = {"PrismD" : {"PROCESS_HOME_DIR" : "","PROCESS_CONF_DIR" : ""}, "tomcat" : {"PROCESS_HOME_DIR" : "","PROCESS_CONF_DIR" : ""}}
@@ -81,11 +87,9 @@ class LogPathFinder():
                             raise
                         break
             else:
-                self.is_tomcat = False
                 raise ValueError('tomcat process is not running')
 
         except Exception as error:
-            self.is_tomcat = False
             raise
 
                 
@@ -105,11 +109,9 @@ class LogPathFinder():
                             raise
                         break
             else:
-                self.is_prsim = False
                 raise ValueError('prism process is not running')
 
         except Exception as error:
-            self.is_prsim = False
             raise
   
 
@@ -124,10 +126,12 @@ class LogPathFinder():
                     pname_dir, pvalue_dir = tuple(content.split("="))
                 self.dict_of_process_dir[pname][pname_dir] = pvalue_dir
 
-            if self.is_tomcat:
+            if pname == "tomcat":
+                self.is_tomcat_process_directory = True
                 self.find_tomcat_tlog_path(pname)
 
-            elif self.is_prsim:
+            elif pname == "PrismD":
+                self.is_prsim_process_directory = True
                 self.find_prism_tlog_path(pname)
 
         except Exception as error:
@@ -178,14 +182,17 @@ class LogPathFinder():
                     if pname == "tomcat":
                         self.tomcat_log_path_dict[self.tomcat_base_log_path] = f"{value}/"
                         self.tomcat_log_path_dict[self.tomcat_tlog_log_path] = f"{value}/TLOG/"
+                        self.is_tomcat_tlog_path = True
+
                     elif pname == "PrismD":
                         self.prism_log_path_dict[self.prism_base_log_path] = f"{value}/"
                         self.prism_log_path_dict[self.prism_tlog_log_path] = f"{value}/TLOG/"
+                        self.is_prism_tlog_path = True
             
-            if self.is_tomcat:
+            if pname == "tomcat":
                 self.find_tomcat_daemon_path(pname)
 
-            elif self.is_prsim:
+            elif pname == "PrismD":
                 self.find_prism_daemon_path(pname)
 
         except subprocess.CalledProcessError as ex:
@@ -322,20 +329,28 @@ class LogPathFinder():
             logging.debug(ex)
 
 
-    def initialize_path(self):
+    def initialize_tomcat_path(self):
         """
-        Find path
+        Initialize tomcat path.
         """
         try:
             self.find_tomcat_process()
         except ValueError as error:
             raise ValueError(error)
+        except Exception as error:
+            raise
+
+    def initialize_prism_path(self):
+        """
+        Initialize prism path
+        """
         try:
             self.find_prism_process()
         except ValueError as error:
             raise ValueError(error)
         except Exception as error:
             raise
+
 
         # self.find_tomcat_tlog_path()
         # self.find_tomcat_daemon_path()
