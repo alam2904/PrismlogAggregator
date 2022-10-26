@@ -1,0 +1,23 @@
+[22-10-25 14:15:21,844]/UMAR/python/automation/log_aggregator/main.py:(15)-INFO - Log aggregation started
+[22-10-25 14:15:21,844]/UMAR/python/automation/log_aggregator/main.py:(16)-INFO - ******************************
+[22-10-25 14:15:25,994]/UMAR/python/automation/log_aggregator/input_validation.py:(20)-DEBUG - msisdn entered is 9845000012
+[22-10-25 14:15:28,684]/UMAR/python/automation/log_aggregator/input_validation.py:(43)-DEBUG - Transaction date entered is 20220923
+[22-10-25 14:15:28,889]/UMAR/python/automation/log_aggregator/log_files.py:(45)-ERROR - tomcat process is not running
+Traceback (most recent call last):
+  File "/UMAR/python/automation/log_aggregator/path_finder.py", line 313, in find_path
+    self.find_tomcat_process()
+  File "/UMAR/python/automation/log_aggregator/path_finder.py", line 74, in find_tomcat_process
+    raise ValueError('tomcat process is not running')
+ValueError: tomcat process is not running
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/UMAR/python/automation/log_aggregator/log_files.py", line 26, in prism_tlog_files
+    log_path.find_path()
+  File "/UMAR/python/automation/log_aggregator/path_finder.py", line 315, in find_path
+    raise ValueError(error)
+ValueError: tomcat process is not running
+[22-10-25 14:15:28,890]/UMAR/python/automation/log_aggregator/tlog_parser.py:(50)-DEBUG - No tlog found for given msisdn: 9845000012
+[22-10-25 14:15:28,890]/UMAR/python/automation/log_aggregator/main.py:(38)-INFO - Log aggregation finished
+[22-10-25 14:15:28,890]/UMAR/python/automation/log_aggregator/main.py:(39)-INFO - **********************************
