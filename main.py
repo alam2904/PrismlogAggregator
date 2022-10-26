@@ -40,7 +40,7 @@ class Main:
                 logging.warning("Prism path not initialized")
                 logging.debug(error)
 
-            proc = PROCESSOR()
+            proc = PROCESSOR(msisdn, input_date)
             proc.process()
 
         logging.info('Log aggregation finished')
