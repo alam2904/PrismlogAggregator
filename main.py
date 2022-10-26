@@ -5,7 +5,7 @@ import time
 import logging
 from input_validation import InputValidation
 from path_initializer import LogPathFinder
-from processor import PROCESSOR
+from log_processor import PROCESSOR
 
 class Main:
 
