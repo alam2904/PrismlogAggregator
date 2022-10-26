@@ -30,7 +30,7 @@ class Main:
                 initializePath.initialize_tomcat_path()
                 logging.debug("Tomcat path initialized")
             except ValueError as error:
-                logging.warning('Tomcat path not initialized. Eigther tomcat daemon not running/directory path not determined. %s', error)
+                logging.warning('Tomcat path not initialized. Eigther tomcat daemon not running. %s', error)
             except Exception as error:
                 logging.warning(error)
 
