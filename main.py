@@ -30,15 +30,17 @@ class Main:
                 initializePath.initialize_tomcat_path()
                 logging.debug("Tomcat path initialized")
             except ValueError as error:
-                logging.warning("Tomcat path not initialized")
-                logging.debug(error)
+                logging.warning('Tomcat path not initialized. Eigther tomcat daemon not running/directory path not determined. %s', error)
+            except Exception as error:
+                logging.warning(error)
 
             try:
                 initializePath.initialize_prism_path()
                 logging.debug("Prism path initialized")
             except ValueError as error:
-                logging.warning("Prism path not initialized")
-                logging.debug(error)
+                logging.warning('Prism path not initialized. Eigther PrismD daemon not running. %s', error)
+            except Exception as error:
+                logging.warning(error)
 
             proc = PROCESSOR(msisdn, input_date)
             proc.process()
