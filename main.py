@@ -1,6 +1,7 @@
 """
 importing modules
 """
+import sys
 import time
 import logging
 from input_validation import InputValidation
@@ -18,35 +19,50 @@ class Main:
         logging.info('Log aggregation started')
         logging.info("******************************")
 
+        num_argv = len(sys.argv)
+        logging.debug('Number of arguments passed is %s', num_argv)
 
-        validation = InputValidation()
-
-        msisdn = validation.validate_msisdn()
-        input_date = validation.validate_date()
-
-        if validation.is_input_valid:
-            initializePath = LogPathFinder()
-            try:
-                initializePath.initialize_tomcat_path()
-                logging.debug("Tomcat path initialized")
-            except ValueError as error:
-                logging.warning('Tomcat path not initialized. Eigther tomcat daemon not running. %s', error)
-            except Exception as error:
-                logging.warning(error)
+        if num_argv == 3:
+            logging.debug('Arguments passed are : %s and %s', sys.argv[1], sys.argv[2])
+            validation = InputValidation(sys.argv[1], sys.argv[2])
 
             try:
-                initializePath.initialize_prism_path()
-                logging.debug("Prism path initialized")
-            except ValueError as error:
-                logging.warning('Prism path not initialized. Eigther PrismD daemon not running. %s', error)
+                msisdn = validation.validate_msisdn()
+                input_date = validation.validate_date()
             except Exception as error:
-                logging.warning(error)
+                logging.exception(error)
 
-            proc = PROCESSOR(msisdn, input_date)
-            proc.process()
+            if validation.is_input_valid:
+                initializePath = LogPathFinder()
+                try:
+                    initializePath.initialize_tomcat_path()
+                    logging.debug("Tomcat path initialized")
+                except ValueError as error:
+                    logging.warning('Tomcat path not initialized.Tomcat daemon not running. %s', error)
+                except Exception as error:
+                        logging.warning(error)
 
-        logging.info('Log aggregation finished')
-        logging.info("**********************************")
+                try:
+                    initializePath.initialize_prism_path()
+                    logging.debug("Prism path initialized")
+                except ValueError as error:
+                    logging.warning('Prism path not initialized.PrismD daemon not running. %s', error)
+                except Exception as error:
+                    logging.warning(error)
+
+                proc = PROCESSOR(msisdn, input_date)
+                proc.process()
+                logging.info('Log aggregation finished')
+                logging.info("**********************************")
+                
+            else:
+                logging.debug('Invalid input. Log aggregation failed to process')
+                logging.info("**********************************")
+
+        else:
+            logging.debug('Invalid number of arguments passed')
+            logging.debug('Log aggregation failed to process')
+            logging.info("**********************************")
 
         end = time.time()
         logging.debug(end)
