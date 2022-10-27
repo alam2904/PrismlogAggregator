@@ -51,11 +51,17 @@ class Main:
                     logging.warning(error)
 
                 if initializePath.is_tomcat or initializePath.is_prsim:
+                    is_tomcat = initializePath.is_tomcat
+                    is_tomcat_tlog_path = initializePath.is_tomcat_tlog_path
+                    is_prism = initializePath.is_prsim
+                    is_prism_tlog_path = initializePath.is_prism_tlog_path
+
+
                     proc = PROCESSOR(msisdn, input_date)
-                    proc.process()
+                    proc.process(is_tomcat, is_prism, is_tomcat_tlog_path, is_prism_tlog_path)
                 else:
                     logging.error('Since none of the process running. Process failed to aggregate log.')
-                    
+
                 logging.info('Log aggregation finished')
                 logging.info("**********************************")
                 
