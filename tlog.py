@@ -4,6 +4,7 @@ tlog module
 import logging
 import re
 from log_files import LogFileFinder
+from path_initializer import LogPathFinder
 
 class Tlog:
     """
@@ -14,13 +15,13 @@ class Tlog:
         self.input_date = input_date
         self.tlog_record_list = tlog_record_list
     
-    def get_tlog(self):
+    def get_prism_tlog(self):
         """
         calling path finder method
         """
         files_path = LogFileFinder()
         if files_path.prism_tlog_files(self.input_date) != None:
-            logging.debug('Prism tlog path exists')
+            logging.debug
             prism_billing_tlog_files = list(files_path.prism_tlog_files(self.input_date))
             
             # if prism_billing_tlog_files:
