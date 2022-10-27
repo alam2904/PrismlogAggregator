@@ -22,7 +22,7 @@ class TlogParser:
         is_parsed = False
         tlog = Tlog(self.msisdn, self.input_date, self.tlog_record_list)
     
-        if tlog.get_prism_tlog():
+        if tlog.get_prism_billing_tlog():
             logging.debug('Tlog record found for %s', self.msisdn )
             filtered_prism_tlog = tlog.tlog_record_list
             logging.debug('Parsing tlog file')

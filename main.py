@@ -56,7 +56,6 @@ class Main:
                     is_prism = initializePath.is_prsim
                     is_prism_tlog_path = initializePath.is_prism_tlog_path
 
-
                     proc = PROCESSOR(msisdn, input_date)
                     proc.process(is_tomcat, is_prism, is_tomcat_tlog_path, is_prism_tlog_path)
                 else:

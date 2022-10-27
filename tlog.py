@@ -15,22 +15,25 @@ class Tlog:
         self.input_date = input_date
         self.tlog_record_list = tlog_record_list
     
-    def get_prism_tlog(self):
+    def get_prism_billing_tlog(self):
         """
         calling path finder method
         """
         files_path = LogFileFinder()
-        if files_path.prism_tlog_files(self.input_date) != None:
-            logging.debug
-            prism_billing_tlog_files = list(files_path.prism_tlog_files(self.input_date))
-            
-            # if prism_billing_tlog_files:
-            for file in prism_billing_tlog_files:
-                with open(file, "r") as read_file:
-                    record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
-                        
-                    if record:
-                        self.tlog_record_list.append(record)
-            return True
+
+        files_path.prism_billing_tlog_path()
+        if files_path.is_prism_billing_tlog_path:
+            tlog_file = files_path.prism_billing_tlog_files(self.input_date)
+            if tlog_file != None:
+                prism_billing_tlog_files = list(files_path.prism_billing_tlog_files(self.input_date))
+                for file in prism_billing_tlog_files:
+                    with open(file, "r") as read_file:
+                        record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
+                                
+                        if record:
+                            self.tlog_record_list.append(record)
+                return True
+            else:
+                return False
         else:
             return False
