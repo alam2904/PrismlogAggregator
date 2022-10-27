@@ -38,7 +38,7 @@ class Main:
                     initializePath.initialize_tomcat_path()
                     logging.debug("Tomcat path initialized")
                 except ValueError as error:
-                    logging.warning('Tomcat path not initialized.Tomcat daemon not running. %s', error)
+                    logging.warning('Tomcat path not initialized. %s', error)
                 except Exception as error:
                         logging.warning(error)
 
@@ -46,12 +46,16 @@ class Main:
                     initializePath.initialize_prism_path()
                     logging.debug("Prism path initialized")
                 except ValueError as error:
-                    logging.warning('Prism path not initialized.PrismD daemon not running. %s', error)
+                    logging.warning('Prism path not initialized. %s', error)
                 except Exception as error:
                     logging.warning(error)
 
-                proc = PROCESSOR(msisdn, input_date)
-                proc.process()
+                if initializePath.is_tomcat or initializePath.is_prsim:
+                    proc = PROCESSOR(msisdn, input_date)
+                    proc.process()
+                else:
+                    logging.error('Since none of the process running. Process failed to aggregate log.')
+                    
                 logging.info('Log aggregation finished')
                 logging.info("**********************************")
                 

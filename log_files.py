@@ -3,7 +3,6 @@ path finder class
 """
 import logging
 from pathlib import Path
-from logger import FileLogger
 from path_initializer import LogPathFinder
 
 
