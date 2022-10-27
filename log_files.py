@@ -17,7 +17,8 @@ class LogFileFinder():
     def prism_billing_tlog_path(self):
         
         log_path = LogPathFinder()
-        
+        log_path.initialize_prism_path()
+
         prism_tlog_path = f"{log_path.prism_log_path_dict[log_path.prism_tlog_log_path]}/BILLING"
         path = Path(rf"{prism_tlog_path}")
 
@@ -36,19 +37,19 @@ class LogFileFinder():
         tlog_files = []
         
         log_path = LogPathFinder()
+        log_path.initialize_prism_path()
+
         prism_tlog_path = f"{log_path.prism_log_path_dict[log_path.prism_tlog_log_path]}/BILLING"
         path = Path(rf"{prism_tlog_path}")
-        try:
-            # log_path.initialize_prism_path()
 
+        try:
             billing_tlog_files = [p for p in path.glob(f"TLOG_BILLING_{input_trans_date}*.*")]
             if bool(billing_tlog_files):
                 for prism_billing_files in billing_tlog_files:
                     tlog_files.append(prism_billing_files)
-                    logging.debug('Prism tlog directory does have {} dated files', input_trans_date)
                     return tlog_files
             else:
-                logging.debug('Prism billing tlog directory does not have {} dated files', input_trans_date)
+                logging.debug('Prism billing tlog directory does not have %s dated files', input_trans_date)
 
         except ValueError as error:
             logging.exception(error)
@@ -62,7 +63,7 @@ class LogFileFinder():
         function to find prism daemon log file path
         """
         log_path = LogPathFinder()
-        # log_path.initialize_prism_path()
+        log_path.initialize_prism_path()
         
         # if self.get_prism_path():
         prism_daemon_log_path = f"{log_path.prism_log_path_dict[log_path.prism_daemon_log_path]}"

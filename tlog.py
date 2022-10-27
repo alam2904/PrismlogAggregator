@@ -4,7 +4,7 @@ tlog module
 import logging
 import re
 from log_files import LogFileFinder
-from path_initializer import LogPathFinder
+
 
 class Tlog:
     """
@@ -22,6 +22,7 @@ class Tlog:
         files_path = LogFileFinder()
 
         files_path.prism_billing_tlog_path()
+        
         if files_path.is_prism_billing_tlog_path:
             tlog_file = files_path.prism_billing_tlog_files(self.input_date)
             if tlog_file != None:
