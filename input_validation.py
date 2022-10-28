@@ -32,7 +32,6 @@ class InputValidation:
         """
         Validate date.
         """
-        # is_valid_date = self.validate(self.input_date)
         try:
             datetime.strptime(self.input_date, "%Y%m%d")
             self.is_input_valid = True

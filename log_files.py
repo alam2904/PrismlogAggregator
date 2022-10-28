@@ -21,12 +21,9 @@ class LogFileFinder():
     def prism_billing_tlog_path(self):
         
         log_path = self.initializedPath_object
-        # log_path.initialize_prism_path()
 
         prism_tlog_path = f"{log_path.prism_log_path_dict[log_path.prism_tlog_log_path]}/BILLING"
         path = Path(rf"{prism_tlog_path}")
-        # prism_tlog_path = f"{log_path.prism_log_path_dict[log_path.prism_tlog_log_path]}/BILLING"
-        # path = Path(rf"{prism_tlog_path}")
 
         if path.exists():
             logging.debug('Prism BILLING tlog path exists.')

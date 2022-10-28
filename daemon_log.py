@@ -48,26 +48,6 @@ class DaemonLog:
                         logging.error('Prism root backup log path does not exists.')
                         logging.error(ex)
                         return False
-
-        # try:
-        #     worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath_object.prism_daemonlog_file()}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
-        #     record = [data for data in worker_thread_log.stdout]
-        #     with open(self.target, "a") as write_file:
-        #         write_file.writelines(record)
-        #     return True
-        # except subprocess.CalledProcessError as ex:
-        #     logging.error('Prism daemon log path does not exists. Going to check root log.')
-
-        #     try:
-        #         worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath_object.prism_rootlog_file()}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
-        #         record = [data for data in worker_thread_log.stdout]
-        #         with open(self.target, "a") as write_file:
-        #             write_file.writelines(record)
-        #         return True
-        #     except subprocess.CalledProcessError as ex:
-                # logging.error('Prism root log path does not exists. Going to check prism backup log path')
-                # logging.error(ex)
-                # return False
     
     def find_prism_log(self, logPath_object, logPath):
         try:
@@ -77,9 +57,7 @@ class DaemonLog:
                 write_file.writelines(record)
         except subprocess.CalledProcessError as ex:
             raise
-            
-
-
+                    
                 # with open(prism_billing_daemonlog_file, "r") as read_file:
                 #     record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.worker_thread)),data)]
                         
