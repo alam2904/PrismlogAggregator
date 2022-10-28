@@ -159,7 +159,7 @@ class LogPathFinder():
 
             self.parse_transaction_logging(self.tomcat_conf_path, pname)
         except subprocess.CalledProcessError as ex:
-            logging.debug(ex)
+            logging.error(ex)
 
     def find_prism_tlog_path(self, pname):
         """

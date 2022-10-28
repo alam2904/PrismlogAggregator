@@ -1,0 +1,22 @@
+[22-10-29 01:50:50,116]main.py:(17)-DEBUG - 1666988450.116335
+[22-10-29 01:50:50,116]main.py:(19)-INFO - Log aggregation started
+[22-10-29 01:50:50,116]main.py:(20)-INFO - ******************************
+[22-10-29 01:50:50,116]main.py:(23)-DEBUG - Number of arguments passed is 3
+[22-10-29 01:50:50,117]main.py:(26)-DEBUG - Arguments passed are : 9845000012 and 20220923
+[22-10-29 01:50:50,117]/UMAR/python/automation/log_aggregator/input_validation.py:(24)-DEBUG - msisdn entered is valid : 9845000012
+[22-10-29 01:50:50,122]/UMAR/python/automation/log_aggregator/input_validation.py:(39)-DEBUG - Transaction date entered is valid : 20220923
+[22-10-29 01:50:50,332]main.py:(41)-WARNING - Tomcat path not initialized. tomcat process is not running
+[22-10-29 01:50:50,550]main.py:(47)-DEBUG - Prism path initialized
+[22-10-29 01:50:50,550]/UMAR/python/automation/log_aggregator/log_processor.py:(24)-DEBUG - Prism tlog path exists.
+[22-10-29 01:50:50,550]/UMAR/python/automation/log_aggregator/log_files.py:(29)-DEBUG - Prism BILLING tlog path exists.
+[22-10-29 01:50:50,556]/UMAR/python/automation/log_aggregator/tlog_parser.py:(27)-DEBUG - Tlog record found for 9845000012
+[22-10-29 01:50:50,557]/UMAR/python/automation/log_aggregator/tlog_parser.py:(29)-DEBUG - Parsing tlog file
+[22-10-29 01:50:50,557]/UMAR/python/automation/log_aggregator/log_processor.py:(26)-DEBUG - Prism tlog parsed successfully
+[22-10-29 01:50:50,557]/UMAR/python/automation/log_aggregator/daemonlog_parser.py:(28)-DEBUG - Parsing prism daemon log
+[22-10-29 01:50:50,564]/UMAR/python/automation/log_aggregator/daemonlog_parser.py:(42)-DEBUG - Getting prismD log for the issue thread : WORKER_76_178971
+[22-10-29 01:50:50,564]/UMAR/python/automation/log_aggregator/daemon_log.py:(28)-DEBUG - Prism daemon log path exists
+[22-10-29 01:50:50,565]/UMAR/python/automation/log_aggregator/daemon_log.py:(30)-DEBUG - d log path /PRISM/PRISMD/PRISMD_LOGS/log4j/prismD.log : 
+[22-10-29 01:50:51,151]main.py:(64)-INFO - Log aggregation finished
+[22-10-29 01:50:51,152]main.py:(65)-INFO - **********************************
+[22-10-29 01:50:51,152]main.py:(77)-DEBUG - 1666988451.1522496
+[22-10-29 01:50:51,152]main.py:(80)-DEBUG - Total time taken 1.035914659500122
