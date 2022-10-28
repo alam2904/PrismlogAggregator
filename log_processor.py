@@ -9,7 +9,6 @@ class PROCESSOR:
     def __init__(self, msisdn, input_date):
         self.msisdn = msisdn
         self.input_date = input_date
-        self
 
     def process(self, is_tomcat, is_prism, is_tomcat_tlog_path, is_prism_tlog_path):
         dictionary_of_tlogs = {}
