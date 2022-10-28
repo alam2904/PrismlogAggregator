@@ -72,6 +72,8 @@ class PrismDaemonLogParser:
                     if self.get_final_index() <= i < self.get_initial_index() + 1:
                         with open(self.out_file, "a") as write_file:
                             write_file.writelines(line)
+        else:
+            logging.error("Prism daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
 
     def get_initial_index(self):
         """

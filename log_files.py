@@ -27,7 +27,7 @@ class LogFileFinder():
             self.set_prism_billing_path(True)
         else:
             self.set_prism_billing_path(False)
-            logging.debug('Prism BILLING tlog path does not exists')
+            logging.error('Prism BILLING tlog path does not exists')
     
 
     def prism_billing_tlog_files(self, input_trans_date):
@@ -49,7 +49,7 @@ class LogFileFinder():
                     tlog_files.append(prism_billing_files)
                     return tlog_files
             else:
-                logging.debug('Prism billing tlog directory does not have %s dated files', input_trans_date)
+                logging.error('Prism billing tlog directory does not have %s dated files', input_trans_date)
 
         except ValueError as error:
             logging.exception(error)
@@ -71,7 +71,7 @@ class LogFileFinder():
         if prism_daemon_log_path:
             return prism_daemon_log_path
         else:
-            logging.debug('Prism daemon log path does not exists')
+            logging.error('Prism daemon log path does not exists')
         # else:
         #     logging.debug('Prism tlog path does not exists')
         

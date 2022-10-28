@@ -27,6 +27,6 @@ class PROCESSOR:
                 daemonLogParser = PrismDaemonLogParser(tlogParser.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list)
                 daemonLogParser.parse()
             else:
-                logging.debug('No issue tlog found for prism. Hence not fetching the prism log.')
+                logging.error('No issue tlog found. Hence not fetching the prism log.')
         else:
-            logging.debug('Prism tlog path does not exists. Hence not fetching the logs')
+            logging.error('Prism tlog path does not exists. Hence not fetching the logs')

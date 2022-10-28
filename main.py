@@ -65,11 +65,11 @@ class Main:
                 logging.info("**********************************")
                 
             else:
-                logging.debug('Invalid input. Log aggregation failed to process')
+                logging.error('Invalid input. Log aggregation failed to process')
                 logging.info("**********************************")
 
         else:
-            logging.debug('Invalid number of arguments passed')
+            logging.error('Invalid number of arguments passed')
             logging.debug('Log aggregation failed to process')
             logging.info("**********************************")
 

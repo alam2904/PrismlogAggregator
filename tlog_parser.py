@@ -39,9 +39,9 @@ class TlogParser:
                     self.dictionary_of_tlogs[f"dict_{cnt}"] = header_data
                 is_parsed = True
             else:
-                logging.debug('No tlog found for given msisdn: %s', self.msisdn)
+                logging.error('No tlog found for given msisdn: %s', self.msisdn)
         else:
-            logging.debug('No tlog found for given msisdn: %s', self.msisdn)
+            logging.error('No tlog found for given msisdn: %s', self.msisdn)
         return is_parsed
 
     def data_in_tlog(self, data, index):
