@@ -10,17 +10,20 @@ class LogFileFinder():
     """
     transaction and daemon log path finder class
     """
-    def __init__(self):
+    def __init__(self, initializedPath_object):
+        self.initializedPath_object = initializedPath_object
         self.is_prism_billing_tlog_path = False
         # self.is_tomcat_path
     
     def prism_billing_tlog_path(self):
         
-        log_path = LogPathFinder()
-        log_path.initialize_prism_path()
+        log_path = self.initializedPath_object
+        # log_path.initialize_prism_path()
 
         prism_tlog_path = f"{log_path.prism_log_path_dict[log_path.prism_tlog_log_path]}/BILLING"
         path = Path(rf"{prism_tlog_path}")
+        # prism_tlog_path = f"{log_path.prism_log_path_dict[log_path.prism_tlog_log_path]}/BILLING"
+        # path = Path(rf"{prism_tlog_path}")
 
         if path.exists():
             logging.debug('Prism BILLING tlog path exists.')
@@ -36,10 +39,10 @@ class LogFileFinder():
         """
         tlog_files = []
         
-        log_path = LogPathFinder()
-        log_path.initialize_prism_path()
+        logPath_object = self.initializedPath_object
+        # log_path.initialize_prism_path()
 
-        prism_tlog_path = f"{log_path.prism_log_path_dict[log_path.prism_tlog_log_path]}/BILLING"
+        prism_tlog_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_tlog_log_path]}/BILLING"
         path = Path(rf"{prism_tlog_path}")
 
         try:
@@ -62,11 +65,11 @@ class LogFileFinder():
         """
         function to find prism daemon log file path
         """
-        log_path = LogPathFinder()
-        log_path.initialize_prism_path()
+        logPath_object = self.initializedPath_object
+        # log_path.initialize_prism_path()
         
         # if self.get_prism_path():
-        prism_daemon_log_path = f"{log_path.prism_log_path_dict[log_path.prism_daemon_log_path]}"
+        prism_daemon_log_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_daemon_log_path]}"
 
         if prism_daemon_log_path:
             return prism_daemon_log_path

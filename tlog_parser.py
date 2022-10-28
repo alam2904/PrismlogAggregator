@@ -9,22 +9,23 @@ class TlogParser:
     """
     Parse the tlog for various conditions
     """
-    def __init__(self, msisdn, input_date, dictionary_of_tlogs, tlog_record_list):
+    def __init__(self, msisdn, input_date, dictionary_of_tlogs, tlog_record_list, initializedPath_object):
         self.msisdn = msisdn
         self.input_date = input_date
         self.dictionary_of_tlogs = dictionary_of_tlogs
         self.tlog_record_list = tlog_record_list
+        self.initializedPath_object = initializedPath_object
 
     def parse_prism(self):
         """
         Call to retreive tlog files and parse.
         """
         is_parsed = False
-        tlog = Tlog(self.msisdn, self.input_date, self.tlog_record_list)
+        tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list, self.initializedPath_object)
     
-        if tlog.get_prism_billing_tlog():
+        if tlog_object.get_prism_billing_tlog():
             logging.debug('Tlog record found for %s', self.msisdn )
-            filtered_prism_tlog = tlog.tlog_record_list
+            filtered_prism_tlog = tlog_object.tlog_record_list
             logging.debug('Parsing tlog file')
             
             if filtered_prism_tlog:

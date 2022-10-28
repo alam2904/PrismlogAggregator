@@ -24,18 +24,18 @@ class Main:
 
         if num_argv == 3:
             logging.debug('Arguments passed are : %s and %s', sys.argv[1], sys.argv[2])
-            validation = InputValidation(sys.argv[1], sys.argv[2])
+            validation_object = InputValidation(sys.argv[1], sys.argv[2])
 
             try:
-                msisdn = validation.validate_msisdn()
-                input_date = validation.validate_date()
+                msisdn = validation_object.validate_msisdn()
+                input_date = validation_object.validate_date()
             except Exception as error:
                 logging.exception(error)
 
-            if validation.is_input_valid:
-                initializePath = LogPathFinder()
+            if validation_object.is_input_valid:
+                initializedPath_object = LogPathFinder()
                 try:
-                    initializePath.initialize_tomcat_path()
+                    initializedPath_object.initialize_tomcat_path()
                     logging.debug("Tomcat path initialized")
                 except ValueError as error:
                     logging.warning('Tomcat path not initialized. %s', error)
@@ -43,21 +43,21 @@ class Main:
                         logging.warning(error)
 
                 try:
-                    initializePath.initialize_prism_path()
+                    initializedPath_object.initialize_prism_path()
                     logging.debug("Prism path initialized")
                 except ValueError as error:
                     logging.warning('Prism path not initialized. %s', error)
                 except Exception as error:
                     logging.warning(error)
 
-                if initializePath.is_tomcat or initializePath.is_prsim:
-                    is_tomcat = initializePath.is_tomcat
-                    is_tomcat_tlog_path = initializePath.is_tomcat_tlog_path
-                    is_prism = initializePath.is_prsim
-                    is_prism_tlog_path = initializePath.is_prism_tlog_path
+                if initializedPath_object.is_tomcat or initializedPath_object.is_prsim:
+                    is_tomcat = initializedPath_object.is_tomcat
+                    is_tomcat_tlog_path = initializedPath_object.is_tomcat_tlog_path
+                    is_prism = initializedPath_object.is_prsim
+                    is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
 
-                    proc = PROCESSOR(msisdn, input_date)
-                    proc.process(is_tomcat, is_prism, is_tomcat_tlog_path, is_prism_tlog_path)
+                    processor_object = PROCESSOR(msisdn, input_date)
+                    processor_object.process(is_tomcat, is_prism, is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object)
                 else:
                     logging.error('Since none of the process running. Process failed to aggregate log.')
 
@@ -81,5 +81,5 @@ class Main:
 
 
 if __name__ == '__main__':
-    main = Main()
-    main.init()
+    main_object = Main()
+    main_object.init()
