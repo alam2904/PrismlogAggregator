@@ -11,7 +11,8 @@ class PrismDaemonLogParser:
     """
     Parse the daemon log based on tlog input
     """
-    def __init__(self, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object):
+    def __init__(self, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object):
+        self.input_date = input_date
         self.initializedPath_object = initializedPath_object
         self.dictionary_of_tlogs = dictionary_of_tlogs
         self.dictionary_of_search_value = dictionary_of_search_value
@@ -40,7 +41,7 @@ class PrismDaemonLogParser:
         """
         # target = Path()/"out.txt"
         logging.debug('Getting prismD log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
-        prismdLog_object = DaemonLog(self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object)
+        prismdLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object)
 
         task = ""
         prismdLog_object.get_prism_log()

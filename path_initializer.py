@@ -4,7 +4,6 @@ Path finder package.
 import logging
 import subprocess
 from subprocess import PIPE
-from sys import stderr
 import xml.etree.ElementTree as ET
 
 class LogPathFinder():

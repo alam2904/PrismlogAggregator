@@ -20,7 +20,7 @@ class Tlog:
         """
         calling path finder method
         """
-        logfile_object = LogFileFinder(self.initializedPath_object)
+        logfile_object = LogFileFinder(self.input_date, self.initializedPath_object)
 
         logfile_object.prism_billing_tlog_path()
         
