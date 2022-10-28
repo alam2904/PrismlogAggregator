@@ -1,8 +1,11 @@
 """
 importing required modules
 """
-import re
+# import re
 import logging
+import subprocess
+from subprocess import PIPE
+from sys import stderr
 from pathlib import Path
 from log_files import LogFileFinder
 
@@ -24,14 +27,20 @@ class DaemonLog:
         if logPath_object.prism_daemonlog_files() != None:
             logging.debug('Prism daemon log path exists')
             prism_billing_daemonlog_file = logPath_object.prism_daemonlog_files()
+            logging.debug('d log path %s : ', prism_billing_daemonlog_file)
             
             if prism_billing_daemonlog_file:
-                with open(prism_billing_daemonlog_file, "r") as read_file:
-                    record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.worker_thread)),data)]
+                worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{prism_billing_daemonlog_file}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                record = [data for data in worker_thread_log.stdout]
+                if len(record) != 0:
+                    with open(self.target, "a") as write_file:
+                        write_file.writelines(record)
+                # with open(prism_billing_daemonlog_file, "r") as read_file:
+                #     record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.worker_thread)),data)]
                         
-                    if record:
-                        with open(self.target, "a") as write_file:
-                            write_file.writelines(record)  
-            return True
+                #     if record:
+                #         with open(self.target, "a") as write_file:
+                #             write_file.writelines(record)  
+                return True
         else:
             return False         
