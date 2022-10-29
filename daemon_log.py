@@ -2,6 +2,7 @@
 importing required modules
 """
 # import re
+from distutils.log import debug
 import logging
 import subprocess
 from subprocess import PIPE
@@ -28,29 +29,38 @@ class DaemonLog:
         logPath_object = LogFileFinder(self.input_date, self.initializedPath_object)
         try:
             self.find_prism_log(logPath_object.prism_daemonlog_file(), self.is_backup_path)
+            logging.debug('Issue thread [%s] found in prism daemon log and will be parsed for any issue.', self.worker_thread)
             return True
         except subprocess.CalledProcessError as ex:
-            logging.error('Prism daemon log path does not exists. Going to check root log.')
+            logging.warning('Prism daemon log path does not exists or issue thread [%s] could not be found.',self.worker_thread) 
+            logging.debug('Going to check root log.')
 
             try:
                 self.find_prism_log(logPath_object.prism_rootlog_file(), self.is_backup_path)
+                logging.debug('Issue thread [%s] found in prism root log and will be parsed for any issue.', self.worker_thread)
                 return True
             except subprocess.CalledProcessError as ex:
-                logging.error('Prism root log path does not exists. Going to check prism backup log path')
+                logging.warning('Prism root log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
+                logging.debug('Going to check prism backup log path')
 
                 try:
                     self.is_backup_path = True
                     self.find_prism_log(logPath_object.prism_daemonlog_backup_file(), self.is_backup_path)
+                    logging.debug('Issue thread [%s] found in prism daemon backup log and will be parsed for any issue.', self.worker_thread)
                     return True
                 except subprocess.CalledProcessError as ex:
-                    logging.error('Prism backup log path does not exists. Going to check root backup log path')
+                    logging.warning('Prism backup log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
+                    logging.debug('Going to check root backup log path')
 
                     try:
                         self.is_backup_path = True
                         self.find_prism_log(logPath_object.prism_rootlog_backup_file(), self.is_backup_path)
+                        logging.debug('Issue thread [%s] found in prism root backup log and will be parsed for any issue.', self.worker_thread)
+                        return True
                     except subprocess.CalledProcessError as ex:
-                        logging.error('Prism root backup log path does not exists.')
+                        logging.warning('Prism root backup log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
                         logging.error(ex)
+                        logging.error('no logs could be found against %s or log may not be debug mode', self.worker_thread)
                         return False
     
     def find_prism_log(self, logPath, is_backup_path):
