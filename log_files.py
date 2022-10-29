@@ -91,8 +91,9 @@ class LogFileFinder():
         
         backup_date = self.input_date
         date = self.get_backup_date(backup_date)
-        prism_daemon_log_backup_path = f"{prism_daemon_log_backup}{date[0]}-{date[1]}/prismD-{date[0]}-{date[1]}-{date[2]}*.gz"
 
+        prism_daemon_log_backup_path = f"{prism_daemon_log_backup}{date[0]}-{date[1]}/prismD-{date[0]}-{date[1]}-{date[2]}*.gz"
+        
         if prism_daemon_log_backup_path:
             return prism_daemon_log_backup_path
         else:
@@ -106,7 +107,6 @@ class LogFileFinder():
         backup_date = self.input_date
         date = self.get_backup_date(backup_date)
         
-        prism_root_log_backup = "/PRISM/prismD/PRISMD_LOGS/log4j/backup/"
         prism_root_log_backup_path = f"{prism_root_log_backup}{date[0]}-{date[1]}/root-{date[0]}-{date[1]}-{date[2]}*.gz"
 
         if prism_root_log_backup_path:
