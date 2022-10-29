@@ -39,6 +39,7 @@ class DaemonLog:
                 self.find_prism_log(logPath_object.prism_rootlog_file(), self.is_backup_path)
                 logging.debug('Issue thread [%s] found in prism root log and will be parsed for any issue.', self.worker_thread)
                 return True
+
             except subprocess.CalledProcessError as ex:
                 logging.warning('Prism root log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
                 logging.debug('Going to check prism backup log path')
@@ -48,6 +49,7 @@ class DaemonLog:
                     self.find_prism_log(logPath_object.prism_daemonlog_backup_file(), self.is_backup_path)
                     logging.debug('Issue thread [%s] found in prism daemon backup log and will be parsed for any issue.', self.worker_thread)
                     return True
+
                 except subprocess.CalledProcessError as ex:
                     logging.warning('Prism backup log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
                     logging.debug('Going to check root backup log path')
