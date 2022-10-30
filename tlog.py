@@ -39,3 +39,27 @@ class Tlog:
                 return False
         else:
             return False
+    
+    def get_tomcat_billing_tlog(self):
+        """
+        calling path finder method
+        """
+        logfile_object = LogFileFinder(self.input_date, self.initializedPath_object)
+
+        logfile_object.tomcat_billing_tlog_path()
+        
+        if logfile_object.is_tomcat_billing_tlog_path:
+            tlog_file = logfile_object.tomcat_billing_tlog_files(self.input_date)
+            if tlog_file != None:
+                tomcat_billing_tlog_files = list(logfile_object.tomcat_billing_tlog_files(self.input_date))
+                for file in tomcat_billing_tlog_files:
+                    with open(file, "r") as read_file:
+                        record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
+                                
+                        if record:
+                            self.tlog_record_list.append(record)
+                return True
+            else:
+                return False
+        else:
+            return False
