@@ -9,45 +9,36 @@ class InputValidation:
     """
     input data validation class
     """
-    def __init__(self):
+    
+    def __init__(self, msisdn, input_date):
+        self.msisdn = msisdn
+        self.input_date = input_date
         self.is_input_valid = False
 
     def validate_msisdn(self):
         """
         Validate msisdn.
         """
-        while True:
-            try:
-                msisdn = int(input("Enter msisdn without country code: ").strip())
-                logging.debug('msisdn entered is %s', msisdn)
-                self.is_input_valid = True
-                break
-            except ValueError:
-                logging.error('Invalid msisdn')
-        return msisdn
+        try:
+            msisdn = int(self.msisdn)
+            logging.debug('msisdn entered is valid : %s', msisdn)
+            self.is_input_valid = True
+            return msisdn
+        except Exception as error:
+            logging.error('Invalid msisdn')
+            raise
 
     def validate_date(self):
         """
         Validate date.
         """
-        while True:
-            input_date = input("Enter transaction date in a format yyyymmdd: ").strip()
-            is_valid_date = self.validate(input_date)
-            if is_valid_date:
-                self.is_input_valid = True
-                break
-        return input_date
-
-    def validate(self, date):
-        """
-        function to validate input date for day
-        """
         try:
-            datetime.strptime(date, "%Y%m%d")
-            logging.debug('Transaction date entered is %s', date)
-            return True
-        except ValueError as ex:
+            datetime.strptime(self.input_date, "%Y%m%d")
+            self.is_input_valid = True
+            logging.debug('Transaction date entered is valid : %s', self.input_date)
+            return self.input_date
+
+        except Exception as error:
+            logging.error('Transaction date %s entered is of invalid format.', self.input_date)
             self.is_input_valid = False
-            logging.debug('date entered is %s', date)
-            logging.debug(ex)
-            return False
+            raise

@@ -4,7 +4,6 @@ Path finder package.
 import logging
 import subprocess
 from subprocess import PIPE
-from sys import stderr
 import xml.etree.ElementTree as ET
 
 class LogPathFinder():
@@ -159,7 +158,7 @@ class LogPathFinder():
 
             self.parse_transaction_logging(self.tomcat_conf_path, pname)
         except subprocess.CalledProcessError as ex:
-            logging.debug(ex)
+            logging.error(ex)
 
     def find_prism_tlog_path(self, pname):
         """
