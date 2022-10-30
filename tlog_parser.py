@@ -24,10 +24,7 @@ class TlogParser:
         tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list, self.initializedPath_object)
     
         if tlog_object.get_prism_billing_tlog():
-            logging.debug('Prism tlog record found for %s', self.msisdn )
             filtered_prism_tlog = tlog_object.tlog_record_list
-            logging.debug('Parsing tlog file')
-            
             if filtered_prism_tlog:
                 tlog_data = [data.split("|") for data in filtered_prism_tlog[0]]
                 for cnt, data in enumerate(tlog_data):
@@ -36,11 +33,15 @@ class TlogParser:
                     header_data = self.dictionary_of_tlogs[f"dict_{cnt}"]
                     temp = list(header_data)
                     for counter, tlog_header in enumerate(temp):
-                        header_data[tlog_header] = self.data_in_tlog(data, counter)
+                        try:
+                            header_data[tlog_header] = self.data_in_tlog(data, counter)
+                        except IndexError as ex:
+                            logging.info('Header data did not match')
                     self.dictionary_of_tlogs[f"dict_{cnt}"] = header_data
                 is_parsed = True
             else:
                 logging.error('No prism tlog found for given msisdn: %s', self.msisdn)
+            is_parsed = True
         else:
             logging.error('No prism tlog found for given msisdn: %s', self.msisdn)
         return is_parsed
@@ -65,7 +66,10 @@ class TlogParser:
                     header_data = self.dictionary_of_tlogs[f"dict_{cnt}"]
                     temp = list(header_data)
                     for counter, tlog_header in enumerate(temp):
-                        header_data[tlog_header] = self.data_in_tlog(data, counter)
+                        try:
+                            header_data[tlog_header] = self.data_in_tlog(data, counter)
+                        except IndexError as ex:
+                            logging.info('Ignoring header index mapping')
                     self.dictionary_of_tlogs[f"dict_{cnt}"] = header_data
                 is_parsed = True
             else:
@@ -78,4 +82,7 @@ class TlogParser:
         """
         Returns data in tlog.
         """
-        return data[index]
+        try:
+            return data[index]
+        except IndexError as ex:
+            raise

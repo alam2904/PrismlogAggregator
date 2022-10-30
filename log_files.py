@@ -37,8 +37,7 @@ class LogFileFinder():
     def tomcat_billing_tlog_path(self):
         
         log_path = self.initializedPath_object
-        
-        tomcat_tlog_path = f"{log_path.tomcat_log_path_dict[log_path.tomcat_tlog_log_path]}/BILLING"
+        tomcat_tlog_path = f"{log_path.tomcat_log_path_dict[log_path.tomcat_tlog_log_path]}BILLING_REALTIME"
         path = Path(rf"{tomcat_tlog_path}")
 
         if path.exists():
@@ -86,11 +85,12 @@ class LogFileFinder():
         logPath_object = self.initializedPath_object
         # log_path.initialize_prism_path()
 
-        tomcat_tlog_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_tlog_log_path]}/BILLING"
+        tomcat_tlog_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_tlog_log_path]}BILLING_REALTIME"
+        logging.info('tomcat tlog path: %s', tomcat_tlog_path)
         path = Path(rf"{tomcat_tlog_path}")
 
         try:
-            billing_tlog_files = [p for p in path.glob(f"TLOG_BILLING_{input_trans_date}*.*")]
+            billing_tlog_files = [p for p in path.glob(f"TLOG_BILLING_REALTIME_{input_trans_date}*.*")]
             if bool(billing_tlog_files):
                 for prism_billing_files in billing_tlog_files:
                     tlog_files.append(prism_billing_files)
