@@ -25,8 +25,10 @@ class TDLogParser:
         self.outputDirectory_object = outputDirectory_object
         self.trimmed_prism_outfile = self.outputDirectory_object/"trimmed_prismd.log"
         self.trimmed_tomcat_outfile = self.outputDirectory_object/"trimmed_tomcat.log"
+        self.issue_tlog = self.outputDirectory_object/"issue_tlog_record.txt"
+        self.issue_tlog_data = ""
 
-    def parse(self):
+    def parse(self, tlogParser_object):
         """
         Parse dictionary of tlogs to get the search value.
         """
@@ -37,13 +39,25 @@ class TDLogParser:
                     if re.search(r"\b{}\b".format(str(status.value)), v):
                         for search_key, search_value in self.dictionary_of_search_value.items():
                             self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[key][search_key]
+        
+        
+        tlog_data_list = [data for data in tlogParser_object.filtered_prism_tlog[0]]
+        for data in tlog_data_list:
+            for status in TlogErrorTag:
+                if re.search(r"\b{}\b".format(str(status.value)), data):
+                    self.issue_tlog_data = data
+                        
+        with open(self.issue_tlog, "a") as write_file:
+            write_file.writelines(self.issue_tlog_data)
+            
+        logging.info('issue tlog data is : %s', self.issue_tlog_data)
+        
         self.get_serched_log()
 
     def get_serched_log(self):
         """
         Get daemon log for the given thread
         """
-        # target = Path()/"out.txt"
         logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
         daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
 
