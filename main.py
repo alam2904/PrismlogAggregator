@@ -50,7 +50,6 @@ class Main:
                 except Exception as error:
                     logging.warning(error)
                     
-                logging.info(initializedPath_object.prism_log_path_dict.items())
 
                 if initializedPath_object.is_tomcat or initializedPath_object.is_prsim:
                     is_tomcat = initializedPath_object.is_tomcat
