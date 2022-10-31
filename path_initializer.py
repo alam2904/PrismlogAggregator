@@ -153,8 +153,9 @@ class LogPathFinder():
                         for item in tomcat_key.split("/"):
                             if item == "conf":
                                 self.tomcat_conf_path = tomcat_key
-                    else:
-                        self.tomcat_conf_path = tomcat_value
+                                break
+                        else:
+                            self.tomcat_conf_path = tomcat_value
 
             self.parse_transaction_logging(self.tomcat_conf_path, pname)
         except subprocess.CalledProcessError as ex:
