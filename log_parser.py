@@ -11,7 +11,7 @@ class TDLogParser:
     """
     Parse the daemon log based on tlog input
     """
-    def __init__(self, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, is_prism):
+    def __init__(self, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, is_prism, outputDirectory_object):
         self.input_date = input_date
         self.initializedPath_object = initializedPath_object
         self.dictionary_of_tlogs = dictionary_of_tlogs
@@ -22,7 +22,9 @@ class TDLogParser:
         self.__initial_index = 0
         self.__final_index = 0
         self.__task_type = ""
-        self.out_file = Path()/"final.txt"
+        self.outputDirectory_object = outputDirectory_object
+        self.trimmed_prism_outfile = self.outputDirectory_object/"trimmed_prismd.log"
+        self.trimmed_tomcat_outfile = self.outputDirectory_object/"trimmed_tomcat.log"
 
     def parse(self):
         """
@@ -43,14 +45,14 @@ class TDLogParser:
         """
         # target = Path()/"out.txt"
         logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
-        daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object)
+        daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
 
         task = ""
         if self.is_tomcat:
             daemonLog_object.get_tomcat_log()
-            if daemonLog_object.target.exists():
+            if daemonLog_object.tomcat_thread_outfile.exists():
                 for status in TlogErrorTag:
-                    with open(daemonLog_object.target, "r") as read_file:
+                    with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
                         for i, line in enumerate(read_file):
                             if re.search(r"\b{}\b".format(str(status.value)), line):
                                 self.set_initial_index(i)
@@ -58,13 +60,13 @@ class TDLogParser:
                                 break
             
                 for ttype in TaskType:
-                    with open(daemonLog_object.target, "r") as read_file:
+                    with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
                         for i, line in enumerate(read_file):
                             if task == ttype.name:
                                 self.set_task_type(ttype.value)
                                 break
 
-                with open(daemonLog_object.target, "r") as read_file:
+                with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
                     serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
 
                     for i, line in enumerate(read_file):
@@ -72,19 +74,19 @@ class TDLogParser:
                             self.set_final_index(i)
                             break
                 
-                with open(daemonLog_object.target, "r") as read_file:
+                with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
                     for i, line in enumerate(read_file):
                         if self.get_final_index() <= i < self.get_initial_index() + 1:
-                            with open(self.out_file, "a") as write_file:
+                            with open(self.trimmed_tomcat_outfile, "a") as write_file:
                                 write_file.writelines(line)
             else:
                 logging.error("Tomcat daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
         
         if self.is_prism:
             daemonLog_object.get_prism_log()
-            if daemonLog_object.target.exists():
+            if daemonLog_object.prismd_thread_outfile.exists():
                 for status in TlogErrorTag:
-                    with open(daemonLog_object.target, "r") as read_file:
+                    with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
                         for i, line in enumerate(read_file):
                             if re.search(r"\b{}\b".format(str(status.value)), line):
                                 self.set_initial_index(i)
@@ -92,24 +94,23 @@ class TDLogParser:
                                 break
             
                 for ttype in TaskType:
-                    with open(daemonLog_object.target, "r") as read_file:
+                    with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
                         for i, line in enumerate(read_file):
                             if task == ttype.name:
                                 self.set_task_type(ttype.value)
                                 break
 
-                with open(daemonLog_object.target, "r") as read_file:
+                with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
                     serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
-
                     for i, line in enumerate(read_file):
                         if re.search(r"{}".format(str(serach_string)), line):
                             self.set_final_index(i)
                             break
                 
-                with open(daemonLog_object.target, "r") as read_file:
+                with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
                     for i, line in enumerate(read_file):
                         if self.get_final_index() <= i < self.get_initial_index() + 1:
-                            with open(self.out_file, "a") as write_file:
+                            with open(self.trimmed_prism_outfile, "a") as write_file:
                                 write_file.writelines(line)
             else:
                 logging.error("Prism daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])

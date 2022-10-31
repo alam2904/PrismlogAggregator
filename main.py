@@ -4,6 +4,8 @@ importing modules
 import sys
 import time
 import logging
+from pathlib import Path
+import shutil
 from input_validation import InputValidation
 from path_initializer import LogPathFinder
 from log_processor import PROCESSOR
@@ -50,15 +52,22 @@ class Main:
                 except Exception as error:
                     logging.warning(error)
                     
-                logging.info(initializedPath_object.prism_log_path_dict.items())
 
                 if initializedPath_object.is_tomcat or initializedPath_object.is_prsim:
                     is_tomcat = initializedPath_object.is_tomcat
                     is_tomcat_tlog_path = initializedPath_object.is_tomcat_tlog_path
                     is_prism = initializedPath_object.is_prsim
                     is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
+                    
+                    outputDirectory_object = Path('out')
+                    try:
+                        outputDirectory_object.mkdir(exist_ok=False)
+                    except FileExistsError as error:
+                        logging.info('out directory already exists. Hence flushing and recreating the same.')
+                        shutil.rmtree(outputDirectory_object)
+                        outputDirectory_object.mkdir()
 
-                    processor_object = PROCESSOR(msisdn, input_date)
+                    processor_object = PROCESSOR(msisdn, input_date, outputDirectory_object)
                     processor_object.process(is_tomcat, is_prism, is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object)
                 else:
                     logging.error('Since none of the process running. Process failed to aggregate log.')

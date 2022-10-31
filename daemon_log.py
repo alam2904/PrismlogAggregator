@@ -14,13 +14,15 @@ class DaemonLog:
     """
     daemon log get class
     """
-    def __init__(self, input_date, worker_log_recod_list, worker_thread, initializedPath_object):
+    def __init__(self, input_date, worker_log_recod_list, worker_thread, initializedPath_object, outputDirectory_object):
         self.input_date = input_date
         self.worker_log_recod_list = worker_log_recod_list
         self.worker_thread = worker_thread
         self.initializedPath_object = initializedPath_object
         self.is_backup_path = False
-        self.target = Path()/"out.txt"
+        # self.target = Path()/"out.txt"
+        self.tomcat_thread_outfile = outputDirectory_object/"tomcat.log"
+        self.prismd_thread_outfile = outputDirectory_object/"prismd.log"
     
     def get_tomcat_log(self):
         """
@@ -116,7 +118,7 @@ class DaemonLog:
             else:
                 worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
                 record = [data for data in worker_thread_log.stdout]
-            with open(self.target, "a") as write_file:
+            with open(self.tomcat_thread_outfile, "a") as write_file:
                 write_file.writelines(record)
         except subprocess.CalledProcessError as ex:
             raise
@@ -129,7 +131,7 @@ class DaemonLog:
             else:
                 worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
                 record = [data for data in worker_thread_log.stdout]
-            with open(self.target, "a") as write_file:
+            with open(self.prismd_thread_outfile, "a") as write_file:
                 write_file.writelines(record)
         except subprocess.CalledProcessError as ex:
             raise
