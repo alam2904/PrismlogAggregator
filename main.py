@@ -66,6 +66,7 @@ class Main:
                         logging.info('out directory already exists. Hence flushing and recreating the same.')
                         shutil.rmtree(outputDirectory_object)
                         outputDirectory_object.mkdir()
+                        logging.info('xyz')
 
                     processor_object = PROCESSOR(msisdn, input_date, outputDirectory_object)
                     processor_object.process(is_tomcat, is_prism, is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object)
