@@ -13,27 +13,28 @@ class PROCESSOR:
 
     def process(self, is_tomcat, is_prism, is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object):
         dictionary_of_tlogs = {}
-        tlog_record_list = []
+        tlog_record_list_prism = []
+        tlog_record_list_tomcat = []
         worker_log_recod_list = []
         dictionary_of_search_value = {"TIMESTAMP" : "","THREAD" : "","MSISDN" : "","SUB_TYPE" : ""}
 
-        tlogParser_object = TlogParser(self.msisdn, self.input_date, dictionary_of_tlogs, tlog_record_list, initializedPath_object)
+        tlogParser_object = TlogParser(self.msisdn, self.input_date, dictionary_of_tlogs, tlog_record_list_prism, tlog_record_list_tomcat, initializedPath_object)
         
         if is_tomcat and is_tomcat_tlog_path:
             logging.debug('Tomcat tlog path exists.')
             if tlogParser_object.parse_tomcat():
-                logging.debug('Tomcat tlog parsed successfully')
+                
                 daemonLogParser_object = TDLogParser(self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, False, self.outputDirectory_object)
-                daemonLogParser_object.parse()
+                daemonLogParser_object.parse(tlogParser_object)
             else:
                 logging.error('No issue tlog found. Hence not fetching the tomcat log.')
                 
         if is_prism and is_prism_tlog_path:
             logging.debug('Prism tlog path exists.')
             if tlogParser_object.parse_prism():
-                logging.debug('Prism tlog parsed successfully')
+                
                 daemonLogParser_object = TDLogParser(self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, False, is_prism, self.outputDirectory_object)
-                daemonLogParser_object.parse()
+                daemonLogParser_object.parse(tlogParser_object)
             else:
                 logging.error('No issue tlog found. Hence not fetching the prism log.')
         else:

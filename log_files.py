@@ -86,7 +86,6 @@ class LogFileFinder():
         # log_path.initialize_prism_path()
 
         tomcat_tlog_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_tlog_log_path]}BILLING_REALTIME"
-        logging.info('tomcat tlog path: %s', tomcat_tlog_path)
         path = Path(rf"{tomcat_tlog_path}")
 
         try:
