@@ -10,10 +10,11 @@ class Tlog:
     """
     tlog get class
     """
-    def __init__(self, msisdn, input_date, tlog_record_list, initializedPath_object):
+    def __init__(self, msisdn, input_date, tlog_record_list_prism, tlog_record_list_tomcat, initializedPath_object):
         self.msisdn = msisdn
         self.input_date = input_date
-        self.tlog_record_list = tlog_record_list
+        self.tlog_record_list_prism = tlog_record_list_prism
+        self.tlog_record_list_tomcat = tlog_record_list_tomcat
         self.initializedPath_object = initializedPath_object
     
     def get_prism_billing_tlog(self):
@@ -33,7 +34,7 @@ class Tlog:
                         record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
                                 
                         if record:
-                            self.tlog_record_list.append(record)
+                            self.tlog_record_list_prism.append(record)
                 return True
             else:
                 return False
@@ -57,7 +58,7 @@ class Tlog:
                         record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
                                 
                         if record:
-                            self.tlog_record_list.append(record)
+                            self.tlog_record_list_tomcat.append(record)
                 return True
             else:
                 return False

@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 import re
 from daemon_log import DaemonLog
-from tlog_tag import TaskType, TlogErrorTag
+from tlog_tag import TaskType, TlogErrorTag, TlogLowBalTag
 
 class TDLogParser:
     """
@@ -26,57 +26,109 @@ class TDLogParser:
         self.trimmed_prism_outfile = self.outputDirectory_object/"trimmed_prismd.log"
         self.trimmed_tomcat_outfile = self.outputDirectory_object/"trimmed_tomcat.log"
         self.issue_tlog = self.outputDirectory_object/"issue_tlog_record.txt"
-        self.issue_tlog_data = ""
+        self.issue_tlog_data_prism = ""
+        self.issue_tlog_data_tomcat = ""
+        self.is_error_tlog = False
+        self.is_lowbal_tlog = False
+        self.task = ""
 
     def parse(self, tlogParser_object):
         """
         Parse dictionary of tlogs to get the search value.
         """
-        logging.debug('Parsing daemon log')
+        logging.debug('Parsing tlog and daemon log')
         for key, value in self.dictionary_of_tlogs.items():
             for k, v in self.dictionary_of_tlogs[key].items():
                 for status in TlogErrorTag:
                     if re.search(r"\b{}\b".format(str(status.value)), v):
                         for search_key, search_value in self.dictionary_of_search_value.items():
                             self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[key][search_key]
-        
-        
-        tlog_data_list = [data for data in tlogParser_object.filtered_prism_tlog[0]]
-        for data in tlog_data_list:
-            for status in TlogErrorTag:
-                if re.search(r"\b{}\b".format(str(status.value)), data):
-                    self.issue_tlog_data = data
+                        self.is_error_tlog = True
                         
-        with open(self.issue_tlog, "a") as write_file:
-            write_file.writelines(self.issue_tlog_data)
-            
-        logging.info('issue tlog data is : %s', self.issue_tlog_data)
+                    elif not self.is_error_tlog:
+                        for status in TlogLowBalTag:
+                            if re.search(r"\b{}\b".format(str(status.value)), v):
+                                for search_key, search_value in self.dictionary_of_search_value.items():
+                                    self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[key][search_key]
+                                self.is_lowbal_tlog = True
+                                
+        if tlogParser_object.filtered_prism_tlog:
+            logging.info('Inside prism filter')                           
+            tlog_data_list = [data for data in tlogParser_object.filtered_prism_tlog[0]]
+            if tlog_data_list:
+                for data in tlog_data_list:
+                    if self.is_error_tlog:
+                        for status in TlogErrorTag:
+                            if re.search(r"\b{}\b".format(str(status.value)), data):
+                                self.issue_tlog_data_prism = data
+                    
+                    elif self.is_lowbal_tlog:
+                        for status in TlogLowBalTag:
+                            if re.search(r"\b{}\b".format(str(status.value)), data):
+                                self.issue_tlog_data_prism = data
+                
+                logging.info('issue tlog data prism is : %s', self.issue_tlog_data_prism)
+                                
+                with open(self.issue_tlog, "a") as write_file:
+                    write_file.writelines(self.issue_tlog_data_prism)
+                self.get_serched_log()
         
+        elif tlogParser_object.filtered_tomcat_tlog:
+            logging.info('inside tomcat filter')                            
+            tlog_data_list = [data for data in tlogParser_object.filtered_tomcat_tlog[0]]
+            if tlog_data_list:
+                for data in tlog_data_list:
+                    if self.is_error_tlog:
+                        for status in TlogErrorTag:
+                            if re.search(r"\b{}\b".format(str(status.value)), data):
+                                self.issue_tlog_data_tomcat = data
+                    
+                    elif self.is_lowbal_tlog:
+                        for status in TlogLowBalTag:
+                            if re.search(r"\b{}\b".format(str(status.value)), data):
+                                self.issue_tlog_data_tomcat = data
+                                
+                logging.info('issue tlog data tomcat is : %s', self.issue_tlog_data_tomcat)
+                
+                with open(self.issue_tlog, "a") as write_file:
+                    write_file.writelines(self.issue_tlog_data_tomcat)
+                    
+
         self.get_serched_log()
 
     def get_serched_log(self):
         """
         Get daemon log for the given thread
         """
-        logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
-        daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
 
-        task = ""
-        if self.is_tomcat:
+        # task = ""
+        if len(self.issue_tlog_data_tomcat) != 0:
+            logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
+            daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
             daemonLog_object.get_tomcat_log()
             if daemonLog_object.tomcat_thread_outfile.exists():
-                for status in TlogErrorTag:
-                    with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
-                        for i, line in enumerate(read_file):
-                            if re.search(r"\b{}\b".format(str(status.value)), line):
-                                self.set_initial_index(i)
-                                task = status.name
-                                break
+                if self.is_error_tlog:
+                    for status in TlogErrorTag:
+                        with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                            for i, line in enumerate(read_file):
+                                if re.search(r"\b{}\b".format(str(status.value)), line):
+                                    self.set_initial_index(i)
+                                    self.task = status.name
+                                    break
+                elif self.is_lowbal_tlog:
+                    for status in TlogLowBalTag:
+                        with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                            for i, line in enumerate(read_file):
+                                if re.search(r"\b{}\b".format(str(status.value)), line):
+                                    self.set_initial_index(i)
+                                    self.task = status.name
+                                    break
+                    
             
                 for ttype in TaskType:
                     with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
                         for i, line in enumerate(read_file):
-                            if task == ttype.name:
+                            if self.task == ttype.name:
                                 self.set_task_type(ttype.value)
                                 break
 
@@ -96,21 +148,33 @@ class TDLogParser:
             else:
                 logging.error("Tomcat daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
         
-        if self.is_prism:
+        if len(self.issue_tlog_data_prism) != 0:
+            logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
+            daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
             daemonLog_object.get_prism_log()
             if daemonLog_object.prismd_thread_outfile.exists():
-                for status in TlogErrorTag:
-                    with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
-                        for i, line in enumerate(read_file):
-                            if re.search(r"\b{}\b".format(str(status.value)), line):
-                                self.set_initial_index(i)
-                                task = status.name
-                                break
+                if self.is_error_tlog:
+                    for status in TlogErrorTag:
+                        with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
+                            for i, line in enumerate(read_file):
+                                if re.search(r"\b{}\b".format(str(status.value)), line):
+                                    self.set_initial_index(i)
+                                    self.task = status.name
+                                    break
+                elif self.is_lowbal_tlog:
+                    for status in TlogLowBalTag:
+                        with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
+                            for i, line in enumerate(read_file):
+                                if re.search(r"\b{}\b".format(str(status.value)), line):
+                                    self.set_initial_index(i)
+                                    self.task = status.name
+                                    break
+                    
             
                 for ttype in TaskType:
                     with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
                         for i, line in enumerate(read_file):
-                            if task == ttype.name:
+                            if self.task == ttype.name:
                                 self.set_task_type(ttype.value)
                                 break
 

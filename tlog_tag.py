@@ -3,7 +3,7 @@ from enum import Enum
 
 class TlogErrorTag(Enum):
     """
-    Enum class
+    Enum error tag class
     """
     SUB_TYPE_CHECK = "STCK=3"
     CHECK_BALANCE = "CBAL=3"
@@ -22,6 +22,13 @@ class TlogErrorTag(Enum):
     GENERIC_TASK3 = "GT3=3"
     GENERIC_TASK4 = "GT4=3"
     GENERIC_TASK5 = "GT5=3"
+    
+class TlogLowBalTag(Enum):
+    """
+    Enum low bal tag class
+    """
+    CHECK_BALANCE = "CBAL=4"
+    CHARGING = "CHG=4"
 
 class TaskType(Enum):
     """
