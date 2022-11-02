@@ -41,8 +41,6 @@ class TlogParser:
                         self.dictionary_of_tlogs[tlog_header] = self.data_in_tlog(tlog_data, counter)
                     except IndexError as ex:
                         logging.info('Header data did not match')
-                for key, data in self.dictionary_of_tlogs.items():
-                    logging.info('tlog header: %s data %s', key, data)
             
                 is_parsed = True
             else:

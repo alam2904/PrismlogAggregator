@@ -70,6 +70,20 @@ class TDLogParser:
         
                                       
         if tlogParser_object.filtered_prism_tlog:
+            access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
+            dts = datetime.strptime(self.input_date, "%Y%m%d")
+            dtf = dts.strftime("%Y-%m-%d")
+            date_formated = dtf.split("-")
+
+            try:
+                access_log = subprocess.run(["grep", f"/subscription/ActivateSubscription?msisdn={msisdn}", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                acc_log = [data for data in access_log.stdout]
+                
+                with open(self.issue_tlog, "a") as write_file:
+                    write_file.writelines(acc_log)
+                    
+            except subprocess.CalledProcessError as ex:
+                logging.info('No access log found') 
                                 
             with open(self.issue_tlog, "a") as write_file:
                 self.issue_tlog_data_prism = tlogParser_object.filtered_prism_tlog[-1]
