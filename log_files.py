@@ -1,12 +1,9 @@
 """
 path finder class
 """
-from cmath import log
 import logging
 from datetime import datetime
 from pathlib import Path
-from webbrowser import get
-from path_initializer import LogPathFinder
 
 
 class LogFileFinder():
@@ -18,7 +15,6 @@ class LogFileFinder():
         self.initializedPath_object = initializedPath_object
         self.is_prism_billing_tlog_path = False
         self.is_tomcat_billing_tlog_path = False
-        # self.is_tomcat_path
     
     def prism_billing_tlog_path(self):
         
@@ -55,19 +51,24 @@ class LogFileFinder():
         tlog_files = []
         
         logPath_object = self.initializedPath_object
-        # log_path.initialize_prism_path()
 
         prism_tlog_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_tlog_log_path]}/BILLING"
         path = Path(rf"{prism_tlog_path}")
 
         try:
-            billing_tlog_files = [p for p in path.glob(f"TLOG_BILLING_{input_trans_date}*.*")]
-            if bool(billing_tlog_files):
-                for prism_billing_files in billing_tlog_files:
+            billing_tlog_files_tmp = [p for p in path.glob(f"TLOG_BILLING_{input_trans_date}*.tmp")]
+            billing_tlog_files_log = [p for p in path.glob(f"TLOG_BILLING_{input_trans_date}*.log")]
+            
+            if bool(billing_tlog_files_log):
+                for prism_billing_files in billing_tlog_files_log:
                     tlog_files.append(prism_billing_files)
-                    return tlog_files
+            if bool(billing_tlog_files_tmp):
+                for prism_billing_files in billing_tlog_files_tmp:
+                    tlog_files.append(prism_billing_files)
             else:
                 logging.error('Prism billing tlog directory does not have %s dated files', input_trans_date)
+            
+            return tlog_files
 
         except ValueError as error:
             logging.exception(error)
@@ -83,19 +84,25 @@ class LogFileFinder():
         tlog_files = []
         
         logPath_object = self.initializedPath_object
-        # log_path.initialize_prism_path()
 
         tomcat_tlog_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_tlog_log_path]}BILLING_REALTIME"
         path = Path(rf"{tomcat_tlog_path}")
 
         try:
-            billing_tlog_files = [p for p in path.glob(f"TLOG_BILLING_REALTIME_{input_trans_date}*.*")]
-            if bool(billing_tlog_files):
-                for prism_billing_files in billing_tlog_files:
-                    tlog_files.append(prism_billing_files)
-                    return tlog_files
+            billing_tlog_files_tmp = [p for p in path.glob(f"TLOG_BILLING_REALTIME_{input_trans_date}*.tmp")]
+            billing_tlog_files_log = [p for p in path.glob(f"TLOG_BILLING_REALTIME_{input_trans_date}*.log")]
+            if bool(billing_tlog_files_log):
+                for tomcat_billing_files in billing_tlog_files_log:
+                    tlog_files.append(tomcat_billing_files)
+                
+            if bool(billing_tlog_files_tmp):
+                for tomcat_billing_files in billing_tlog_files_tmp:
+                    tlog_files.append(tomcat_billing_files)
+                
             else:
                 logging.error('Tomcat billing tlog directory does not have %s dated files', input_trans_date)
+                
+            return tlog_files
 
         except ValueError as error:
             logging.exception(error)

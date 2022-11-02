@@ -28,13 +28,14 @@ class Tlog:
         if logfile_object.is_prism_billing_tlog_path:
             tlog_file = logfile_object.prism_billing_tlog_files(self.input_date)
             if tlog_file != None:
-                prism_billing_tlog_files = list(logfile_object.prism_billing_tlog_files(self.input_date))
+                prism_billing_tlog_files = logfile_object.prism_billing_tlog_files(self.input_date)
                 for file in prism_billing_tlog_files:
                     with open(file, "r") as read_file:
                         record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
-                                
+        
                         if record:
-                            self.tlog_record_list_prism.append(record)
+                            for data in record:
+                                self.tlog_record_list_prism.append(data)
                 return True
             else:
                 return False
@@ -58,7 +59,8 @@ class Tlog:
                         record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
                                 
                         if record:
-                            self.tlog_record_list_tomcat.append(record)
+                            for data in record:
+                                self.tlog_record_list_tomcat.append(data)
                 return True
             else:
                 return False
