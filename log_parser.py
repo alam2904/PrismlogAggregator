@@ -2,10 +2,13 @@
 importing required modules
 """
 import logging
+import subprocess
+from subprocess import PIPE
+from datetime import datetime
 from pathlib import Path
 import re
 from daemon_log import DaemonLog
-from tlog_tag import TaskType, TlogErrorTag, TlogLowBalTag
+from tlog_tag import TaskType, TlogErrorTag, TlogLowBalTag, TlogRetryTag
 
 class TDLogParser:
     """
@@ -30,9 +33,10 @@ class TDLogParser:
         self.issue_tlog_data_tomcat = ""
         self.is_error_tlog = False
         self.is_lowbal_tlog = False
+        self.is_retry_tlog = False
         self.task = ""
 
-    def parse(self, tlogParser_object):
+    def parse(self, tlogParser_object, msisdn):
         """
         Parse dictionary of tlogs to get the search value.
         """
@@ -55,6 +59,15 @@ class TDLogParser:
                             self.is_lowbal_tlog = True
                         break
         
+        if not self.is_lowbal_tlog:
+            for key, value in self.dictionary_of_tlogs.items():
+                for status in TlogRetryTag:
+                    if re.search(r"\b{}\b".format(str(status.value)), value):
+                        for search_key, search_value in self.dictionary_of_search_value.items():
+                            self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
+                            self.is_retry_tlog = True
+                        break
+        
                                       
         if tlogParser_object.filtered_prism_tlog:
                                 
@@ -64,6 +77,21 @@ class TDLogParser:
             
         
         elif tlogParser_object.filtered_tomcat_tlog:
+            access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
+            dts = datetime.strptime(self.input_date, "%Y%m%d")
+            dtf = dts.strftime("%Y-%m-%d")
+            date_formated = dtf.split("-")
+
+            try:
+                access_log = subprocess.run(["grep", f"/subscription/RealTimeActivate?msisdn={msisdn}", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                acc_log = [data for data in access_log.stdout]
+                
+                with open(self.issue_tlog, "a") as write_file:
+                    write_file.writelines(acc_log)
+                    
+            except subprocess.CalledProcessError as ex:
+                logging.info('No access log found') 
+                
                 
             with open(self.issue_tlog, "a") as write_file:
                 self.issue_tlog_data_tomcat = tlogParser_object.filtered_tomcat_tlog[-1]
@@ -93,6 +121,15 @@ class TDLogParser:
                                     break
                 elif self.is_lowbal_tlog:
                     for status in TlogLowBalTag:
+                        with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                            for i, line in enumerate(read_file):
+                                if re.search(r"\b{}\b".format(str(status.value)), line):
+                                    self.set_initial_index(i)
+                                    self.task = status.name
+                                    break
+                                
+                elif self.is_retry_tlog:
+                    for status in TlogRetryTag:
                         with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
                             for i, line in enumerate(read_file):
                                 if re.search(r"\b{}\b".format(str(status.value)), line):
@@ -137,8 +174,18 @@ class TDLogParser:
                                     self.set_initial_index(i)
                                     self.task = status.name
                                     break
+                                
                 elif self.is_lowbal_tlog:
                     for status in TlogLowBalTag:
+                        with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
+                            for i, line in enumerate(read_file):
+                                if re.search(r"\b{}\b".format(str(status.value)), line):
+                                    self.set_initial_index(i)
+                                    self.task = status.name
+                                    break
+                                
+                elif self.is_retry_tlog:
+                    for status in TlogRetryTag:
                         with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
                             for i, line in enumerate(read_file):
                                 if re.search(r"\b{}\b".format(str(status.value)), line):
