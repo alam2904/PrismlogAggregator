@@ -37,61 +37,37 @@ class TDLogParser:
         Parse dictionary of tlogs to get the search value.
         """
         logging.debug('Parsing tlog and daemon log')
+
         for key, value in self.dictionary_of_tlogs.items():
-            for k, v in self.dictionary_of_tlogs[key].items():
-                for status in TlogErrorTag:
-                    if re.search(r"\b{}\b".format(str(status.value)), v):
-                        for search_key, search_value in self.dictionary_of_search_value.items():
-                            self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[key][search_key]
+            for status in TlogErrorTag:
+                if re.search(r"\b{}\b".format(str(status.value)), value):
+                    for search_key, search_value in self.dictionary_of_search_value.items():
+                        self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
                         self.is_error_tlog = True
+                    break
                         
-                    elif not self.is_error_tlog:
-                        for status in TlogLowBalTag:
-                            if re.search(r"\b{}\b".format(str(status.value)), v):
-                                for search_key, search_value in self.dictionary_of_search_value.items():
-                                    self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[key][search_key]
-                                self.is_lowbal_tlog = True
-                                
+        if not self.is_error_tlog:
+            for key, value in self.dictionary_of_tlogs.items():
+                for status in TlogLowBalTag:
+                    if re.search(r"\b{}\b".format(str(status.value)), value):
+                        for search_key, search_value in self.dictionary_of_search_value.items():
+                            self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
+                            self.is_lowbal_tlog = True
+                        break
+        
+                                      
         if tlogParser_object.filtered_prism_tlog:
-            logging.info('Inside prism filter')                           
-            tlog_data_list = [data for data in tlogParser_object.filtered_prism_tlog[0]]
-            if tlog_data_list:
-                for data in tlog_data_list:
-                    if self.is_error_tlog:
-                        for status in TlogErrorTag:
-                            if re.search(r"\b{}\b".format(str(status.value)), data):
-                                self.issue_tlog_data_prism = data
-                    
-                    elif self.is_lowbal_tlog:
-                        for status in TlogLowBalTag:
-                            if re.search(r"\b{}\b".format(str(status.value)), data):
-                                self.issue_tlog_data_prism = data
-                
-                logging.info('issue tlog data prism is : %s', self.issue_tlog_data_prism)
                                 
-                with open(self.issue_tlog, "a") as write_file:
-                    write_file.writelines(self.issue_tlog_data_prism)
-                self.get_serched_log()
+            with open(self.issue_tlog, "a") as write_file:
+                self.issue_tlog_data_prism = tlogParser_object.filtered_prism_tlog[-1]
+                write_file.writelines(self.issue_tlog_data_prism)
+            
         
         elif tlogParser_object.filtered_tomcat_tlog:
-            logging.info('inside tomcat filter')                            
-            tlog_data_list = [data for data in tlogParser_object.filtered_tomcat_tlog[0]]
-            if tlog_data_list:
-                for data in tlog_data_list:
-                    if self.is_error_tlog:
-                        for status in TlogErrorTag:
-                            if re.search(r"\b{}\b".format(str(status.value)), data):
-                                self.issue_tlog_data_tomcat = data
-                    
-                    elif self.is_lowbal_tlog:
-                        for status in TlogLowBalTag:
-                            if re.search(r"\b{}\b".format(str(status.value)), data):
-                                self.issue_tlog_data_tomcat = data
-                                
-                logging.info('issue tlog data tomcat is : %s', self.issue_tlog_data_tomcat)
                 
-                with open(self.issue_tlog, "a") as write_file:
-                    write_file.writelines(self.issue_tlog_data_tomcat)
+            with open(self.issue_tlog, "a") as write_file:
+                self.issue_tlog_data_tomcat = tlogParser_object.filtered_tomcat_tlog[-1]
+                write_file.writelines(self.issue_tlog_data_tomcat)
                     
 
         self.get_serched_log()

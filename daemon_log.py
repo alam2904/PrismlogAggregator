@@ -1,12 +1,9 @@
 """
 importing required modules
 """
-# import re
-from distutils.log import debug
 import logging
 import subprocess
 from subprocess import PIPE
-from pathlib import Path
 import signal
 from log_files import LogFileFinder
 
@@ -20,7 +17,6 @@ class DaemonLog:
         self.worker_thread = worker_thread
         self.initializedPath_object = initializedPath_object
         self.is_backup_path = False
-        # self.target = Path()/"out.txt"
         self.tomcat_thread_outfile = outputDirectory_object/"tomcat.log"
         self.prismd_thread_outfile = outputDirectory_object/"prismd.log"
     
@@ -134,14 +130,4 @@ class DaemonLog:
             with open(self.prismd_thread_outfile, "a") as write_file:
                 write_file.writelines(record)
         except subprocess.CalledProcessError as ex:
-            raise
-                    
-                # with open(prism_billing_daemonlog_file, "r") as read_file:
-                #     record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.worker_thread)),data)]
-                        
-                #     if record:
-                #         with open(self.target, "a") as write_file:
-                #             write_file.writelines(record)  
-                # return True
-        # else:
-        #     return False         
+            raise        
