@@ -46,6 +46,7 @@ class LogPathFinder():
         self.prism_snmp_log_backup_path = "prism_snmp_log_backup_path"
 
         self.tomcat_conf_path = "tomcat_conf_path"
+        self.tomcat_access_path = "tomcat_access_path"
         self.tomcat_base_log_path = "tomcat_base_log_path"
         self.tomcat_tlog_log_path = "tomcat_tlog_log_path"
         self.tomcat_log_path_dict = {}
@@ -111,7 +112,6 @@ class LogPathFinder():
 
         except Exception as error:
             raise
-  
 
     def find_process_directory(self, pname):
         """
@@ -126,6 +126,7 @@ class LogPathFinder():
 
             if pname == "tomcat":
                 self.is_tomcat_process_directory = True
+                self.find_tomcat_access_path(pname)
                 self.find_tomcat_tlog_path(pname)
 
             elif pname == "PrismD":
@@ -136,6 +137,20 @@ class LogPathFinder():
             logging.error('%s.cnf not present', pname)
             raise Exception(error)
 
+    def find_tomcat_access_path(self, pname):
+        tomcat_home_dir = self.dict_of_process_dir[pname]["PROCESS_HOME_DIR"]
+        access_log = f"{tomcat_home_dir}/conf/server.xml"
+        
+        try:
+            tree = ET.parse(access_log)
+            for data in tree.findall('./Service/Engine/Host/Valve'):
+                if data.attrib.get('className') == 'org.apache.catalina.valves.AccessLogValve':
+                    self.tomcat_log_path_dict[self.tomcat_access_path] = data.attrib.get('directory')
+                    
+        except ET.ParseError as ex:
+            logging.debug(ex)
+        
+                
     def find_tomcat_tlog_path(self, pname):
 
         """

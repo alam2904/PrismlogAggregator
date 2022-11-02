@@ -22,6 +22,26 @@ class TlogErrorTag(Enum):
     GENERIC_TASK3 = "GT3=3"
     GENERIC_TASK4 = "GT4=3"
     GENERIC_TASK5 = "GT5=3"
+
+class TlogRetryTag(Enum):
+    SUB_TYPE_CHECK = "STCK=0"
+    CHECK_BALANCE = "CBAL=0"
+    RESERVE = "RSRV=0"
+    CHARGING = "CHG=0"
+    REMOTE_ACT = "RMAC=0"
+    REMOTE_DCT = "RMD=0"
+    DECTIVATION = "DCT=0"
+    CALLBACK = "CBCK=0"
+    CDR = "CRM=0"
+    INFORM_CSS = "CSS=0"
+    REFUND = "RFD=0"
+    INFORM_OMF = "OMF=0"
+    GENERIC_TASK1 = "GT1=0"
+    GENERIC_TASK2 = "GT2=0"
+    GENERIC_TASK3 = "GT3=0"
+    GENERIC_TASK4 = "GT4=0"
+    GENERIC_TASK5 = "GT5=0"
+    
     
 class TlogLowBalTag(Enum):
     """
