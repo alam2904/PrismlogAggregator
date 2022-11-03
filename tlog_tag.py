@@ -56,7 +56,7 @@ class TaskType(Enum):
     """
     SUB_TYPE_CHECK = "S"
     CHECK_BALANCE = "Q"
-    RESERVE = "RSV"
+    RESERVE = "RA"
     CHARGING = "B"
     REMOTE_ACT = "R"
     REMOTE_DCT = "H"

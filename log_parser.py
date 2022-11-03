@@ -83,7 +83,14 @@ class TDLogParser:
                     write_file.writelines(acc_log)
                     
             except subprocess.CalledProcessError as ex:
-                logging.info('No access log found') 
+                try: 
+                    access_log = subprocess.run(["grep", f"/subscription/ActivateSubscription?msisdn={msisdn}", f"{self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                    acc_log = [data for data in access_log.stdout]
+                    
+                    with open(self.issue_tlog, "a") as write_file:
+                        write_file.writelines(acc_log)
+                except subprocess.CalledProcessError as ex:
+                    logging.info('No access log found') 
                                 
             with open(self.issue_tlog, "a") as write_file:
                 self.issue_tlog_data_prism = tlogParser_object.filtered_prism_tlog[-1]
