@@ -58,6 +58,7 @@ class Main:
                     is_tomcat_tlog_path = initializedPath_object.is_tomcat_tlog_path
                     is_prism = initializedPath_object.is_prsim
                     is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
+                     
                     
                     outputDirectory_object = Path('out')
                     try:
