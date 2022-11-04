@@ -1,0 +1,23 @@
+[22-11-04 17:38:23,453]main.py:(19)-DEBUG - 1667563703.4538016
+[22-11-04 17:38:23,454]main.py:(21)-INFO - Log aggregation started
+[22-11-04 17:38:23,454]main.py:(22)-INFO - ******************************
+[22-11-04 17:38:23,454]main.py:(25)-DEBUG - Number of arguments passed is 3
+[22-11-04 17:38:23,454]main.py:(28)-DEBUG - Arguments passed are : 9845000200 and 20221104
+[22-11-04 17:38:23,454]/UMAR/python/automation/log_aggregator/input_validation.py:(24)-DEBUG - msisdn entered is valid : 9845000200
+[22-11-04 17:38:23,459]/UMAR/python/automation/log_aggregator/input_validation.py:(38)-DEBUG - Transaction date entered is valid : 20221104
+[22-11-04 17:38:23,693]main.py:(41)-DEBUG - Tomcat path initialized
+[22-11-04 17:38:23,919]main.py:(49)-DEBUG - Prism path initialized
+[22-11-04 17:38:23,919]main.py:(67)-INFO - out directory already exists. Hence flushing and recreating the same.
+[22-11-04 17:38:23,920]/UMAR/python/automation/log_aggregator/log_processor.py:(24)-DEBUG - Tomcat tlog path exists.
+[22-11-04 17:38:23,920]/UMAR/python/automation/log_aggregator/log_files.py:(40)-DEBUG - Tomcat BILLING tlog path exists.
+[22-11-04 17:38:23,932]/UMAR/python/automation/log_aggregator/tlog_parser.py:(78)-ERROR - No tomcat tlog found for given msisdn: 9845000200
+[22-11-04 17:38:23,932]/UMAR/python/automation/log_aggregator/log_processor.py:(30)-ERROR - No issue tlog found. Hence not fetching the tomcat log.
+[22-11-04 17:38:23,933]/UMAR/python/automation/log_aggregator/log_processor.py:(33)-DEBUG - Prism tlog path exists.
+[22-11-04 17:38:23,933]/UMAR/python/automation/log_aggregator/log_files.py:(27)-DEBUG - Prism BILLING tlog path exists.
+[22-11-04 17:38:23,951]/UMAR/python/automation/log_aggregator/tlog_parser.py:(36)-INFO - tlog data : ['2022-11-04 17:07:11,957:\t', 'WORKER_7_1831369', '1', '9845000200', 'P', '1', 'RBT_ACT_DEFAULT', 'A', 'null', '30.0', 'VOICE', 'mmp', '2022-11-04 17:07:06.0', '2022-11-04 17:07:06.0', 'null', '0', 'C', '0', '1', 'null', 'P', 'RBT_ACT_DEFAULT_ACT_SC', '0', '', '', 'null', 'SITE_NAME', '[STCK=1,-,,,Dummy subtype ]', '[CBAL=30,30.0,,-,,,,Deafult balance available,1011,0.0,,,]', '[CHG=1,30.0,,-,,,,38314352471956690438,1011,0.0,,,]', '[GT1=1,-,,,Dummy success]', '[GT3=1,-,,,Dummy success]', '[GT4=1,-,,,Dummy success]', '[GT2=1,-,,,Dummy success]', '[CRM=1,-,,,Dummy success]', '[OMF=96,-,,,-#inform not required]', '[RP=96,-,,,-#null]', '[CBCK=1,-,,,Dummy callback success]', '[CBCK=1,-,,OK,SUCCESS]', '[CONTENT_ID=contentid=content12345,catid=ct12345,campaign=onmobile,campaignsessionid=onmobile,songname=TERE BINA]', '[CAMPAIGN_ID=source=Test_Partner,medium=test partner company,campaign=DIALOGSL_CA_testing,campaignsessionid=123,storesessionid=c6931647910740558c2f9952287c9c29,network-type=DATA,mode=SM,statickey1=staticvalue]', '[TOTAL_CHG_AMNT =30.0]', '[RECO:refId=1234567890ABCDEFGHI]', '[TSK = Z,99,0,2022-12-04 17:07:11.68,2022-12-04 17:07:11.68]\n']
+[22-11-04 17:38:23,965]/UMAR/python/automation/log_aggregator/log_parser.py:(139)-ERROR - No issue tlog found for given msisdn: 9845000200
+[22-11-04 17:38:23,965]/UMAR/python/automation/log_aggregator/log_parser.py:(140)-ERROR - Hence not fetching the daemon log.
+[22-11-04 17:38:23,965]main.py:(76)-INFO - Log aggregation finished
+[22-11-04 17:38:23,965]main.py:(77)-INFO - **********************************
+[22-11-04 17:38:23,965]main.py:(89)-DEBUG - 1667563703.9657311
+[22-11-04 17:38:23,965]main.py:(92)-DEBUG - Total time taken 0.5119295120239258

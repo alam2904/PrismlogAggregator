@@ -16,7 +16,7 @@ class PROCESSOR:
         tlog_record_list_prism = []
         tlog_record_list_tomcat = []
         worker_log_recod_list = []
-        dictionary_of_search_value = {"TIMESTAMP" : "","THREAD" : "","MSISDN" : "","SUB_TYPE" : ""}
+        dictionary_of_search_value = {"TIMESTAMP" : "","THREAD" : "","MSISDN" : "","SUB_TYPE" : "","CHARGE_TYPE": ""}
 
         tlogParser_object = TlogParser(self.msisdn, self.input_date, dictionary_of_tlogs, tlog_record_list_prism, tlog_record_list_tomcat, initializedPath_object)
         

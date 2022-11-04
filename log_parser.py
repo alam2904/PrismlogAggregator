@@ -40,8 +40,6 @@ class TDLogParser:
         """
         Parse dictionary of tlogs to get the search value.
         """
-        logging.debug('Parsing tlog and daemon log')
-
         for key, value in self.dictionary_of_tlogs.items():
             for status in TlogErrorTag:
                 if re.search(r"\b{}\b".format(str(status.value)), value):
@@ -69,14 +67,21 @@ class TDLogParser:
                         break
         
                                       
-        if tlogParser_object.filtered_prism_tlog:
+        if tlogParser_object.filtered_prism_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog):
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
             dts = datetime.strptime(self.input_date, "%Y%m%d")
             dtf = dts.strftime("%Y-%m-%d")
             date_formated = dtf.split("-")
-
+            
+            logging.debug('Going to parse prism tlog and prism daemon log')
+              
             try:
-                access_log = subprocess.run(["grep", f"/subscription/ActivateSubscription?msisdn={msisdn}", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
+                    access_log = subprocess.run(["grep", f"/subscription/ActivateSubscription?msisdn={msisdn}", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
+                    access_log = subprocess.run(["grep", f"/subscription/DeactivateSubscription?msisdn={msisdn}", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                    
                 acc_log = [data for data in access_log.stdout]
                 
                 with open(self.issue_tlog, "a") as write_file:
@@ -84,7 +89,12 @@ class TDLogParser:
                     
             except subprocess.CalledProcessError as ex:
                 try: 
-                    access_log = subprocess.run(["grep", f"/subscription/ActivateSubscription?msisdn={msisdn}", f"{self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                    if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
+                        access_log = subprocess.run(["grep", f"/subscription/ActivateSubscription?msisdn={msisdn}", f"{self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                    
+                    elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
+                        access_log = subprocess.run(["grep", f"/subscription/ActivateSubscription?msisdn={msisdn}", f"{self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                        
                     acc_log = [data for data in access_log.stdout]
                     
                     with open(self.issue_tlog, "a") as write_file:
@@ -97,14 +107,21 @@ class TDLogParser:
                 write_file.writelines(self.issue_tlog_data_prism)
             
         
-        elif tlogParser_object.filtered_tomcat_tlog:
+        elif tlogParser_object.filtered_tomcat_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog):
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
             dts = datetime.strptime(self.input_date, "%Y%m%d")
             dtf = dts.strftime("%Y-%m-%d")
             date_formated = dtf.split("-")
 
+            logging.debug('Going to parse tomcat tlog and tomcat daemon log')
+            
             try:
-                access_log = subprocess.run(["grep", f"/subscription/RealTimeActivate?msisdn={msisdn}", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
+                    access_log = subprocess.run(["grep", f"/subscription/RealTimeActivate?msisdn={msisdn}", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
+                    access_log = subprocess.run(["grep", f"/subscription/RealTimeDeactivate?msisdn={msisdn}", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                
                 acc_log = [data for data in access_log.stdout]
                 
                 with open(self.issue_tlog, "a") as write_file:
@@ -117,6 +134,10 @@ class TDLogParser:
             with open(self.issue_tlog, "a") as write_file:
                 self.issue_tlog_data_tomcat = tlogParser_object.filtered_tomcat_tlog[-1]
                 write_file.writelines(self.issue_tlog_data_tomcat)
+                
+        else:
+            logging.error('No issue tlog found for given msisdn: %s', msisdn)
+            logging.error('Hence not fetching the daemon log.')
                     
 
         self.get_serched_log()
