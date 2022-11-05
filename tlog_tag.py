@@ -23,6 +23,7 @@ class TlogErrorTag(Enum):
     GENERIC_TASK4 = "GT4=3"
     GENERIC_TASK5 = "GT5=3"
 
+
 class TlogRetryTag(Enum):
     SUB_TYPE_CHECK = "STCK=0"
     CHECK_BALANCE = "CBAL=0"
@@ -49,6 +50,12 @@ class TlogLowBalTag(Enum):
     """
     CHECK_BALANCE = "CBAL=4"
     CHARGING = "CHG=4"
+
+class TlogNHFTag(Enum):
+    """
+    Enum error tag class
+    """
+    NHF = "NHF:NO handler configured for request"
 
 class TaskType(Enum):
     """
