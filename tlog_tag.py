@@ -3,7 +3,7 @@ from enum import Enum
 
 class TlogErrorTag(Enum):
     """
-    Enum error tag class
+    Enum error tag
     """
     SUB_TYPE_CHECK = "STCK=3"
     CHECK_BALANCE = "CBAL=3"
@@ -25,6 +25,9 @@ class TlogErrorTag(Enum):
 
 
 class TlogRetryTag(Enum):
+    """
+    Enum retry tag
+    """
     SUB_TYPE_CHECK = "STCK=0"
     CHECK_BALANCE = "CBAL=0"
     RESERVE = "RSRV=0"
@@ -46,17 +49,45 @@ class TlogRetryTag(Enum):
     
 class TlogLowBalTag(Enum):
     """
-    Enum low bal tag class
+    Enum low bal tag
     """
     CHECK_BALANCE = "CBAL=4"
     CHARGING = "CHG=4"
 
 class TlogNHFTag(Enum):
     """
-    Enum error tag class
+    Enum no handler found tag
     """
     NHF = "NHF:NO handler configured for request"
 
+class TlogAwaitPushTag(Enum):
+    """
+    Enum await push tag
+    """
+    SUB_TYPE_CHECK = "STCK=7"
+    CHECK_BALANCE = "CBAL=7"
+    RESERVE = "RSRV=7"
+    CHARGING = "CHG=7"
+    REMOTE_ACT = "RMAC=7"
+    REMOTE_DCT = "RMD=7"
+    DECTIVATION = "DCT=7"
+    CALLBACK = "CBCK=7"
+    CDR = "CRM=7"
+    INFORM_CSS = "CSS=7"
+    REFUND = "RFD=7"
+    INFORM_OMF = "OMF=7"
+    GENERIC_TASK1 = "GT1=7"
+    GENERIC_TASK2 = "GT2=7"
+    GENERIC_TASK3 = "GT3=7"
+    GENERIC_TASK4 = "GT4=7"
+    GENERIC_TASK5 = "GT5=7"
+    
+class TlogAwaitPushTimeOutTag(Enum):
+    """
+    Enum timeout tag
+    """
+    timeout = "#TIMEOUT"
+    
 class TaskType(Enum):
     """
     Task type class
