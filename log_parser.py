@@ -14,7 +14,7 @@ class TDLogParser:
     """
     Parse the daemon log based on tlog input
     """
-    def __init__(self, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, is_prism, outputDirectory_object):
+    def __init__(self, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, is_prism, outputDirectory_object, is_prism_processing_required):
         self.input_date = input_date
         self.initializedPath_object = initializedPath_object
         self.dictionary_of_tlogs = dictionary_of_tlogs
@@ -25,6 +25,7 @@ class TDLogParser:
         self.__initial_index = 0
         self.__final_index = 0
         self.__task_type = ""
+        self.is_prism_processing_required = is_prism_processing_required
         self.outputDirectory_object = outputDirectory_object
         self.trimmed_prism_outfile = self.outputDirectory_object/"trimmed_prismd.log"
         self.trimmed_tomcat_outfile = self.outputDirectory_object/"trimmed_tomcat.log"
@@ -258,10 +259,17 @@ class TDLogParser:
                 except subprocess.CalledProcessError as ex:
                     logging.info('No access log found') 
                 
-                
+            #charge schedule < now check
             with open(self.issue_tlog, "a") as write_file:
                 self.issue_tlog_data_tomcat = tlogParser_object.filtered_tomcat_tlog[-1]
-                write_file.writelines(self.issue_tlog_data_tomcat)
+                data = str(self.issue_tlog_data_tomcat).split("|")
+                tdata = str(data[-1]).split(",")
+                if datetime.strptime(f"{tdata[-2]}", "%Y-%m-%d %H:%M:%S.%f") < datetime.now():
+                    logging.info('charge schedule < now = true. hence skipping tomcat log processing')
+                else:
+                    self.is_prism_processing_required = False
+                    write_file.writelines(self.issue_tlog_data_tomcat)
+                    logging.info("tomcat tlog charge schedule is greater than now. Hence not going to check for prism tlog")
                 
         else:
             logging.error('No issue tlog found for given msisdn: %s', msisdn)
@@ -276,7 +284,7 @@ class TDLogParser:
         """
 
         # task = ""
-        if len(self.issue_tlog_data_tomcat) != 0:
+        if len(self.issue_tlog_data_tomcat) != 0 and self.is_prism_processing_required == False:
             logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
             daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
             daemonLog_object.get_tomcat_log()
