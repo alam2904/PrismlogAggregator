@@ -150,7 +150,6 @@ class TDLogParser:
                         if re.search(r"\b{}\b".format(str(msisdn)),data):
                             self.acc_log = f"{data}{self.new_line}"
                     
-                logging.info('Access log found is: %s', self.acc_log)
                 with open(self.issue_tlog, "a") as write_file:
                     write_file.writelines(self.acc_log)
                         
