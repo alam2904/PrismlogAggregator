@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 import re
 from daemon_log import DaemonLog
-from tlog_tag import TaskType, TlogErrorTag, TlogLowBalTag, TlogRetryTag, TlogNHFTag
+from tlog_tag import TaskType, TlogAwaitPushTag, TlogAwaitPushTimeOutTag, TlogErrorTag, TlogLowBalTag, TlogRetryTag, TlogNHFTag
 
 class TDLogParser:
     """
@@ -36,6 +36,8 @@ class TDLogParser:
         self.is_lowbal_tlog = False
         self.is_retry_tlog = False
         self.is_nhf_tlog = False
+        self.is_await_push_tlog = False
+        self.is_timeout_tlog = False
         self.task = ""
         self.acc_log = []
         self.new_line = '\n'
@@ -78,8 +80,27 @@ class TDLogParser:
                             self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
                             self.is_nhf_tlog = True
                         break
+        
+        if not self.is_nhf_tlog:
+            for key, value in self.dictionary_of_tlogs.items():
+                for status in TlogAwaitPushTag:
+                    if re.search(r"\b{}\b".format(str(status.value)), value):
+                        for search_key, search_value in self.dictionary_of_search_value.items():
+                            self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
+                            self.is_await_push_tlog = True
+                        break
+        
+        if not self.is_await_push_tlog:
+            for key, value in self.dictionary_of_tlogs.items():
+                for status in TlogAwaitPushTimeOutTag:
+                    if re.search(r"\b{}\b".format(str(status.value)), value):
+                        for search_key, search_value in self.dictionary_of_search_value.items():
+                            self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
+                            self.is_timeout_tlog = True
+                        break
+        
                         
-        if tlogParser_object.filtered_prism_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog):
+        if tlogParser_object.filtered_prism_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog or self.is_timeout_tlog):
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
             dts = datetime.strptime(self.input_date, "%Y%m%d")
             dtf = dts.strftime("%Y-%m-%d")
@@ -189,7 +210,8 @@ class TDLogParser:
                 write_file.writelines(self.issue_tlog_data_prism)
             
         
-        elif tlogParser_object.filtered_tomcat_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog):
+        elif tlogParser_object.filtered_tomcat_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog):
+            
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
             dts = datetime.strptime(self.input_date, "%Y%m%d")
             dtf = dts.strftime("%Y-%m-%d")
@@ -285,72 +307,76 @@ class TDLogParser:
 
         # task = ""
         if len(self.issue_tlog_data_tomcat) != 0 and self.is_prism_processing_required == False:
-            logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
-            daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
-            daemonLog_object.get_tomcat_log()
-            if daemonLog_object.tomcat_thread_outfile.exists():
-                if self.is_error_tlog:
-                    for status in TlogErrorTag:
+            
+            if not self.is_await_push_tlog:
+                logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
+                daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
+                daemonLog_object.get_tomcat_log()
+                if daemonLog_object.tomcat_thread_outfile.exists():
+                    if self.is_error_tlog:
+                        for status in TlogErrorTag:
+                            with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                                for i, line in enumerate(read_file):
+                                    if re.search(r"\b{}\b".format(str(status.value)), line):
+                                        self.set_initial_index(i)
+                                        self.task = status.name
+                                        break
+                    elif self.is_lowbal_tlog:
+                        for status in TlogLowBalTag:
+                            with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                                for i, line in enumerate(read_file):
+                                    if re.search(r"\b{}\b".format(str(status.value)), line):
+                                        self.set_initial_index(i)
+                                        self.task = status.name
+                                        break
+                                    
+                    elif self.is_retry_tlog:
+                        for status in TlogRetryTag:
+                            with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                                for i, line in enumerate(read_file):
+                                    if re.search(r"\b{}\b".format(str(status.value)), line):
+                                        self.set_initial_index(i)
+                                        self.task = status.name
+                                        break
+                    
+                    elif self.is_nhf_tlog:
+                        for status in TlogNHFTag:
+                            with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                                for i, line in enumerate(read_file):
+                                    if re.search(r"\b{}\b".format(str(status.value)), line):
+                                        self.set_initial_index(i)
+                                        self.task = status.name
+                                        break
+                        
+                
+                    for ttype in TaskType:
                         with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
                             for i, line in enumerate(read_file):
-                                if re.search(r"\b{}\b".format(str(status.value)), line):
-                                    self.set_initial_index(i)
-                                    self.task = status.name
-                                    break
-                elif self.is_lowbal_tlog:
-                    for status in TlogLowBalTag:
-                        with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
-                            for i, line in enumerate(read_file):
-                                if re.search(r"\b{}\b".format(str(status.value)), line):
-                                    self.set_initial_index(i)
-                                    self.task = status.name
+                                if self.task == ttype.name:
+                                    self.set_task_type(ttype.value)
                                     break
                                 
-                elif self.is_retry_tlog:
-                    for status in TlogRetryTag:
+                    if self.is_nhf_tlog:
+                        self.set_final_index(self.get_initial_index() - 1)
+                    else:
                         with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                            serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
+
                             for i, line in enumerate(read_file):
-                                if re.search(r"\b{}\b".format(str(status.value)), line):
-                                    self.set_initial_index(i)
-                                    self.task = status.name
-                                    break
-                
-                elif self.is_nhf_tlog:
-                    for status in TlogNHFTag:
-                        with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
-                            for i, line in enumerate(read_file):
-                                if re.search(r"\b{}\b".format(str(status.value)), line):
-                                    self.set_initial_index(i)
-                                    self.task = status.name
+                                if re.search(r"{}".format(str(serach_string)), line):
+                                    self.set_final_index(i)
                                     break
                     
-            
-                for ttype in TaskType:
                     with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
                         for i, line in enumerate(read_file):
-                            if self.task == ttype.name:
-                                self.set_task_type(ttype.value)
-                                break
-                            
-                if self.is_nhf_tlog:
-                    self.set_final_index(self.get_initial_index() - 1)
+                            if self.get_final_index() <= i < self.get_initial_index() + 1:
+                                with open(self.trimmed_tomcat_outfile, "a") as write_file:
+                                    write_file.writelines(line)
                 else:
-                    with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
-                        serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
-
-                        for i, line in enumerate(read_file):
-                            if re.search(r"{}".format(str(serach_string)), line):
-                                self.set_final_index(i)
-                                break
-                
-                with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
-                    for i, line in enumerate(read_file):
-                        if self.get_final_index() <= i < self.get_initial_index() + 1:
-                            with open(self.trimmed_tomcat_outfile, "a") as write_file:
-                                write_file.writelines(line)
+                    logging.error("Tomcat daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
             else:
-                logging.error("Tomcat daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
-        
+                logging.info('Transaction is awaiting notification callback. Hence not processing further')
+                
         if len(self.issue_tlog_data_prism) != 0:
             logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
             daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
