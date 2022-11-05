@@ -10,7 +10,6 @@ class PROCESSOR:
         self.msisdn = msisdn
         self.input_date = input_date
         self.outputDirectory_object = outputDirectory_object
-        self.is_prism_processing_required = True
 
     def process(self, is_tomcat, is_prism, is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object):
         dictionary_of_tlogs = {}
@@ -25,19 +24,18 @@ class PROCESSOR:
             logging.debug('Tomcat tlog path exists.')
             if tlogParser_object.parse_tomcat():
                 
-                daemonLogParser_object = TDLogParser(self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, False, self.outputDirectory_object, self.is_prism_processing_required)
+                daemonLogParser_object = TDLogParser(self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, False, self.outputDirectory_object)
                 daemonLogParser_object.parse(tlogParser_object, self.msisdn)
             else:
                 logging.error('No issue tlog found. Hence not fetching the tomcat log.')
                 
         if is_prism and is_prism_tlog_path:
-            if daemonLogParser_object.is_prism_processing_required:
-                logging.debug('Prism tlog path exists.')
-                if tlogParser_object.parse_prism():
+            logging.debug('Prism tlog path exists.')
+            if tlogParser_object.parse_prism():
                     
-                    daemonLogParser_object = TDLogParser(self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, False, is_prism, self.outputDirectory_object, False)
-                    daemonLogParser_object.parse(tlogParser_object, self.msisdn)
-                else:
-                    logging.error('No issue tlog found. Hence not fetching the prism log.')
+                daemonLogParser_object = TDLogParser(self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, False, is_prism, self.outputDirectory_object)
+                daemonLogParser_object.parse(tlogParser_object, self.msisdn)
+            else:
+                logging.error('No issue tlog found. Hence not fetching the prism log.')
         else:
             logging.error('Prism tlog path does not exists. Hence not fetching the logs')
