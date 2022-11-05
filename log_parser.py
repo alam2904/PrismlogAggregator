@@ -90,7 +90,6 @@ class TDLogParser:
                 if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
                     access_log = subprocess.run(["grep", f"/subscription/ActivateSubscription?", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
                     for data in access_log.stdout.splitlines():
-                        logging.info('access data: %s', data)
                         if re.search(r"\b{}\b".format(str(msisdn)),data):
                             self.acc_log = f"{data}{self.new_line}"
                 
@@ -136,7 +135,6 @@ class TDLogParser:
                     
             except subprocess.CalledProcessError as ex:
                 try:
-                    new_line = '\n'
                     if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
                         access_log = subprocess.run(["grep", f"/subscription/ActivateSubscription?", f"{self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
                         for data in access_log.stdout.splitlines():
@@ -179,9 +177,9 @@ class TDLogParser:
                             if re.search(r"\b{}\b".format(str(msisdn)),data):
                                 self.acc_log = f"{data}{self.new_line}"
                     
-                    logging.info('Access log found is: %s', self.acc_log[-1])
+                    logging.info('Access log found is: %s', self.acc_log)
                     with open(self.issue_tlog, "a") as write_file:
-                        write_file.writelines(self.acc_log[-1])
+                        write_file.writelines(self.acc_log)
                 except subprocess.CalledProcessError as ex:
                     logging.info('No access log found') 
                                 
@@ -223,9 +221,9 @@ class TDLogParser:
                         if re.search(r"\b{}\b".format(str(msisdn)),data):
                             self.acc_log = f"{data}{self.new_line}"
                 
-                logging.info('Access log found is: %s', self.acc_log[-1])
+                logging.info('Access log found is: %s', self.acc_log)
                 with open(self.issue_tlog, "a") as write_file:
-                    write_file.writelines(self.acc_log[-1])
+                    write_file.writelines(self.acc_log)
             
             except subprocess.CalledProcessError as ex:
                 try: 
@@ -253,9 +251,9 @@ class TDLogParser:
                             if re.search(r"\b{}\b".format(str(msisdn)),data):
                                 self.acc_log = f"{data}{self.new_line}"
                     
-                    logging.info('Access log found is: %s', self.acc_log[-1])
+                    logging.info('Access log found is: %s', self.acc_log)
                     with open(self.issue_tlog, "a") as write_file:
-                            write_file.writelines(self.acc_log[-1])
+                            write_file.writelines(self.acc_log)
                         
                 except subprocess.CalledProcessError as ex:
                     logging.info('No access log found') 
