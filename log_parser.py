@@ -29,7 +29,7 @@ class TDLogParser:
         self.outputDirectory_object = outputDirectory_object
         self.trimmed_prism_outfile = self.outputDirectory_object/"trimmed_prismd.log"
         self.trimmed_tomcat_outfile = self.outputDirectory_object/"trimmed_tomcat.log"
-        self.issue_tlog = self.outputDirectory_object/"issue_tlog_record.txt"
+        self.issue_tlog_path = self.outputDirectory_object/"issue_tlog_record.txt"
         self.issue_tlog_data_prism = ""
         self.issue_tlog_data_tomcat = ""
         self.is_error_tlog = False
@@ -46,6 +46,12 @@ class TDLogParser:
         """
         Parse dictionary of tlogs to get the search value.
         """
+        logging.info('Going to parse tlog for ERROR/RETRY/LOWBAL/HNF/AWAIT_PUSH/AWAIT_PUSH_TIMEOUT cases.')
+        
+        dts = datetime.strptime(self.input_date, "%Y%m%d")
+        dtf = dts.strftime("%Y-%m-%d")
+        date_formated = dtf.split("-")
+        
         for key, value in self.dictionary_of_tlogs.items():
             for status in TlogErrorTag:
                 if re.search(r"\b{}\b".format(str(status.value)), value):
@@ -99,13 +105,11 @@ class TDLogParser:
                             self.is_timeout_tlog = True
                         break
                   
+        
         if tlogParser_object.filtered_prism_tlog and self.is_prism_processing_required and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog or self.is_timeout_tlog):
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
-            dts = datetime.strptime(self.input_date, "%Y%m%d")
-            dtf = dts.strftime("%Y-%m-%d")
-            date_formated = dtf.split("-")
                 
-            logging.debug('Going to parse prism tlog and prism daemon log')
+            logging.info('Issue tlog found. Going to fetch access log.')
                 
             try:
                 if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
@@ -150,7 +154,7 @@ class TDLogParser:
                         if re.search(r"\b{}\b".format(str(msisdn)),data):
                             self.acc_log = f"{data}{self.new_line}"
                     
-                with open(self.issue_tlog, "a") as write_file:
+                with open(self.issue_tlog_path, "a") as write_file:
                     write_file.writelines(self.acc_log)
                         
             except subprocess.CalledProcessError as ex:
@@ -197,13 +201,14 @@ class TDLogParser:
                             if re.search(r"\b{}\b".format(str(msisdn)),data):
                                 self.acc_log = f"{data}{self.new_line}"
                         
-                    logging.info('Access log found is: %s', self.acc_log)
-                    with open(self.issue_tlog, "a") as write_file:
+                    logging.info('Access log found. Writing to a file : %s', self.issue_tlog_path)
+                    with open(self.issue_tlog_path, "a") as write_file:
                         write_file.writelines(self.acc_log)
                 except subprocess.CalledProcessError as ex:
                     logging.info('No access log found') 
                                     
-            with open(self.issue_tlog, "a") as write_file:
+            with open(self.issue_tlog_path, "a") as write_file:
+                logging.info('Writing issue tlog to a file: %s', self.issue_tlog_path)
                 self.issue_tlog_data_prism = tlogParser_object.filtered_prism_tlog[-1]
                 write_file.writelines(self.issue_tlog_data_prism)
             
@@ -211,12 +216,8 @@ class TDLogParser:
         elif tlogParser_object.filtered_tomcat_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog):
             
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
-            dts = datetime.strptime(self.input_date, "%Y%m%d")
-            dtf = dts.strftime("%Y-%m-%d")
-            date_formated = dtf.split("-")
-
-            logging.debug('Going to parse tomcat tlog and tomcat daemon log')
             
+            logging.info('Issue tlog found. Going to fetch access log.')
             try:
                 if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
                     access_log = subprocess.run(["grep", f"/subscription/RealTimeActivate?", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
@@ -243,7 +244,7 @@ class TDLogParser:
                             self.acc_log = f"{data}{self.new_line}"
                 
                 logging.info('Access log found is: %s', self.acc_log)
-                with open(self.issue_tlog, "a") as write_file:
+                with open(self.issue_tlog_path, "a") as write_file:
                     write_file.writelines(self.acc_log)
             
             except subprocess.CalledProcessError as ex:
@@ -272,15 +273,15 @@ class TDLogParser:
                             if re.search(r"\b{}\b".format(str(msisdn)),data):
                                 self.acc_log = f"{data}{self.new_line}"
                     
-                    logging.info('Access log found is: %s', self.acc_log)
-                    with open(self.issue_tlog, "a") as write_file:
+                    logging.info('Access log found. Writing to a file: %s', self.issue_tlog_path)
+                    with open(self.issue_tlog_path, "a") as write_file:
                             write_file.writelines(self.acc_log)
                         
                 except subprocess.CalledProcessError as ex:
-                    logging.info('No access log found') 
+                    logging.debug('No access log found') 
                 
             #charge schedule < now check
-            with open(self.issue_tlog, "a") as write_file:
+            with open(self.issue_tlog_path, "a") as write_file:
                 self.issue_tlog_data_tomcat = tlogParser_object.filtered_tomcat_tlog[-1]
                 data = str(self.issue_tlog_data_tomcat).split("|")
                 tdata = str(data[-1]).split(",")
@@ -293,13 +294,13 @@ class TDLogParser:
                     logging.info("tomcat tlog charge schedule is greater than now. Hence not going to check for prism tlog. Kindly ignore below logs.")
                 
         else:
-            logging.error('No issue tlog found for given msisdn: %s', msisdn)
-            logging.error('Hence not fetching the daemon log.')
+            logging.debug('No issue tlog found for given msisdn: %s', msisdn)
+            logging.debug('Hence not fetching the daemon log.')
                     
 
-        self.get_serched_log()
+        self.get_trimmed_thread_log()
 
-    def get_serched_log(self):
+    def get_trimmed_thread_log(self):
         """
         Get daemon log for the given thread
         """
@@ -308,7 +309,7 @@ class TDLogParser:
         if len(self.issue_tlog_data_tomcat) != 0 and self.is_prism_processing_required == False:
             
             if not self.is_await_push_tlog:
-                logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
+                logging.info('Going to fetch tomcat daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
                 daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
                 daemonLog_object.get_tomcat_log()
                 if daemonLog_object.tomcat_thread_outfile.exists():
@@ -372,14 +373,14 @@ class TDLogParser:
                                 with open(self.trimmed_tomcat_outfile, "a") as write_file:
                                     write_file.writelines(line)
                 else:
-                    logging.error("Tomcat daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
+                    logging.debug("Tomcat daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
             else:
-                logging.info('Transaction is awaiting notification callback. Hence not processing further.Ignore below logs.')
+                logging.debug('Transaction is awaiting notification callback. Hence not processing further.Ignore below logs.')
                 
         if len(self.issue_tlog_data_prism) != 0:
             if not self.is_timeout_tlog and not self.is_await_push_tlog:
                 
-                logging.debug('Getting daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
+                logging.info('Going to fetch prism daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
                 daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
                 daemonLog_object.get_prism_log()
                 if daemonLog_object.prismd_thread_outfile.exists():
@@ -453,10 +454,10 @@ class TDLogParser:
                                 with open(self.trimmed_prism_outfile, "a") as write_file:
                                     write_file.writelines(line)
                 else:
-                    logging.error("Prism daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
+                    logging.debug("Prism daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
             else:
-                logging.info('Eigther transaction is in await push state or timed out.')
-                logging.info('Check for notification callback. Daemon log processing not required.')
+                logging.debug('Eigther transaction is in await push state or timed out.')
+                logging.debug('Check for notification callback. Daemon log processing not required.')
                 
     def get_initial_index(self):
         """

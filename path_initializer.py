@@ -32,6 +32,7 @@ class LogPathFinder():
         self.logger_list = []
         self.logger_dict = {}
         self.prism_log_path_dict = {}
+        self.tomcat_log_path_dict = {}
         
         self.prism_base_log_path = "prism_base_log_path"
         self.prism_tlog_log_path = "prism_tlog_log_path"
@@ -49,7 +50,6 @@ class LogPathFinder():
         self.tomcat_access_path = "tomcat_access_path"
         self.tomcat_base_log_path = "tomcat_base_log_path"
         self.tomcat_tlog_log_path = "tomcat_tlog_log_path"
-        self.tomcat_log_path_dict = {}
         self.tomcat_daemon_log_path = "tomcat_daemon_log_path"
         self.tomcat_daemon_log_backup_path = "tomcat_daemon_log_backup_path"
         self.tomcat_queue_id_processor_99_log_path = "tomcat_queue_id_processor_99_log_path"
