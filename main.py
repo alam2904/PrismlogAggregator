@@ -22,10 +22,10 @@ class Main:
         logging.info("******************************")
 
         num_argv = len(sys.argv)
-        logging.debug('Number of arguments passed is %s', num_argv)
+        logging.debug('Number of arguments passed is %s', num_argv - 1)
 
         if num_argv == 3:
-            logging.debug('Arguments passed are : %s and %s', sys.argv[1], sys.argv[2])
+            logging.debug('Arguments passed are : msisdn=%s and search_date=%s', sys.argv[1], sys.argv[2])
             validation_object = InputValidation(sys.argv[1], sys.argv[2])
 
             try:
@@ -34,31 +34,42 @@ class Main:
             except Exception as error:
                 logging.exception(error)
 
+            logging.info('\n')
+            
             if validation_object.is_input_valid:
                 initializedPath_object = LogPathFinder()
                 try:
                     initializedPath_object.initialize_tomcat_path()
-                    logging.debug("Tomcat path initialized")
+                    logging.info('TOMCAT PATH INITIALIZED')
+                    formatter = "#" * 100
+                    logging.info('%s', formatter)
+                    for key, value in initializedPath_object.tomcat_log_path_dict.items():
+                        logging.info('%s : %s', key, value)
                 except ValueError as error:
                     logging.warning('Tomcat path not initialized. %s', error)
                 except Exception as error:
                         logging.warning(error)
-
+                
+                logging.info('\n')
                 try:
                     initializedPath_object.initialize_prism_path()
-                    logging.debug("Prism path initialized")
+                    logging.info('PRISM PATH INITIALIZED')
+                    formatter = "#" * 100
+                    logging.info('%s', formatter)
+                    for key, value in initializedPath_object.prism_log_path_dict.items():
+                        logging.info('%s : %s', key, value)
                 except ValueError as error:
                     logging.warning('Prism path not initialized. %s', error)
                 except Exception as error:
                     logging.warning(error)
                     
+                logging.info('\n')
 
                 if initializedPath_object.is_tomcat or initializedPath_object.is_prsim:
                     is_tomcat = initializedPath_object.is_tomcat
                     is_tomcat_tlog_path = initializedPath_object.is_tomcat_tlog_path
                     is_prism = initializedPath_object.is_prsim
                     is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
-                     
                     
                     outputDirectory_object = Path('out')
                     try:

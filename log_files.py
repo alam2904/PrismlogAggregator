@@ -28,7 +28,7 @@ class LogFileFinder():
             self.set_prism_billing_path(True)
         else:
             self.set_prism_billing_path(False)
-            logging.error('Prism BILLING tlog path does not exists')
+            logging.debug('Prism BILLING tlog path does not exists')
     
     def tomcat_billing_tlog_path(self):
         
@@ -41,7 +41,7 @@ class LogFileFinder():
             self.set_tomcat_billing_path(True)
         else:
             self.set_tomcat_billing_path(False)
-            logging.error('Tomcat BILLING tlog path does not exists')
+            logging.debug('Tomcat BILLING tlog path does not exists')
     
 
     def prism_billing_tlog_files(self, input_trans_date):
@@ -65,8 +65,9 @@ class LogFileFinder():
             if bool(billing_tlog_files_tmp):
                 for prism_billing_files in billing_tlog_files_tmp:
                     tlog_files.append(prism_billing_files)
+                    
             else:
-                logging.error('Prism billing tlog directory does not have %s dated files', input_trans_date)
+                logging.debug('Prism billing tlog directory does not have %s dated files', input_trans_date)
             
             return tlog_files
 
@@ -100,7 +101,7 @@ class LogFileFinder():
                     tlog_files.append(tomcat_billing_files)
                 
             else:
-                logging.error('Tomcat billing tlog directory does not have %s dated files', input_trans_date)
+                logging.debug('Tomcat billing tlog directory does not have %s dated files', input_trans_date)
                 
             return tlog_files
 
@@ -122,7 +123,7 @@ class LogFileFinder():
         if prism_daemon_log_path:
             return prism_daemon_log_path
         else:
-            logging.error('Prism daemon log path does not exists')
+            logging.debug('Prism daemon log path does not exists')
         return None
     
     def tomcat_daemonlog_file(self):
@@ -136,30 +137,39 @@ class LogFileFinder():
         if tomcat_daemon_log_path:
             return tomcat_daemon_log_path
         else:
-            logging.error('Tomcat daemon log path does not exists')
+            logging.debug('Tomcat daemon log path does not exists')
         return None
     
     def prism_rootlog_file(self):
+        """
+        function to find prism root log file path
+        """
         logPath_object = self.initializedPath_object
         prism_root_log_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_root_log_path]}"
 
         if prism_root_log_path:
             return prism_root_log_path
         else:
-            logging.error('Prism root log path does not exists')
+            logging.debug('Prism root log path does not exists')
         return None
     
     def tomcat_rootlog_file(self):
+        """
+        function to find tomcat root log file path
+        """
         logPath_object = self.initializedPath_object
         tomcat_root_log_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_root_log_path]}"
 
         if tomcat_root_log_path:
             return tomcat_root_log_path
         else:
-            logging.error('Tomcat root log path does not exists')
+            logging.debug('Tomcat root log path does not exists')
         return None
 
     def prism_daemonlog_backup_file(self):
+        """
+        function to find prism daemon log backup file path
+        """
         logPath_object = self.initializedPath_object
         prism_daemon_log_backup = f"{logPath_object.prism_log_path_dict[logPath_object.prism_daemon_log_backup_path]}"
         
@@ -171,10 +181,13 @@ class LogFileFinder():
         if prism_daemon_log_backup_path:
             return prism_daemon_log_backup_path
         else:
-            logging.error('Prism daemon backup log path does not exists')
+            logging.debug('Prism daemon backup log path does not exists')
         return None
     
     def tomcat_daemonlog_backup_file(self):
+        """
+        function to find tomcat daemon log backup file path
+        """
         logPath_object = self.initializedPath_object
         tomcat_daemon_log_backup = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_daemon_log_backup_path]}"
         
@@ -186,10 +199,13 @@ class LogFileFinder():
         if tomcat_daemon_log_backup_path:
             return tomcat_daemon_log_backup_path
         else:
-            logging.error('Tomcat daemon backup log path does not exists')
+            logging.debug('Tomcat daemon backup log path does not exists')
         return None
 
     def prism_rootlog_backup_file(self):
+        """
+        function to find prism root log backup file path
+        """
         logPath_object = self.initializedPath_object
         prism_root_log_backup = f"{logPath_object.prism_log_path_dict[logPath_object.prism_root_log_backup_path]}"
         
@@ -201,10 +217,13 @@ class LogFileFinder():
         if prism_root_log_backup_path:
             return prism_root_log_backup_path
         else:
-            logging.error('Prism root backup log path does not exists')
+            logging.debug('Prism root backup log path does not exists')
         return None
     
     def tomcat_rootlog_backup_file(self):
+        """
+        function to find tomcat root log backup file path
+        """
         logPath_object = self.initializedPath_object
         tomcat_root_log_backup = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_root_log_backup_path]}"
         
@@ -216,7 +235,33 @@ class LogFileFinder():
         if tomcat_root_log_backup_path:
             return tomcat_root_log_backup_path
         else:
-            logging.error('Tomcat root backup log path does not exists')
+            logging.debug('Tomcat root backup log path does not exists')
+        return None
+    
+    def tomcat_queue_id_99_log_file(self):
+        """
+        function to find tomcat queue_id_99 log file path
+        """
+        logPath_object = self.initializedPath_object
+        queue_id_99_log_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_queue_id_processor_99_log_path]}"
+
+        if queue_id_99_log_path:
+            return queue_id_99_log_path
+        else:
+            logging.debug('tomcat queue_id_99 log path does not exists')
+        return None
+    
+    def prism_queue_id_99_log_file(self):
+        """
+        function to find prism queue_id_99 log file path
+        """
+        logPath_object = self.initializedPath_object
+        queue_id_99_log_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_queue_id_processor_99_log_path]}"
+
+        if queue_id_99_log_path:
+            return queue_id_99_log_path
+        else:
+            logging.debug('prism queue_id_99 log path does not exists')
         return None
 
     def get_backup_date(self, input_date):

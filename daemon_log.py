@@ -59,9 +59,16 @@ class DaemonLog:
                         return True
                     except subprocess.CalledProcessError as ex:
                         logging.warning('Tomcat root backup log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
-                        logging.error(ex)
-                        logging.error('no tomcat logs could be found against %s or log may not be debug mode', self.worker_thread)
-                        return False
+                        logging.debug('Going to check tomcat queue_id_99 log path')
+                        try:
+                            self.find_tomcat_log(logPath_object.tomcat_queue_id_99_log_file(), self.is_backup_path)
+                            logging.debug('Issue thread [%s] found in tomcat queue_id_99 log and will be parsed for any issue.', self.worker_thread)
+                            return True
+                        except subprocess.CalledProcessError as ex:
+                            logging.warning('Tomcat queue_id_99 log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
+                            logging.error(ex)
+                            logging.error('No tomcat logs could be found against %s or log may not be in debug mode', self.worker_thread)
+                            return False
     
     def get_prism_log(self):
         """
@@ -101,10 +108,17 @@ class DaemonLog:
                         logging.debug('Issue thread [%s] found in prism root backup log and will be parsed for any issue.', self.worker_thread)
                         return True
                     except subprocess.CalledProcessError as ex:
-                        logging.warning('Prism root backup log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
-                        logging.error(ex)
-                        logging.error('no prism logs could be found against %s or log may not be debug mode', self.worker_thread)
-                        return False
+                        logging.warning('Prism root backup log path does not exists or issue thread [%s] could not be found.',self.worker_thread) 
+                        logging.debug('Going to check queue_id_99 log.')
+                        try:
+                            self.find_prism_log(logPath_object.prism_queue_id_99_log_file(), self.is_backup_path)
+                            logging.debug('Issue thread [%s] found in prism queue_id_99 log and will be parsed for any issue.', self.worker_thread)
+                            return True
+                        except subprocess.CalledProcessError as ex:
+                            logging.warning('Prism queue_id_99 log path does not exists or issue thread [%s] could not be found.',self.worker_thread)
+                            logging.error(ex)
+                            logging.error('no prism logs could be found against %s or log may not be in debug mode', self.worker_thread)
+                            return False
     
     def find_tomcat_log(self, logPath, is_backup_path):
         try:
@@ -130,4 +144,4 @@ class DaemonLog:
             with open(self.prismd_thread_outfile, "a") as write_file:
                 write_file.writelines(record)
         except subprocess.CalledProcessError as ex:
-            raise        
+            raise
