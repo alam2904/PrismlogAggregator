@@ -41,6 +41,7 @@ class TDLogParser:
         self.task = ""
         self.acc_log = []
         self.new_line = '\n'
+        self.is_issue_in_thread = False
 
     def parse(self, tlogParser_object, msisdn):
         """
@@ -320,6 +321,7 @@ class TDLogParser:
                                     if re.search(r"\b{}\b".format(str(status.value)), line):
                                         self.set_initial_index(i)
                                         self.task = status.name
+                                        self.is_issue_in_thread = True
                                         break
                     elif self.is_lowbal_tlog:
                         for status in TlogLowBalTag:
@@ -328,6 +330,7 @@ class TDLogParser:
                                     if re.search(r"\b{}\b".format(str(status.value)), line):
                                         self.set_initial_index(i)
                                         self.task = status.name
+                                        self.is_issue_in_thread = True
                                         break
                                     
                     elif self.is_retry_tlog:
@@ -337,6 +340,7 @@ class TDLogParser:
                                     if re.search(r"\b{}\b".format(str(status.value)), line):
                                         self.set_initial_index(i)
                                         self.task = status.name
+                                        self.is_issue_in_thread = True
                                         break
                     
                     elif self.is_nhf_tlog:
@@ -346,32 +350,36 @@ class TDLogParser:
                                     if re.search(r"\b{}\b".format(str(status.value)), line):
                                         self.set_initial_index(i)
                                         self.task = status.name
+                                        self.is_issue_in_thread = True
+                                        break
+                    
+                    if self.is_issue_in_thread:
+                
+                        for ttype in TaskType:
+                            with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                                for i, line in enumerate(read_file):
+                                    if self.task == ttype.name:
+                                        self.set_task_type(ttype.value)
+                                        break
+                                    
+                        if self.is_nhf_tlog:
+                            self.set_final_index(self.get_initial_index() - 1)
+                        else:
+                            with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                                serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
+
+                                for i, line in enumerate(read_file):
+                                    if re.search(r"{}".format(str(serach_string)), line):
+                                        self.set_final_index(i)
                                         break
                         
-                
-                    for ttype in TaskType:
                         with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
                             for i, line in enumerate(read_file):
-                                if self.task == ttype.name:
-                                    self.set_task_type(ttype.value)
-                                    break
-                                
-                    if self.is_nhf_tlog:
-                        self.set_final_index(self.get_initial_index() - 1)
+                                if self.get_final_index() <= i < self.get_initial_index() + 1:
+                                    with open(self.trimmed_tomcat_outfile, "a") as write_file:
+                                        write_file.writelines(line)
                     else:
-                        with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
-                            serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
-
-                            for i, line in enumerate(read_file):
-                                if re.search(r"{}".format(str(serach_string)), line):
-                                    self.set_final_index(i)
-                                    break
-                    
-                    with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
-                        for i, line in enumerate(read_file):
-                            if self.get_final_index() <= i < self.get_initial_index() + 1:
-                                with open(self.trimmed_tomcat_outfile, "a") as write_file:
-                                    write_file.writelines(line)
+                        logging.debug('%s present without containing the issue tag.', self.dictionary_of_search_value["THREAD"])
                 else:
                     logging.debug("Tomcat daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
             else:
@@ -391,6 +399,7 @@ class TDLogParser:
                                     if re.search(r"\b{}\b".format(str(status.value)), line):
                                         self.set_initial_index(i)
                                         self.task = status.name
+                                        self.is_issue_in_thread = True
                                         break
                                     
                     elif self.is_lowbal_tlog:
@@ -400,6 +409,7 @@ class TDLogParser:
                                     if re.search(r"\b{}\b".format(str(status.value)), line):
                                         self.set_initial_index(i)
                                         self.task = status.name
+                                        self.is_issue_in_thread = True
                                         break
                                     
                     elif self.is_retry_tlog:
@@ -409,6 +419,7 @@ class TDLogParser:
                                     if re.search(r"\b{}\b".format(str(status.value)), line):
                                         self.set_initial_index(i)
                                         self.task = status.name
+                                        self.is_issue_in_thread = True
                                         break
                     
                     elif self.is_nhf_tlog:
@@ -418,6 +429,7 @@ class TDLogParser:
                                     if re.search(r"\b{}\b".format(str(status.value)), line):
                                         self.set_initial_index(i)
                                         self.task = status.name
+                                        self.is_issue_in_thread = True
                                         break
                     
                     elif self.is_await_push_tlog:
@@ -427,32 +439,37 @@ class TDLogParser:
                                     if re.search(r"\b{}\b".format(str(status.value)), line):
                                         self.set_initial_index(i)
                                         self.task = status.name
+                                        self.is_issue_in_thread = True
+                                        break
+                    
+                    if self.is_issue_in_thread:
+                                       
+                        for ttype in TaskType:
+                            with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
+                                for i, line in enumerate(read_file):
+                                    if self.task == ttype.name:
+                                        self.set_task_type(ttype.value)
                                         break
                         
-                
-                    for ttype in TaskType:
-                        with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
-                            for i, line in enumerate(read_file):
-                                if self.task == ttype.name:
-                                    self.set_task_type(ttype.value)
-                                    break
-                    
-                    if self.is_nhf_tlog:
-                        self.set_final_index(self.get_initial_index() - 1)
-                    else:
-                        with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
-                            serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
-                            for i, line in enumerate(read_file):
-                                if re.search(r"{}".format(str(serach_string)), line):
-                                    self.set_final_index(i)
-                                    break
+                        if self.is_nhf_tlog:
+                            self.set_final_index(self.get_initial_index() - 1)
+                        else:
+                            with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
+                                serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
+                                for i, line in enumerate(read_file):
+                                    if re.search(r"{}".format(str(serach_string)), line):
+                                        self.set_final_index(i)
+                                        break
+                                
                             
+                        with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
+                            for i, line in enumerate(read_file):
+                                if self.get_final_index() <= i < self.get_initial_index() + 1:
+                                    with open(self.trimmed_prism_outfile, "a") as write_file:
+                                        write_file.writelines(line)
+                    else:
+                        logging.debug('%s present without containing the issue tag.', self.dictionary_of_search_value["THREAD"])
                         
-                    with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
-                        for i, line in enumerate(read_file):
-                            if self.get_final_index() <= i < self.get_initial_index() + 1:
-                                with open(self.trimmed_prism_outfile, "a") as write_file:
-                                    write_file.writelines(line)
                 else:
                     logging.debug("Prism daemon log doesn't exist for the issue thread %s : ", self.dictionary_of_search_value["THREAD"])
             else:
