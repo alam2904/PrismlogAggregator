@@ -39,6 +39,6 @@ class InputValidation:
             return self.input_date
 
         except Exception as error:
-            logging.error('Transaction date %s entered is of invalid format.', self.input_date)
+            logging.error('Transaction date %s entered is of invalid format. The format should be "yyyymmdd".', self.input_date)
             self.is_input_valid = False
             raise

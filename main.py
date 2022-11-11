@@ -29,7 +29,8 @@ class Main:
             validation_object = InputValidation(sys.argv[1], sys.argv[2])
 
             try:
-                msisdn = validation_object.validate_msisdn()
+                # msisdn = validation_object.validate_msisdn()
+                msisdn = sys.argv[1]
                 input_date = validation_object.validate_date()
             except Exception as error:
                 logging.exception(error)
