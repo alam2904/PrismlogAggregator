@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 import re
 from daemon_log import DaemonLog
-from tlog_tag import TaskType, TlogAwaitPushTag, TlogAwaitPushTimeOutTag, TlogErrorTag, TlogLowBalTag, TlogRetryTag, TlogNHFTag
+from tlog_tag import TaskType, TlogAwaitPushTag, TlogAwaitPushTimeOutTag, TlogErrorTag, TlogHandlerExp, TlogLowBalTag, TlogRetryTag, TlogNHFTag
 
 class TDLogParser:
     """
@@ -25,7 +25,7 @@ class TDLogParser:
         self.__initial_index = 0
         self.__final_index = 0
         self.__task_type = ""
-        self.is_prism_processing_required = True
+        # self.is_prism_processing_required = True
         self.outputDirectory_object = outputDirectory_object
         self.trimmed_prism_outfile = self.outputDirectory_object/"trimmed_prismd.log"
         self.trimmed_tomcat_outfile = self.outputDirectory_object/"trimmed_tomcat.log"
@@ -38,6 +38,7 @@ class TDLogParser:
         self.is_nhf_tlog = False
         self.is_await_push_tlog = False
         self.is_timeout_tlog = False
+        self.is_handler_exp = False
         self.task = ""
         self.acc_log = []
         self.new_line = '\n'
@@ -105,9 +106,18 @@ class TDLogParser:
                             self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
                             self.is_timeout_tlog = True
                         break
+        if not self.is_timeout_tlog:
+            for key, value in self.dictionary_of_tlogs.items():
+                for status in TlogHandlerExp:
+                    if re.search(r"\b{}\b".format(str(status.value)), value):
+                        for search_key, search_value in self.dictionary_of_search_value.items():
+                            self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
+                            self.is_handler_exp = True
+                        break
                   
         
-        if tlogParser_object.filtered_prism_tlog and self.is_prism_processing_required and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog or self.is_timeout_tlog):
+        # if tlogParser_object.filtered_prism_tlog and self.is_prism_processing_required and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog or self.is_timeout_tlog or self.is_handler_exp):
+        if tlogParser_object.filtered_prism_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog or self.is_timeout_tlog or self.is_handler_exp):
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
                 
             logging.info('Issue tlog found. Going to fetch access log.')
@@ -214,7 +224,7 @@ class TDLogParser:
                 write_file.writelines(self.issue_tlog_data_prism)
             
         
-        elif tlogParser_object.filtered_tomcat_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog):
+        elif tlogParser_object.filtered_tomcat_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog or self.is_handler_exp):
             
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
             
@@ -283,16 +293,17 @@ class TDLogParser:
                 
             #charge schedule < now check
             with open(self.issue_tlog_path, "a") as write_file:
+                logging.info('Writing issue tlog to a file: %s', self.issue_tlog_path)
                 self.issue_tlog_data_tomcat = tlogParser_object.filtered_tomcat_tlog[-1]
-                data = str(self.issue_tlog_data_tomcat).split("|")
-                tdata = str(data[-1]).split(",")
-                if datetime.strptime(f"{tdata[-2]}", "%Y-%m-%d %H:%M:%S.%f") < datetime.now():
-                    logging.info('charge schedule < now = true. hence skipping tomcat log processing')
-                    self.is_prism_processing_required = True
-                else:
-                    self.is_prism_processing_required = False
-                    write_file.writelines(self.issue_tlog_data_tomcat)
-                    logging.info("tomcat tlog charge schedule is greater than now. Hence not going to check for prism tlog. Kindly ignore below logs.")
+                # data = str(self.issue_tlog_data_tomcat).split("|")
+                # tdata = str(data[-1]).split(",")
+                # if datetime.strptime(f"{tdata[-2]}", "%Y-%m-%d %H:%M:%S.%f") < datetime.now():
+                #     logging.info('charge schedule < now = true. hence skipping tomcat log processing')
+                #     self.is_prism_processing_required = True
+                # else:
+                #     self.is_prism_processing_required = False
+                write_file.writelines(self.issue_tlog_data_tomcat)
+                    # logging.info("tomcat tlog charge schedule is greater than now. Hence not going to check for prism tlog. Kindly ignore below logs.")
                 
         else:
             logging.debug('No issue tlog found for given msisdn: %s', msisdn)
@@ -307,7 +318,8 @@ class TDLogParser:
         """
 
         # task = ""
-        if len(self.issue_tlog_data_tomcat) != 0 and self.is_prism_processing_required == False:
+        # if len(self.issue_tlog_data_tomcat) != 0 and self.is_prism_processing_required == False:
+        if len(self.issue_tlog_data_tomcat) != 0:
             
             if not self.is_await_push_tlog:
                 logging.info('Going to fetch tomcat daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
@@ -352,6 +364,17 @@ class TDLogParser:
                                         self.task = status.name
                                         self.is_issue_in_thread = True
                                         break
+                    
+                    elif self.is_handler_exp:
+                        for status in TlogHandlerExp:
+                            with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                                for i, line in enumerate(read_file):
+                                    if re.search(r"\b{}\b".format(str(status.value)), line):
+                                        self.set_initial_index(i)
+                                        self.task = status.name
+                                        self.is_issue_in_thread = True
+                                        break
+                    
                     
                     if self.is_issue_in_thread:
                 

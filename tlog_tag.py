@@ -104,6 +104,10 @@ class TlogAwaitPushTimeOutTag(Enum):
     GENERIC_TASK4 = "GT4=96,-,,,-#TIMEOUT"
     GENERIC_TASK5 = "GT5=96,-,,,-#TIMEOUT"
     
+class TlogHandlerExp(Enum):
+    CHARGING = "CHG=30"
+    CHG = "CHG=41"
+    
 class TaskType(Enum):
     """
     Task type class
@@ -112,6 +116,7 @@ class TaskType(Enum):
     CHECK_BALANCE = "Q"
     RESERVE = "RA"
     CHARGING = "B"
+    CHG = "B"
     REMOTE_ACT = "R"
     REMOTE_DCT = "H"
     DECTIVATION = "D"
