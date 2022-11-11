@@ -6,6 +6,7 @@ import subprocess
 from subprocess import PIPE
 import signal
 from log_files import LogFileFinder
+from outfile_writter import FileWriter
 
 class DaemonLog:
     """
@@ -121,6 +122,7 @@ class DaemonLog:
                             return False
     
     def find_tomcat_log(self, logPath, is_backup_path):
+        log_writer = FileWriter()
         try:
             if is_backup_path:
                 worker_thread_log = subprocess.check_output(f"grep {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
@@ -128,12 +130,14 @@ class DaemonLog:
             else:
                 worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
                 record = [data for data in worker_thread_log.stdout]
-            with open(self.tomcat_thread_outfile, "a") as write_file:
-                write_file.writelines(record)
+            
+            log_writer.write_complete_thread_log(record, self.tomcat_thread_outfile)
+            
         except subprocess.CalledProcessError as ex:
             raise
                     
     def find_prism_log(self, logPath, is_backup_path):
+        log_writer = FileWriter()
         try:
             if is_backup_path:
                 worker_thread_log = subprocess.check_output(f"grep {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
@@ -141,7 +145,8 @@ class DaemonLog:
             else:
                 worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
                 record = [data for data in worker_thread_log.stdout]
-            with open(self.prismd_thread_outfile, "a") as write_file:
-                write_file.writelines(record)
+            
+            log_writer.write_complete_thread_log(record, self.prismd_thread_outfile)
+            
         except subprocess.CalledProcessError as ex:
             raise
