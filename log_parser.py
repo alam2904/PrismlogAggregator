@@ -198,7 +198,10 @@ class TDLogParser:
                             self.set_final_index(self.get_initial_index() - 1)
                         else:
                             with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
-                                serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
+                                if self.get_task_type() == "S":
+                                    serach_string = f'-process handler params for task {self.get_task_type()} for subType:A'
+                                else:
+                                    serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
 
                                 for i, line in enumerate(read_file):
                                     if re.search(r"{}".format(str(serach_string)), line):
@@ -237,6 +240,7 @@ class TDLogParser:
                         self.find_issue_daemon_log(daemonLog_object.prismd_thread_outfile, TlogAwaitPushTag)
                     
                     if self.is_issue_in_thread:
+                        logging.info('is issue thread:%s', self.is_issue_in_thread)
                                        
                         for ttype in TaskType:
                             with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
@@ -249,7 +253,11 @@ class TDLogParser:
                             self.set_final_index(self.get_initial_index() - 1)
                         else:
                             with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
-                                serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
+                                if self.get_task_type() == "S":
+                                    serach_string = f'-process handler params for task {self.get_task_type()} for subType:A'
+                                else:
+                                    serach_string = f'-process handler params for task {self.get_task_type()} for subType:{self.dictionary_of_search_value["SUB_TYPE"]}'
+                                logging.info('search string: %s', serach_string)
                                 for i, line in enumerate(read_file):
                                     if re.search(r"{}".format(str(serach_string)), line):
                                         self.set_final_index(i)
