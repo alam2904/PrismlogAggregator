@@ -264,11 +264,7 @@ class TDLogParser:
                                         break
                             
                         log_writer.write_trimmed_thread_log(daemonLog_object.prismd_thread_outfile, self.trimmed_prism_outfile, self.get_initial_index(), self.get_final_index())
-                        # with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
-                        #     for i, line in enumerate(read_file):
-                        #         if self.get_final_index() <= i < self.get_initial_index() + 1:
-                        #             with open(self.trimmed_prism_outfile, "a") as write_file:
-                        #                 write_file.writelines(line)
+
                     else:
                         logging.debug('%s present without containing the issue tag.', self.dictionary_of_search_value["THREAD"])
                         
