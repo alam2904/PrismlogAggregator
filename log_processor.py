@@ -35,6 +35,7 @@ class PROCESSOR:
                     
                 daemonLogParser_object = TDLogParser(self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, False, is_prism, self.outputDirectory_object)
                 daemonLogParser_object.parse(tlogParser_object, self.msisdn)
+            
             else:
                 logging.error('No issue tlog found. Hence not fetching the prism log.')
         else:

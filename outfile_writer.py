@@ -23,6 +23,7 @@ class FileWriter:
                 if final_index <= i < initial_index + 1:
                     with open(trimmed_thread_outfile, "a") as write_file:
                         write_file.writelines(line)
+        return True
         
         
             

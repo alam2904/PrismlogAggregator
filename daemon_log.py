@@ -6,7 +6,7 @@ import subprocess
 from subprocess import PIPE
 import signal
 from log_files import LogFileFinder
-from outfile_writter import FileWriter
+from outfile_writer import FileWriter
 
 class DaemonLog:
     """

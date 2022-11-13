@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 import re
 from daemon_log import DaemonLog
-from outfile_writter import FileWriter
+from outfile_writer import FileWriter
 from tlog_tag import TaskType, TlogAwaitPushTag, TlogAwaitPushTimeOutTag, TlogErrorTag, TlogHandlerExp, TlogLowBalTag, TlogRetryTag, TlogNHFTag
 
 class TDLogParser:
@@ -162,6 +162,7 @@ class TDLogParser:
         # task = ""
         # if len(self.issue_tlog_data_tomcat) != 0 and self.is_prism_processing_required == False:
         log_writer = FileWriter()
+        
         if len(self.issue_tlog_data_tomcat) != 0:
             
             if not self.is_await_push_tlog:
@@ -209,7 +210,7 @@ class TDLogParser:
                                         break
                         
                         log_writer.write_trimmed_thread_log(daemonLog_object.tomcat_thread_outfile, self.trimmed_tomcat_outfile, self.get_initial_index(), self.get_final_index())
-                        
+
                     else:
                         logging.debug('%s present without containing the issue tag.', self.dictionary_of_search_value["THREAD"])
                 else:
