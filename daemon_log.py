@@ -125,7 +125,7 @@ class DaemonLog:
         log_writer = FileWriter()
         try:
             if is_backup_path:
-                worker_thread_log = subprocess.check_output(f"grep {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                worker_thread_log = subprocess.check_output(f"zgrep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 record = [data for data in worker_thread_log]
             else:
                 worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
@@ -140,7 +140,7 @@ class DaemonLog:
         log_writer = FileWriter()
         try:
             if is_backup_path:
-                worker_thread_log = subprocess.check_output(f"grep {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                worker_thread_log = subprocess.check_output(f"zgrep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 record = [data for data in worker_thread_log]
             else:
                 worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
