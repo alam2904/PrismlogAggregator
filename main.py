@@ -65,12 +65,30 @@ class Main:
                     logging.warning(error)
                     
                 logging.info('\n')
+                
+                try:
+                    initializedPath_object.initialize_sms_path()
+                    logging.info('SMS PATH INITIALIZED')
+                    formatter = "#" * 100
+                    logging.info('%s', formatter)
+                    for key, value in initializedPath_object.sms_log_path_dict.items():
+                        logging.info('%s : %s', key, value)
+                except ValueError as error:
+                    logging.warning('SMS path not initialized. %s', error)
+                except Exception as error:
+                    logging.warning(error)
+                    
+                logging.info('\n')
 
-                if initializedPath_object.is_tomcat or initializedPath_object.is_prsim:
+                if initializedPath_object.is_tomcat or initializedPath_object.is_prsim or initializedPath_object.is_sms:
                     is_tomcat = initializedPath_object.is_tomcat
                     is_tomcat_tlog_path = initializedPath_object.is_tomcat_tlog_path
+                    
                     is_prism = initializedPath_object.is_prsim
                     is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
+                    
+                    is_sms = initializedPath_object.is_sms
+                    is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
                     
                     outputDirectory_object = Path('out')
                     try:
