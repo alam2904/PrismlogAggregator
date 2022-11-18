@@ -46,10 +46,6 @@ class TDLogParser:
         
         #sms issue flags
         self.is_issue_sms_tlog = False
-        # self.is_retry_exceeded_sms_tlog = False
-        # self.is_pending_sms_tlog = False
-        # self.is_suspended_sms_tlog = False
-        # self.is_queued_sms_tlog = False
         
         self.task = ""
         self.acc_log = []
@@ -153,19 +149,6 @@ class TDLogParser:
         
         self.is_issue_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_issue_sms_tlog)
         
-        # if not self.is_invalid_sms_tlog:
-        #     self.is_retry_exceeded_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_retry_exceeded_sms_tlog)
-        
-        # if not self.is_retry_exceeded_sms_tlog:
-        #     self.is_pending_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_pending_sms_tlog)
-        
-        # if not self.is_pending_sms_tlog:
-        #     self.is_suspended_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_suspended_sms_tlog)
-        
-        # if not self.is_suspended_sms_tlog:
-        #     self.is_queued_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_queued_sms_tlog)
-        
-        #if tlogParser_object.filtered_sms_tlog and (self.is_issue_sms_tlog or self.is_retry_exceeded_sms_tlog or self.is_pending_sms_tlog or self.is_suspended_sms_tlog or self.is_queued_sms_tlog):
         if tlogParser_object.filtered_sms_tlog and (self.is_issue_sms_tlog):
             
             self.issue_tlog_data_sms = tlogParser_object.filtered_sms_tlog[-1]
