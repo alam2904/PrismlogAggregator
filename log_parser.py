@@ -9,13 +9,13 @@ from pathlib import Path
 import re
 from daemon_log import DaemonLog
 from outfile_writer import FileWriter
-from tlog_tag import TaskType, TlogAwaitPushTag, TlogAwaitPushTimeOutTag, TlogErrorTag, TlogHandlerExp, TlogLowBalTag, TlogRetryTag, TlogNHFTag
+from tlog_tag import TaskType, TlogAwaitPushTag, TlogAwaitPushTimeOutTag, TlogErrorTag, TlogHandlerExp, TlogLowBalTag, TlogRetryTag, TlogNHFTag, TlogSmsTag
 
 class TDLogParser:
     """
     Parse the daemon log based on tlog input
     """
-    def __init__(self, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, is_prism, outputDirectory_object):
+    def __init__(self, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, is_prism, is_sms, outputDirectory_object):
         self.input_date = input_date
         self.initializedPath_object = initializedPath_object
         self.dictionary_of_tlogs = dictionary_of_tlogs
@@ -23,6 +23,7 @@ class TDLogParser:
         self.worker_log_recod_list = worker_log_recod_list
         self.is_tomcat = is_tomcat
         self.is_prism = is_prism
+        self.is_sms = is_sms
         self.__initial_index = 0
         self.__final_index = 0
         self.__task_type = ""
@@ -33,6 +34,8 @@ class TDLogParser:
         self.issue_tlog_path = self.outputDirectory_object/"issue_tlog_record.txt"
         self.issue_tlog_data_prism = ""
         self.issue_tlog_data_tomcat = ""
+        self.issue_tlog_data_sms = ""
+        #tomcat and prism issue flags
         self.is_error_tlog = False
         self.is_lowbal_tlog = False
         self.is_retry_tlog = False
@@ -40,6 +43,14 @@ class TDLogParser:
         self.is_await_push_tlog = False
         self.is_timeout_tlog = False
         self.is_handler_exp = False
+        
+        #sms issue flags
+        self.is_invalid_sms_tlog = False
+        self.is_retry_exceeded_sms_tlog = False
+        self.is_pending_sms_tlog = False
+        self.is_suspended_sms_tlog = False
+        self.is_queued_sms_tlog = False
+        
         self.task = ""
         self.acc_log = []
         self.new_line = '\n'
@@ -128,6 +139,40 @@ class TDLogParser:
             
         self.get_trimmed_thread_log()
     
+    def parse_sms_td(self, tlogParser_object, msisdn):
+        """
+        Parse dictionary of tlogs to get the search value.
+        """
+        logging.info('Going to parse sms tlog for INVALID/RETRY_EXCEEDED/PENDING/SUSPENDED/QUEUED cases.')
+        
+        log_writer = FileWriter()
+        
+        dts = datetime.strptime(self.input_date, "%Y%m%d")
+        dtf = dts.strftime("%Y-%m-%d")
+        date_formated = dtf.split("-")
+        
+        self.is_invalid_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_invalid_sms_tlog)
+        
+        if not self.is_invalid_sms_tlog:
+            self.is_retry_exceeded_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_retry_exceeded_sms_tlog)
+        
+        if not self.is_retry_exceeded_sms_tlog:
+            self.is_pending_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_pending_sms_tlog)
+        
+        if not self.is_pending_sms_tlog:
+            self.is_suspended_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_suspended_sms_tlog)
+        
+        if not self.is_suspended_sms_tlog:
+            self.is_queued_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_queued_sms_tlog)
+        
+        if tlogParser_object.filtered_sms_tlog and (self.is_invalid_sms_tlog or self.is_retry_exceeded_sms_tlog or self.is_pending_sms_tlog or self.is_suspended_sms_tlog or self.is_queued_sms_tlog):
+                
+            self.issue_tlog_data_sms = tlogParser_object.filtered_sms_tlog[-1]
+            log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_sms)
+        else:
+            logging.debug('No sms issue tlog found for given msisdn: %s', msisdn)
+            logging.debug('Hence not fetching the sms daemon log.')
+    
     def fetch_access_log(self, msisdn, search_string, access_path, date_formated):
         try:
             access_log = subprocess.run(["grep", f"{search_string}", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
@@ -152,6 +197,15 @@ class TDLogParser:
                         self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
                         is_tlog = True
                     break
+        return is_tlog
+    
+    def parse_sms_tlog(self, tlogSmsTags, is_tlog):
+        for status in tlogSmsTags:
+            if status.value == self.dictionary_of_tlogs["STATUS"]:
+                for search_key, search_value in self.dictionary_of_search_value.items():
+                    self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
+                    is_tlog = True
+                break
         return is_tlog
             
     def get_trimmed_thread_log(self):

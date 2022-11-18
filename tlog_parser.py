@@ -9,22 +9,24 @@ class TlogParser:
     """
     Parse the tlog for various conditions
     """
-    def __init__(self, msisdn, input_date, dictionary_of_tlogs, tlog_record_list_prism, tlog_record_list_tomcat, initializedPath_object):
+    def __init__(self, msisdn, input_date, dictionary_of_tlogs, tlog_record_list_prism, tlog_record_list_tomcat, tlog_record_list_sms, initializedPath_object):
         self.msisdn = msisdn
         self.input_date = input_date
         self.dictionary_of_tlogs = dictionary_of_tlogs
         self.tlog_record_list_prism = tlog_record_list_prism
         self.tlog_record_list_tomcat = tlog_record_list_tomcat
+        self.tlog_record_list_sms = tlog_record_list_sms
         self.initializedPath_object = initializedPath_object
         self.filtered_prism_tlog = ""
         self.filtered_tomcat_tlog = ""
+        self.filtered_sms_tlog = ""
 
     def parse_prism(self):
         """
         Call to retreive prism tlog files and parse.
         """
         is_parsed = False
-        tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list_prism, self.tlog_record_list_tomcat, self.initializedPath_object)
+        tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list_prism, self.tlog_record_list_tomcat, self.tlog_record_list_sms, self.initializedPath_object)
     
         if tlog_object.get_prism_billing_tlog():
             
@@ -55,7 +57,7 @@ class TlogParser:
         Call to retreive tomcat tlog files and parse.
         """
         is_parsed = False
-        tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list_prism, self.tlog_record_list_tomcat, self.initializedPath_object)
+        tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list_prism, self.tlog_record_list_tomcat, self.tlog_record_list_sms, self.initializedPath_object)
     
         if tlog_object.get_tomcat_billing_tlog():
             
@@ -80,6 +82,37 @@ class TlogParser:
             logging.error('No tomcat tlog found for given msisdn: %s', self.msisdn)
         return is_parsed
 
+    def parse_sms(self):
+        """
+        Call to retreive sms tlog files and parse.
+        """
+        is_parsed = False
+        tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list_prism, self.tlog_record_list_tomcat, self.tlog_record_list_sms, self.initializedPath_object)
+    
+        if tlog_object.get_sms_tlog():
+            
+            self.filtered_sms_tlog = tlog_object.tlog_record_list_sms
+            
+            if self.filtered_sms_tlog:
+                
+                tlog_data = self.filtered_sms_tlog[-1].split("|")
+                logging.info('tlog data : %s', tlog_data)
+                tlog_key_value = ["TIMESTAMP","THREAD","SITE_ID","MSISDN","SRNO","SRVCODE","MSG","HANDLER","STATUS","REMARKS","TIME TAKEN","SMS_INFO"]
+                    
+                for counter, tlog_header in enumerate(tlog_key_value):
+                    try:
+                        self.dictionary_of_tlogs[tlog_header] = self.data_in_tlog(tlog_data, counter)
+                    except IndexError as ex:
+                        logging.info('Header data did not match')
+            
+                is_parsed = True
+            else:
+                logging.error('No sms tlog found for given msisdn: %s', self.msisdn)
+        else:
+            logging.error('No sms tlog found for given msisdn: %s', self.msisdn)
+            
+        return is_parsed
+    
     def data_in_tlog(self, data, index):
         """
         Returns data in tlog.

@@ -107,7 +107,14 @@ class TlogAwaitPushTimeOutTag(Enum):
 class TlogHandlerExp(Enum):
     CHARGING = "CHG=30"
     CHG = "CHG=41"
-    
+
+class TlogSmsTag(Enum):
+    SMS_INVALID = "I"
+    SMS_RETRY_EXCEEDED = "E"
+    SMS_PENDING = "P"
+    SMS_SUSPENDED = "S"
+    SMS_QUEUED = "Q"
+
 class TaskType(Enum):
     """
     Task type class

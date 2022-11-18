@@ -15,6 +15,7 @@ class LogFileFinder():
         self.initializedPath_object = initializedPath_object
         self.is_prism_billing_tlog_path = False
         self.is_tomcat_billing_tlog_path = False
+        self.is_sms_tlog_path = False
     
     def prism_billing_tlog_path(self):
         
@@ -43,6 +44,19 @@ class LogFileFinder():
             self.set_tomcat_billing_path(False)
             logging.debug('Tomcat BILLING tlog path does not exists')
     
+    def sms_tlog_path(self):
+        
+        log_path = self.initializedPath_object
+
+        sms_tlog_path = f"{log_path.sms_log_path_dict[log_path.sms_tlog_log_path]}/SMS"
+        path = Path(rf"{sms_tlog_path}")
+
+        if path.exists():
+            logging.debug('Sms tlog path exists.')
+            self.set_sms_path(True)
+        else:
+            self.set_sms_path(False)
+            logging.debug('Sms tlog path does not exists')
 
     def prism_billing_tlog_files(self, input_trans_date):
         """
@@ -112,6 +126,40 @@ class LogFileFinder():
         
         return None
 
+    def sms_tlog_files(self, input_trans_date):
+        """
+        function to find sms tlog file path
+        """
+        tlog_files = []
+        
+        logPath_object = self.initializedPath_object
+
+        prism_tlog_path = f"{logPath_object.sms_log_path_dict[logPath_object.sms_tlog_log_path]}/SMS"
+        path = Path(rf"{prism_tlog_path}")
+
+        try:
+            sms_tlog_files_tmp = [p for p in path.glob(f"TLOG_SMS_{input_trans_date}*.tmp")]
+            sms_tlog_files_log = [p for p in path.glob(f"TLOG_SMS_{input_trans_date}*.log")]
+            
+            if bool(sms_tlog_files_log):
+                for sms_files in sms_tlog_files_log:
+                    tlog_files.append(sms_files)
+            if bool(sms_tlog_files_tmp):
+                for sms_files in sms_tlog_files_tmp:
+                    tlog_files.append(sms_files)
+                    
+            else:
+                logging.debug('Sms tlog directory does not have %s dated files', input_trans_date)
+            
+            return tlog_files
+
+        except ValueError as error:
+            logging.exception(error)
+        except Exception as error:
+            logging.exception(error)
+        
+        return None
+    
     def prism_daemonlog_file(self):
         """
         function to find prism daemon log file path
@@ -302,14 +350,19 @@ class LogFileFinder():
         return date_formated
 
     def set_prism_billing_path(self, is_prism_billing_tlog_path):
-    
         self.is_prism_billing_tlog_path = is_prism_billing_tlog_path
     
     def set_tomcat_billing_path(self, is_tomcat_billing_tlog_path):
         self.is_tomcat_billing_tlog_path = is_tomcat_billing_tlog_path
 
+    def set_sms_path(self, is_sms_tlog_path):
+        self.is_sms_tlog_path = is_sms_tlog_path
+    
     def get_prism_path(self):
         return self.is_prism_billing_tlog_path
     
     def get_tomcat_path(self):
         return self.is_prism_billing_tlog_path
+    
+    def get_sms_path(self):
+        return self.is_sms_tlog_path
