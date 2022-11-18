@@ -99,7 +99,7 @@ class Main:
                         outputDirectory_object.mkdir()
 
                     processor_object = PROCESSOR(msisdn, input_date, outputDirectory_object)
-                    processor_object.process(is_tomcat, is_prism, is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object)
+                    processor_object.process(is_tomcat, is_prism, is_sms, is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
                 else:
                     logging.error('Since none of the process running. Process failed to aggregate log.')
 
