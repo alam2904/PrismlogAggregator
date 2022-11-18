@@ -45,11 +45,11 @@ class TDLogParser:
         self.is_handler_exp = False
         
         #sms issue flags
-        self.is_invalid_sms_tlog = False
-        self.is_retry_exceeded_sms_tlog = False
-        self.is_pending_sms_tlog = False
-        self.is_suspended_sms_tlog = False
-        self.is_queued_sms_tlog = False
+        self.is_issue_sms_tlog = False
+        # self.is_retry_exceeded_sms_tlog = False
+        # self.is_pending_sms_tlog = False
+        # self.is_suspended_sms_tlog = False
+        # self.is_queued_sms_tlog = False
         
         self.task = ""
         self.acc_log = []
@@ -151,24 +151,26 @@ class TDLogParser:
         dtf = dts.strftime("%Y-%m-%d")
         date_formated = dtf.split("-")
         
-        self.is_invalid_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_invalid_sms_tlog)
+        self.is_issue_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_issue_sms_tlog)
         
-        if not self.is_invalid_sms_tlog:
-            self.is_retry_exceeded_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_retry_exceeded_sms_tlog)
+        # if not self.is_invalid_sms_tlog:
+        #     self.is_retry_exceeded_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_retry_exceeded_sms_tlog)
         
-        if not self.is_retry_exceeded_sms_tlog:
-            self.is_pending_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_pending_sms_tlog)
+        # if not self.is_retry_exceeded_sms_tlog:
+        #     self.is_pending_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_pending_sms_tlog)
         
-        if not self.is_pending_sms_tlog:
-            self.is_suspended_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_suspended_sms_tlog)
+        # if not self.is_pending_sms_tlog:
+        #     self.is_suspended_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_suspended_sms_tlog)
         
-        if not self.is_suspended_sms_tlog:
-            self.is_queued_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_queued_sms_tlog)
+        # if not self.is_suspended_sms_tlog:
+        #     self.is_queued_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_queued_sms_tlog)
         
-        if tlogParser_object.filtered_sms_tlog and (self.is_invalid_sms_tlog or self.is_retry_exceeded_sms_tlog or self.is_pending_sms_tlog or self.is_suspended_sms_tlog or self.is_queued_sms_tlog):
-                
+        #if tlogParser_object.filtered_sms_tlog and (self.is_issue_sms_tlog or self.is_retry_exceeded_sms_tlog or self.is_pending_sms_tlog or self.is_suspended_sms_tlog or self.is_queued_sms_tlog):
+        if tlogParser_object.filtered_sms_tlog and (self.is_issue_sms_tlog):
+            
             self.issue_tlog_data_sms = tlogParser_object.filtered_sms_tlog[-1]
             log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_sms)
+        
         else:
             logging.debug('No sms issue tlog found for given msisdn: %s', msisdn)
             logging.debug('Hence not fetching the sms daemon log.')
@@ -201,6 +203,7 @@ class TDLogParser:
     
     def parse_sms_tlog(self, tlogSmsTags, is_tlog):
         for status in tlogSmsTags:
+            logging.info('status value: %s and diction status value: %s', status.value,self.dictionary_of_tlogs["STATUS"])
             if status.value == self.dictionary_of_tlogs["STATUS"]:
                 for search_key, search_value in self.dictionary_of_search_value.items():
                     self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
