@@ -46,6 +46,7 @@ class TDLogParser:
         
         #sms issue flags
         self.is_issue_sms_tlog = False
+        
         # self.is_retry_exceeded_sms_tlog = False
         # self.is_pending_sms_tlog = False
         # self.is_suspended_sms_tlog = False
