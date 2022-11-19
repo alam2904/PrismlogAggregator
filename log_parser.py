@@ -143,13 +143,9 @@ class TDLogParser:
         
         log_writer = FileWriter()
         
-        dts = datetime.strptime(self.input_date, "%Y%m%d")
-        dtf = dts.strftime("%Y-%m-%d")
-        date_formated = dtf.split("-")
-        
         self.is_issue_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_issue_sms_tlog)
         
-        if tlogParser_object.filtered_sms_tlog and (self.is_issue_sms_tlog):
+        if tlogParser_object.filtered_sms_tlog and self.is_issue_sms_tlog:
             
             self.issue_tlog_data_sms = tlogParser_object.filtered_sms_tlog[-1]
             log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_sms)
@@ -157,6 +153,8 @@ class TDLogParser:
         else:
             logging.debug('No sms issue tlog found for given msisdn: %s', msisdn)
             logging.debug('Hence not fetching the sms daemon log.')
+        
+        self.get_trimmed_thread_log()
     
     def fetch_access_log(self, msisdn, search_string, access_path, date_formated):
         try:
@@ -314,6 +312,12 @@ class TDLogParser:
             else:
                 logging.debug('Eigther transaction is in await push state or timed out.')
                 logging.debug('Check for notification callback. Daemon log processing not required.')
+        
+        if len(self.issue_tlog_data_sms) != 0 and self.is_issue_sms_tlog:
+                
+            logging.info('Going to fetch sms daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
+            daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
+            daemonLog_object.get_sms_log()
     
     def find_issue_daemon_log(self, outfile, tlogTags):
         for status in tlogTags:
