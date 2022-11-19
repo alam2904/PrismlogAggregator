@@ -20,6 +20,7 @@ class DaemonLog:
         self.is_backup_path = False
         self.tomcat_thread_outfile = outputDirectory_object/"tomcat.log"
         self.prismd_thread_outfile = outputDirectory_object/"prismd.log"
+        self.smsd_thread_outfile = outputDirectory_object/"smsd.log"
     
     def get_tomcat_log(self):
         """
@@ -121,6 +122,56 @@ class DaemonLog:
                             logging.error('no prism logs could be found against %s or log may not be in debug mode', self.worker_thread)
                             return False
     
+    def get_sms_log(self):
+        """
+        calling path finder method
+        """
+        logPath_object = LogFileFinder(self.input_date, self.initializedPath_object)
+        try:
+            self.find_sms_log(logPath_object.sms_daemonlog_file(), self.is_backup_path)
+            logging.debug('Issue thread [%s] found in sms daemon log and will be parsed for any issue.', self.worker_thread)
+            return True
+        except subprocess.CalledProcessError as ex:
+            logging.warning('Sms daemon log path does not exists or issue thread [%s] could not be found.',self.worker_thread) 
+            logging.debug('Going to check root log.')
+
+            try:
+                self.find_sms_log(logPath_object.sms_rootlog_file(), self.is_backup_path)
+                logging.debug('Issue thread [%s] found in sms root log and will be parsed for any issue.', self.worker_thread)
+                return True
+
+            except subprocess.CalledProcessError as ex:
+                logging.warning('Sms root log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
+                logging.debug('Going to check sms backup log path')
+
+                try:
+                    self.is_backup_path = True
+                    self.find_sms_log(logPath_object.sms_daemonlog_backup_file(), self.is_backup_path)
+                    logging.debug('Issue thread [%s] found in sms daemon backup log and will be parsed for any issue.', self.worker_thread)
+                    return True
+
+                except subprocess.CalledProcessError as ex:
+                    logging.warning('Sms backup log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
+                    logging.debug('Going to check root backup log path')
+
+                    try:
+                        self.is_backup_path = True
+                        self.find_sms_log(logPath_object.sms_rootlog_backup_file(), self.is_backup_path)
+                        logging.debug('Issue thread [%s] found in sms root backup log and will be parsed for any issue.', self.worker_thread)
+                        return True
+                    except subprocess.CalledProcessError as ex:
+                        logging.warning('Sms root backup log path does not exists or issue thread [%s] could not be found.',self.worker_thread) 
+                        logging.debug('Going to check queue_id_99 log.')
+                        try:
+                            self.find_sms_log(logPath_object.sms_queue_id_99_log_file(), self.is_backup_path)
+                            logging.debug('Issue thread [%s] found in sms queue_id_99 log and will be parsed for any issue.', self.worker_thread)
+                            return True
+                        except subprocess.CalledProcessError as ex:
+                            logging.warning('Sms queue_id_99 log path does not exists or issue thread [%s] could not be found.',self.worker_thread)
+                            logging.error(ex)
+                            logging.error('no sms logs could be found against %s or log may not be in debug mode', self.worker_thread)
+                            return False
+    
     def find_tomcat_log(self, logPath, is_backup_path):
         log_writer = FileWriter()
         try:
@@ -147,6 +198,21 @@ class DaemonLog:
                 record = [data for data in worker_thread_log.stdout]
             
             log_writer.write_complete_thread_log(record, self.prismd_thread_outfile)
+            
+        except subprocess.CalledProcessError as ex:
+            raise
+    
+    def find_sms_log(self, logPath, is_backup_path):
+        log_writer = FileWriter()
+        try:
+            if is_backup_path:
+                worker_thread_log = subprocess.check_output(f"zgrep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                record = [data for data in worker_thread_log]
+            else:
+                worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
+                record = [data for data in worker_thread_log.stdout]
+            
+            log_writer.write_complete_thread_log(record, self.smsd_thread_outfile)
             
         except subprocess.CalledProcessError as ex:
             raise
