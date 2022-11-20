@@ -110,7 +110,11 @@ class TDLogParser:
                 self.fetch_access_log(msisdn, "/subscription/ChargeGift?", access_path, date_formated)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'V':
                 self.fetch_access_log(msisdn, "/subscription/AddRenewalTrigger?", access_path, date_formated)
-    
+
+            if not tlogParser_object.filtered_tomcat_tlog:
+                if os.path.isfile(self.issue_tlog_path) and os.path.getsize(self.issue_tlog_path) != 0:
+                    os.remove(self.issue_tlog_path)
+                
             log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
             
             self.issue_tlog_data_prism = tlogParser_object.filtered_prism_tlog[-1]
