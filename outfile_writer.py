@@ -1,4 +1,5 @@
 import logging
+import os
 
 class FileWriter:
         
@@ -9,15 +10,23 @@ class FileWriter:
             
     def write_issue_tlog(self, issue_tlog_path, issue_tlog_data):
         logging.info('Writing issue tlog to a file: %s', issue_tlog_path)
+            
         with open(issue_tlog_path, "a") as write_file:
             write_file.writelines(issue_tlog_data)
             
     def write_complete_thread_log(self, record, thread_outfile):
+        if os.path.isfile(thread_outfile) and os.path.getsize(thread_outfile) != 0:
+            os.remove(thread_outfile)
+            
         with open(thread_outfile, "a") as write_file:
             write_file.writelines(record)
     
     def write_trimmed_thread_log(self, thread_outfile, trimmed_thread_outfile, initial_index, final_index):
         logging.info('thread file-%s, trimmed thread file-%s, initial index-%s, final index-%s', thread_outfile,trimmed_thread_outfile,initial_index,final_index)
+        
+        if os.path.isfile(trimmed_thread_outfile) and os.path.getsize(trimmed_thread_outfile) != 0:
+            os.remove(trimmed_thread_outfile)
+            
         with open(thread_outfile, "r") as read_file:
             for i, line in enumerate(read_file):
                 if final_index <= i < initial_index + 1:

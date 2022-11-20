@@ -1,3 +1,4 @@
+from datetime import datetime
 from tlog_parser import TlogParser
 from log_parser import TDLogParser
 import logging
@@ -10,14 +11,15 @@ class PROCESSOR:
         self.msisdn = msisdn
         self.input_date = input_date
         self.outputDirectory_object = outputDirectory_object
+        self.today_date_time = datetime.strftime(datetime.today(), "%Y-%m-%d")
         
         self.outputDirectory_object = outputDirectory_object
-        self.prismd_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_prismd.log"
-        self.tomcat_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_tomcat.log"
-        self.smsd_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_smsd.log"
-        self.trimmed_prism_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_trimmed_prismd.log"
-        self.trimmed_tomcat_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_trimmed_tomcat.log"
-        self.issue_tlog_path = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_issue_tlog_record.txt"
+        self.prismd_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_prismd.log"
+        self.tomcat_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_tomcat.log"
+        self.smsd_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_smsd.log"
+        self.trimmed_prism_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_trimmed_prismd.log"
+        self.trimmed_tomcat_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_trimmed_tomcat.log"
+        self.issue_tlog_path = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_issue_tlog_record.txt"
 
     def process(self, is_tomcat, is_prism, is_sms, is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object):
         dictionary_of_tlogs = {}
