@@ -13,7 +13,9 @@ from log_processor import PROCESSOR
 class Main:
 
     def init(self):
+        
         logging.basicConfig(filename='log_aggregator.log', filemode='w', format='[%(asctime)s,%(msecs)d]%(pathname)s:(%(lineno)d)-%(levelname)s - %(message)s', datefmt='%y-%m-%d %H:%M:%S', level=logging.DEBUG)
+        
         
         start = time.time()
         logging.debug(start)
@@ -120,6 +122,10 @@ class Main:
         
         duration = end - start
         logging.debug('Total time taken %s', duration)
+        
+        if Path('log_aggregator.log').exists():
+            shutil.move('log_aggregator.log', 'out/log_aggregator.log')
+            
 
 
 if __name__ == '__main__':

@@ -15,7 +15,8 @@ class TDLogParser:
     """
     Parse the daemon log based on tlog input
     """
-    def __init__(self, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, is_prism, is_sms, outputDirectory_object):
+    def __init__(self, msisdn, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, is_prism, is_sms, tomcat_thread_outfile, prismd_thread_outfile, smsd_thread_outfile, trimmed_tomcat_outfile, trimmed_prism_outfile, issue_tlog_path):
+        self.msisdn = msisdn
         self.input_date = input_date
         self.initializedPath_object = initializedPath_object
         self.dictionary_of_tlogs = dictionary_of_tlogs
@@ -28,10 +29,14 @@ class TDLogParser:
         self.__final_index = 0
         self.__task_type = ""
         # self.is_prism_processing_required = True
-        self.outputDirectory_object = outputDirectory_object
-        self.trimmed_prism_outfile = self.outputDirectory_object/"trimmed_prismd.log"
-        self.trimmed_tomcat_outfile = self.outputDirectory_object/"trimmed_tomcat.log"
-        self.issue_tlog_path = self.outputDirectory_object/"issue_tlog_record.txt"
+        #out files
+        self.tomcat_thread_outfile = tomcat_thread_outfile
+        self.prismd_thread_outfile = prismd_thread_outfile
+        self.smsd_thread_outfile = smsd_thread_outfile
+        self.trimmed_tomcat_outfile = trimmed_tomcat_outfile
+        self.trimmed_prism_outfile = trimmed_prism_outfile
+        self.issue_tlog_path = issue_tlog_path
+        
         self.issue_tlog_data_prism = ""
         self.issue_tlog_data_tomcat = ""
         self.issue_tlog_data_sms = ""
@@ -142,6 +147,7 @@ class TDLogParser:
         logging.info('Going to parse sms tlog for INVALID/RETRY_EXCEEDED/PENDING/SUSPENDED/QUEUED cases.')
         
         log_writer = FileWriter()
+        # log_writer = FileWriter()
         
         self.is_issue_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_issue_sms_tlog)
         
@@ -205,29 +211,30 @@ class TDLogParser:
             
             if not self.is_await_push_tlog:
                 logging.info('Going to fetch tomcat daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
-                daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
+                daemonLog_object = DaemonLog(self.msisdn, self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile)
                 daemonLog_object.get_tomcat_log()
-                if daemonLog_object.tomcat_thread_outfile.exists():
+                
+                if self.tomcat_thread_outfile:
                     if self.is_error_tlog:
-                        self.find_issue_daemon_log(daemonLog_object.tomcat_thread_outfile, TlogErrorTag)
+                        self.find_issue_daemon_log(self.tomcat_thread_outfile, TlogErrorTag)
                         
                     elif self.is_lowbal_tlog:
-                        self.find_issue_daemon_log(daemonLog_object.tomcat_thread_outfile, TlogLowBalTag)
+                        self.find_issue_daemon_log(self.tomcat_thread_outfile, TlogLowBalTag)
                                     
                     elif self.is_retry_tlog:
-                        self.find_issue_daemon_log(daemonLog_object.tomcat_thread_outfile, TlogRetryTag)
+                        self.find_issue_daemon_log(self.tomcat_thread_outfile, TlogRetryTag)
                     
                     elif self.is_nhf_tlog:
-                        self.find_issue_daemon_log(daemonLog_object.tomcat_thread_outfile, TlogNHFTag)
+                        self.find_issue_daemon_log(self.tomcat_thread_outfile, TlogNHFTag)
                     
                     elif self.is_handler_exp:
-                        self.find_issue_daemon_log(daemonLog_object.tomcat_thread_outfile, TlogHandlerExp)
+                        self.find_issue_daemon_log(self.tomcat_thread_outfile, TlogHandlerExp)
                     
-                    
+                    logging.info('is issue thread: %s', self.is_issue_in_thread)
                     if self.is_issue_in_thread:
                 
                         for ttype in TaskType:
-                            with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                            with open(self.tomcat_thread_outfile, "r") as read_file:
                                 for i, line in enumerate(read_file):
                                     if self.task == ttype.name:
                                         self.set_task_type(ttype.value)
@@ -236,7 +243,7 @@ class TDLogParser:
                         if self.is_nhf_tlog:
                             self.set_final_index(self.get_initial_index() - 1)
                         else:
-                            with open(daemonLog_object.tomcat_thread_outfile, "r") as read_file:
+                            with open(self.tomcat_thread_outfile, "r") as read_file:
                                 if self.get_task_type() == "S":
                                     serach_string = f'-process handler params for task {self.get_task_type()} for subType:A'
                                 else:
@@ -247,7 +254,7 @@ class TDLogParser:
                                         self.set_final_index(i)
                                         break
                         
-                        log_writer.write_trimmed_thread_log(daemonLog_object.tomcat_thread_outfile, self.trimmed_tomcat_outfile, self.get_initial_index(), self.get_final_index())
+                        log_writer.write_trimmed_thread_log(self.tomcat_thread_outfile, self.trimmed_tomcat_outfile, self.get_initial_index(), self.get_final_index())
 
                     else:
                         logging.debug('%s present without containing the issue tag.', self.dictionary_of_search_value["THREAD"])
@@ -260,29 +267,30 @@ class TDLogParser:
             if not self.is_timeout_tlog and not self.is_await_push_tlog:
                 
                 logging.info('Going to fetch prism daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
-                daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
+                daemonLog_object = DaemonLog(self.msisdn, self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile)
                 daemonLog_object.get_prism_log()
-                if daemonLog_object.prismd_thread_outfile.exists():
+                logging.info('daemon out file: %s', self.prismd_thread_outfile)
+                if self.prismd_thread_outfile:
                     if self.is_error_tlog:
-                        self.find_issue_daemon_log(daemonLog_object.prismd_thread_outfile, TlogErrorTag)
+                        self.find_issue_daemon_log(self.prismd_thread_outfile, TlogErrorTag)
                                     
                     elif self.is_lowbal_tlog:
-                        self.find_issue_daemon_log(daemonLog_object.prismd_thread_outfile, TlogLowBalTag)
+                        self.find_issue_daemon_log(self.prismd_thread_outfile, TlogLowBalTag)
                                     
                     elif self.is_retry_tlog:
-                        self.find_issue_daemon_log(daemonLog_object.prismd_thread_outfile, TlogRetryTag)
+                        self.find_issue_daemon_log(self.prismd_thread_outfile, TlogRetryTag)
                     
                     elif self.is_nhf_tlog:
-                        self.find_issue_daemon_log(daemonLog_object.prismd_thread_outfile, TlogNHFTag)
+                        self.find_issue_daemon_log(self.prismd_thread_outfile, TlogNHFTag)
                     
                     elif self.is_await_push_tlog:
-                        self.find_issue_daemon_log(daemonLog_object.prismd_thread_outfile, TlogAwaitPushTag)
+                        self.find_issue_daemon_log(self.prismd_thread_outfile, TlogAwaitPushTag)
                     
                     if self.is_issue_in_thread:
                         logging.info('is issue thread:%s', self.is_issue_in_thread)
                                        
                         for ttype in TaskType:
-                            with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
+                            with open(self.prismd_thread_outfile, "r") as read_file:
                                 for i, line in enumerate(read_file):
                                     if self.task == ttype.name:
                                         self.set_task_type(ttype.value)
@@ -291,7 +299,7 @@ class TDLogParser:
                         if self.is_nhf_tlog:
                             self.set_final_index(self.get_initial_index() - 1)
                         else:
-                            with open(daemonLog_object.prismd_thread_outfile, "r") as read_file:
+                            with open(self.prismd_thread_outfile, "r") as read_file:
                                 if self.get_task_type() == "S":
                                     serach_string = f'-process handler params for task {self.get_task_type()} for subType:A'
                                 else:
@@ -302,7 +310,7 @@ class TDLogParser:
                                         self.set_final_index(i)
                                         break
                             
-                        log_writer.write_trimmed_thread_log(daemonLog_object.prismd_thread_outfile, self.trimmed_prism_outfile, self.get_initial_index(), self.get_final_index())
+                        log_writer.write_trimmed_thread_log(self.prismd_thread_outfile, self.trimmed_prism_outfile, self.get_initial_index(), self.get_final_index())
 
                     else:
                         logging.debug('%s present without containing the issue tag.', self.dictionary_of_search_value["THREAD"])
@@ -316,18 +324,21 @@ class TDLogParser:
         if len(self.issue_tlog_data_sms) != 0 and self.is_issue_sms_tlog:
                 
             logging.info('Going to fetch sms daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
-            daemonLog_object = DaemonLog(self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.outputDirectory_object)
+            daemonLog_object = DaemonLog(self.msisdn, self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile)
             daemonLog_object.get_sms_log()
     
     def find_issue_daemon_log(self, outfile, tlogTags):
-        for status in tlogTags:
-            with open(outfile, "r") as read_file:
-                for i, line in enumerate(read_file):
-                    if re.search(r"\b{}\b".format(str(status.value)), line):
-                        self.set_initial_index(i)
-                        self.task = status.name
-                        self.is_issue_in_thread = True
-                        break
+        try:
+            for status in tlogTags:
+                with open(outfile, "r") as read_file:
+                    for i, line in enumerate(read_file):
+                        if re.search(r"\b{}\b".format(str(status.value)), line):
+                            self.set_initial_index(i)
+                            self.task = status.name
+                            self.is_issue_in_thread = True
+                            break
+        except FileNotFoundError as ex:
+            logging.info('No out file generated for daemon log. Hence log trimming could not be done.')
                     
     def get_initial_index(self):
         """

@@ -12,15 +12,18 @@ class DaemonLog:
     """
     daemon log get class
     """
-    def __init__(self, input_date, worker_log_recod_list, worker_thread, initializedPath_object, outputDirectory_object):
+    def __init__(self, msisdn, input_date, worker_log_recod_list, worker_thread, initializedPath_object, tomcat_thread_outfile, prismd_thread_outfile, smsd_thread_outfile):
+        self.msisdn = msisdn
         self.input_date = input_date
         self.worker_log_recod_list = worker_log_recod_list
         self.worker_thread = worker_thread
         self.initializedPath_object = initializedPath_object
         self.is_backup_path = False
-        self.tomcat_thread_outfile = outputDirectory_object/"tomcat.log"
-        self.prismd_thread_outfile = outputDirectory_object/"prismd.log"
-        self.smsd_thread_outfile = outputDirectory_object/"smsd.log"
+        
+        self.tomcat_thread_outfile = tomcat_thread_outfile
+        self.prismd_thread_outfile = prismd_thread_outfile
+        self.smsd_thread_outfile = smsd_thread_outfile
+
     
     def get_tomcat_log(self):
         """
@@ -178,9 +181,10 @@ class DaemonLog:
             if is_backup_path:
                 worker_thread_log = subprocess.check_output(f"zgrep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 record = [data for data in worker_thread_log]
+
             else:
-                worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
-                record = [data for data in worker_thread_log.stdout]
+                worker_thread_log = subprocess.check_output(f"grep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                record = [data for data in worker_thread_log]
             
             log_writer.write_complete_thread_log(record, self.tomcat_thread_outfile)
             
@@ -193,9 +197,10 @@ class DaemonLog:
             if is_backup_path:
                 worker_thread_log = subprocess.check_output(f"zgrep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 record = [data for data in worker_thread_log]
+
             else:
-                worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
-                record = [data for data in worker_thread_log.stdout]
+                worker_thread_log = subprocess.check_output(f"grep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                record = [data for data in worker_thread_log]
             
             log_writer.write_complete_thread_log(record, self.prismd_thread_outfile)
             
@@ -208,9 +213,10 @@ class DaemonLog:
             if is_backup_path:
                 worker_thread_log = subprocess.check_output(f"zgrep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 record = [data for data in worker_thread_log]
+                    
             else:
-                worker_thread_log = subprocess.run(["grep", f"{self.worker_thread}", f"{logPath}"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
-                record = [data for data in worker_thread_log.stdout]
+                worker_thread_log = subprocess.check_output(f"grep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                record = [data for data in worker_thread_log]
             
             log_writer.write_complete_thread_log(record, self.smsd_thread_outfile)
             
