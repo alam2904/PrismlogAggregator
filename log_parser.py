@@ -7,6 +7,7 @@ from subprocess import PIPE
 from datetime import datetime
 from pathlib import Path
 import re
+import os
 from daemon_log import DaemonLog
 from outfile_writer import FileWriter
 from tlog_tag import TaskType, TlogAwaitPushTag, TlogAwaitPushTimeOutTag, TlogErrorTag, TlogHandlerExp, TlogLowBalTag, TlogRetryTag, TlogNHFTag, TlogSmsTag
@@ -109,7 +110,11 @@ class TDLogParser:
                 self.fetch_access_log(msisdn, "/subscription/ChargeGift?", access_path, date_formated)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'V':
                 self.fetch_access_log(msisdn, "/subscription/AddRenewalTrigger?", access_path, date_formated)
-    
+
+            if not tlogParser_object.filtered_tomcat_tlog:
+                if os.path.isfile(self.issue_tlog_path) and os.path.getsize(self.issue_tlog_path) != 0:
+                    os.remove(self.issue_tlog_path)
+                
             log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
             
             self.issue_tlog_data_prism = tlogParser_object.filtered_prism_tlog[-1]
@@ -128,6 +133,9 @@ class TDLogParser:
                 self.fetch_access_log(msisdn, "/subscription/RealTimeCharge?", access_path, date_formated)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'F':
                 self.fetch_access_log(msisdn, "/subscription/RealTimeTransactionRefund?", access_path, date_formated)
+            
+            if os.path.isfile(self.issue_tlog_path) and os.path.getsize(self.issue_tlog_path) != 0:
+                os.remove(self.issue_tlog_path)
                 
             log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
                
@@ -285,6 +293,9 @@ class TDLogParser:
                     
                     elif self.is_await_push_tlog:
                         self.find_issue_daemon_log(self.prismd_thread_outfile, TlogAwaitPushTag)
+                    
+                    elif self.is_handler_exp:
+                        self.find_issue_daemon_log(self.prismd_thread_outfile, TlogHandlerExp)
                     
                     if self.is_issue_in_thread:
                         logging.info('is issue thread:%s', self.is_issue_in_thread)

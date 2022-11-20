@@ -5,7 +5,9 @@ import sys
 import time
 import logging
 from pathlib import Path
+from datetime import datetime, timedelta
 import shutil
+import os
 from input_validation import InputValidation
 from path_initializer import LogPathFinder
 from log_processor import PROCESSOR
@@ -16,9 +18,33 @@ class Main:
         
         logging.basicConfig(filename='log_aggregator.log', filemode='w', format='[%(asctime)s,%(msecs)d]%(pathname)s:(%(lineno)d)-%(levelname)s - %(message)s', datefmt='%y-%m-%d %H:%M:%S', level=logging.DEBUG)
         
-        
         start = time.time()
         logging.debug(start)
+        
+        
+    
+        bdt = datetime.today() - timedelta(days=3)
+        back_date = datetime.strftime(bdt, "%Y-%m-%d")
+        logging.info('back date: %s', back_date)
+        
+        outputDirectory_object = Path('out')
+        try:
+            outputDirectory_object.mkdir(exist_ok=False)
+        except FileExistsError as error:
+            logging.info('out directory already exists. Going to fetch 3 days old files from today and remove.')
+            outfiles = [p for p in outputDirectory_object.glob(f"*_{back_date}_*.*")]
+            if bool(outfiles):
+                for file in outfiles:
+                    if os.path.isfile(file):
+                        os.remove(file)
+                        logging.info('3 day back dated files removed: %s', file)
+                    else:
+                        logging.info('back dated file does not exists: %s', file)
+            else:
+                logging.info('back dated file does not exists')
+                
+            # outputDirectory_object.mkdir()
+            # shutil.rmtree(outputDirectory_object)
 
         logging.info('Log aggregation started')
         logging.info("******************************")
@@ -92,13 +118,6 @@ class Main:
                     is_sms = initializedPath_object.is_sms
                     is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
                     
-                    outputDirectory_object = Path('out')
-                    try:
-                        outputDirectory_object.mkdir(exist_ok=False)
-                    except FileExistsError as error:
-                        logging.info('out directory already exists. Hence flushing and recreating the same.')
-                        shutil.rmtree(outputDirectory_object)
-                        outputDirectory_object.mkdir()
 
                     processor_object = PROCESSOR(msisdn, input_date, outputDirectory_object)
                     processor_object.process(is_tomcat, is_prism, is_sms, is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
