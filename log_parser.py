@@ -4,6 +4,7 @@ importing required modules
 import logging
 import subprocess
 from subprocess import PIPE
+import signal
 from datetime import datetime
 from pathlib import Path
 import re
@@ -97,25 +98,26 @@ class TDLogParser:
             logging.info('Issue tlog found. Going to fetch access log.')
                 
             if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
-                self.fetch_access_log(msisdn, "/subscription/ActivateSubscription?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/ActivateSubscription?", access_path)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
-                self.fetch_access_log(msisdn, "/subscription/DeactivateSubscription?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/DeactivateSubscription?", access_path)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'E':
-                self.fetch_access_log(msisdn, "/subscription/EventCharge?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/EventCharge?", access_path)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'U':
-                self.fetch_access_log(msisdn, "/subscription/UpgradeSubscription?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/UpgradeSubscription?", access_path)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'T':
-                self.fetch_access_log(msisdn, "/subscription/TriggerCharge?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/TriggerCharge?", access_path)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'G':
-                self.fetch_access_log(msisdn, "/subscription/ChargeGift?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/ChargeGift?", access_path)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'V':
-                self.fetch_access_log(msisdn, "/subscription/AddRenewalTrigger?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/AddRenewalTrigger?", access_path)
 
             if not tlogParser_object.filtered_tomcat_tlog:
                 if os.path.isfile(self.issue_tlog_path) and os.path.getsize(self.issue_tlog_path) != 0:
                     os.remove(self.issue_tlog_path)
-                
-            log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
+            
+            if self.acc_log:  
+                log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
             
             self.issue_tlog_data_prism = tlogParser_object.filtered_prism_tlog[-1]
             log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_prism)
@@ -124,20 +126,22 @@ class TDLogParser:
         elif tlogParser_object.filtered_tomcat_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog or self.is_handler_exp):
             
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
+            
             logging.info('Issue tlog found. Going to fetch access log.')
             if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeActivate?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/RealTimeActivate?", access_path)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeDeactivate?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/RealTimeDeactivate?", access_path)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'E':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeCharge?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/RealTimeCharge?", access_path)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'F':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeTransactionRefund?", access_path, date_formated)
+                self.fetch_access_log(msisdn, "/subscription/RealTimeTransactionRefund?", access_path)
             
             if os.path.isfile(self.issue_tlog_path) and os.path.getsize(self.issue_tlog_path) != 0:
                 os.remove(self.issue_tlog_path)
-                
-            log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
+            
+            if self.acc_log:
+                log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
                
             self.issue_tlog_data_tomcat = tlogParser_object.filtered_tomcat_tlog[-1]
             log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_tomcat)
@@ -170,20 +174,24 @@ class TDLogParser:
         
         self.get_trimmed_thread_log()
     
-    def fetch_access_log(self, msisdn, search_string, access_path, date_formated):
+    def fetch_access_log(self, msisdn, search_string, access_path):
         try:
-            access_log = subprocess.run(["grep", f"{search_string}", f"{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
-            for data in access_log.stdout.splitlines():
-                if re.search(r"\b{}\b".format(str(msisdn)),data):
-                    self.acc_log = f"{data}{self.new_line}"
-        except subprocess.CalledProcessError as ex:
-            try: 
-                access_log = subprocess.run(["grep", f"{search_string}", f"{self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/localhost_access_log.{date_formated[0]}-{date_formated[1]}-{date_formated[2]}.txt"], stdout=PIPE, stderr=PIPE, universal_newlines=True, check=True)
-                for data in access_log.stdout.splitlines():
+            access_log = subprocess.check_output(f"grep {search_string} {access_path}/localhost_access_log*.txt", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            
+            for record in access_log.splitlines():
+                for data in record.split("-"):
                     if re.search(r"\b{}\b".format(str(msisdn)),data):
                         self.acc_log = f"{data}{self.new_line}"
-            except subprocess.CalledProcessError as ex:
-                    logging.info('No access log found')
+        except subprocess.CalledProcessError as ex:
+            try: 
+                access_log = subprocess.check_output(f"grep {search_string} {self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/localhost_access_log*.txt", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                
+                for record in access_log.splitlines():
+                    for data in record.split("-"):
+                        if re.search(r"\b{}\b".format(str(msisdn)),data):
+                            self.acc_log = f"{data}{self.new_line}"
+            except subprocess.CalledProcessError as ex:            
+                logging.info('No access log found')
         
 
     def parse_tlog(self, tlogTags, is_tlog):
