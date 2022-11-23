@@ -25,14 +25,11 @@ class TDLogParser:
         self.dictionary_of_tlogs = dictionary_of_tlogs
         self.dictionary_of_search_value = dictionary_of_search_value
         self.worker_log_recod_list = worker_log_recod_list
-        # self.is_tomcat = is_tomcat
-        # self.is_prism = is_prism
-        # self.is_sms = is_sms
+
         self.__initial_index = 0
         self.__final_index = 0
         self.__task_type = ""
-        # self.is_prism_processing_required = True
-        #out files
+
         self.tomcat_thread_outfile = tomcat_thread_outfile
         self.prismd_thread_outfile = prismd_thread_outfile
         self.smsd_thread_outfile = smsd_thread_outfile
@@ -60,7 +57,7 @@ class TDLogParser:
         self.acc_log = []
         self.new_line = '\n'
         self.is_issue_in_thread = False
-        self.is_access_log = False
+
 
     def parse(self, tlogParser_object, msisdn):
         """

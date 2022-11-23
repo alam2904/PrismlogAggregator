@@ -40,9 +40,6 @@ class Main:
                         logging.info('back dated file does not exists: %s', file)
             else:
                 logging.info('back dated file does not exists')
-                
-            # outputDirectory_object.mkdir()
-            # shutil.rmtree(outputDirectory_object)
 
         logging.info('Log aggregation started')
         logging.info("******************************")
