@@ -11,22 +11,23 @@ import re
 import os
 from daemon_log import DaemonLog
 from outfile_writer import FileWriter
+from configparser import ConfigParser
 from tlog_tag import TaskType, TlogAwaitPushTag, TlogAwaitPushTimeOutTag, TlogErrorTag, TlogHandlerExp, TlogLowBalTag, TlogRetryTag, TlogNHFTag, TlogSmsTag
 
 class TDLogParser:
     """
     Parse the daemon log based on tlog input
     """
-    def __init__(self, msisdn, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, is_prism, is_sms, tomcat_thread_outfile, prismd_thread_outfile, smsd_thread_outfile, trimmed_tomcat_outfile, trimmed_prism_outfile, issue_tlog_path):
+    def __init__(self, msisdn, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, tomcat_thread_outfile, prismd_thread_outfile, smsd_thread_outfile, trimmed_tomcat_outfile, trimmed_prism_outfile, issue_tlog_path, file):
         self.msisdn = msisdn
         self.input_date = input_date
         self.initializedPath_object = initializedPath_object
         self.dictionary_of_tlogs = dictionary_of_tlogs
         self.dictionary_of_search_value = dictionary_of_search_value
         self.worker_log_recod_list = worker_log_recod_list
-        self.is_tomcat = is_tomcat
-        self.is_prism = is_prism
-        self.is_sms = is_sms
+        # self.is_tomcat = is_tomcat
+        # self.is_prism = is_prism
+        # self.is_sms = is_sms
         self.__initial_index = 0
         self.__final_index = 0
         self.__task_type = ""
@@ -38,6 +39,7 @@ class TDLogParser:
         self.trimmed_tomcat_outfile = trimmed_tomcat_outfile
         self.trimmed_prism_outfile = trimmed_prism_outfile
         self.issue_tlog_path = issue_tlog_path
+        self.file = file
         
         self.issue_tlog_data_prism = ""
         self.issue_tlog_data_tomcat = ""
@@ -58,6 +60,7 @@ class TDLogParser:
         self.acc_log = []
         self.new_line = '\n'
         self.is_issue_in_thread = False
+        self.is_access_log = False
 
     def parse(self, tlogParser_object, msisdn):
         """
@@ -96,7 +99,7 @@ class TDLogParser:
                 
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
             logging.info('Issue tlog found. Going to fetch access log.')
-                
+            
             if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
                 self.fetch_access_log(msisdn, "/subscription/ActivateSubscription?", access_path)
             elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
@@ -175,8 +178,10 @@ class TDLogParser:
         self.get_trimmed_thread_log()
     
     def fetch_access_log(self, msisdn, search_string, access_path):
+        config = ConfigParser()
+        config.read(self.file)
         try:
-            access_log = subprocess.check_output(f"grep {search_string} {access_path}/localhost_access_log*.txt", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config['tomcat_access']['PREFIX']}*.{config['tomcat_access']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
             
             for record in access_log.splitlines():
                 for data in record.split("-"):
@@ -184,7 +189,7 @@ class TDLogParser:
                         self.acc_log = f"{data}{self.new_line}"
         except subprocess.CalledProcessError as ex:
             try: 
-                access_log = subprocess.check_output(f"grep {search_string} {self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/localhost_access_log*.txt", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                access_log = subprocess.check_output(f"grep {search_string} {self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/{config['tomcat_access']['PREFIX']}*.{config['tomcat_access']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 
                 for record in access_log.splitlines():
                     for data in record.split("-"):

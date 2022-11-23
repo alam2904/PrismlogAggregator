@@ -20,8 +20,6 @@ class Main:
         
         start = time.time()
         logging.debug(start)
-        
-        
     
         bdt = datetime.today() - timedelta(days=3)
         back_date = datetime.strftime(bdt, "%Y-%m-%d")
@@ -66,7 +64,9 @@ class Main:
             logging.info('\n')
             
             if validation_object.is_input_valid:
-                initializedPath_object = LogPathFinder()
+                file = Path('path_config.properties')
+                initializedPath_object = LogPathFinder(file)
+
                 try:
                     initializedPath_object.initialize_tomcat_path()
                     logging.info('TOMCAT PATH INITIALIZED')
@@ -108,19 +108,13 @@ class Main:
                     
                 logging.info('\n')
 
-                if initializedPath_object.is_tomcat or initializedPath_object.is_prsim or initializedPath_object.is_sms:
-                    is_tomcat = initializedPath_object.is_tomcat
+                if initializedPath_object.is_tomcat_tlog_path or initializedPath_object.is_prism_tlog_path or initializedPath_object.is_sms_tlog_path:
                     is_tomcat_tlog_path = initializedPath_object.is_tomcat_tlog_path
-                    
-                    is_prism = initializedPath_object.is_prsim
                     is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
-                    
-                    is_sms = initializedPath_object.is_sms
                     is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
                     
-
-                    processor_object = PROCESSOR(msisdn, input_date, outputDirectory_object)
-                    processor_object.process(is_tomcat, is_prism, is_sms, is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
+                    processor_object = PROCESSOR(msisdn, input_date, outputDirectory_object, file)
+                    processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
                 else:
                     logging.error('Since none of the process running. Process failed to aggregate log.')
 
