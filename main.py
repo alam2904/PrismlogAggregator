@@ -11,7 +11,7 @@ import os
 from input_validation import InputValidation
 from path_initializer import LogPathFinder
 from log_processor import PROCESSOR
-
+from configparser import ConfigParser
 class Main:
 
     def init(self):
@@ -61,62 +61,77 @@ class Main:
             logging.info('\n')
             
             if validation_object.is_input_valid:
-                file = Path('path_config.properties')
-                initializedPath_object = LogPathFinder(file)
+                file = Path('config.properties')
+                if file.exists():
+                    initializedPath_object = LogPathFinder(file)
+                    config = ConfigParser()
+                    config.read(file)
+            
+                    if config.has_option('tomcat', 'TRANS_BASE_DIR'):
+                        try:
+                            initializedPath_object.initialize_tomcat_path('tomcat')
+                            logging.info('TOMCAT PATH INITIALIZED')
+                            formatter = "#" * 100
+                            logging.info('%s', formatter)
+                            for key, value in initializedPath_object.tomcat_log_path_dict.items():
+                                logging.info('%s : %s', key, value)
+                        except ValueError as error:
+                            logging.warning('Tomcat path not initialized. %s', error)
+                        except Exception as error:
+                                logging.warning(error)
+                    else:
+                        logging.error('tomcat TRANS_BASE_DIR path not present in config.properties')
+                    
+                    logging.info('\n')
+                    
+                    if config.has_option('prismd', 'TRANS_BASE_DIR'):
+                        try:
+                            initializedPath_object.initialize_prism_path('prismd')
+                            logging.info('PRISM PATH INITIALIZED')
+                            formatter = "#" * 100
+                            logging.info('%s', formatter)
+                            for key, value in initializedPath_object.prism_log_path_dict.items():
+                                logging.info('%s : %s', key, value)
+                        except ValueError as error:
+                            logging.warning('Prism path not initialized. %s', error)
+                        except Exception as error:
+                            logging.warning(error)
+                    else:
+                        logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
+                        
+                    logging.info('\n')
+                    
+                    if config.has_option('smsd', 'TRANS_BASE_DIR'):
+                        try:
+                            initializedPath_object.initialize_sms_path('smsd')
+                            logging.info('SMS PATH INITIALIZED')
+                            formatter = "#" * 100
+                            logging.info('%s', formatter)
+                            for key, value in initializedPath_object.sms_log_path_dict.items():
+                                logging.info('%s : %s', key, value)
+                        except ValueError as error:
+                            logging.warning('SMS path not initialized. %s', error)
+                        except Exception as error:
+                            logging.warning(error)
+                    else:
+                        logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
+                        
+                    logging.info('\n')
 
-                try:
-                    initializedPath_object.initialize_tomcat_path()
-                    logging.info('TOMCAT PATH INITIALIZED')
-                    formatter = "#" * 100
-                    logging.info('%s', formatter)
-                    for key, value in initializedPath_object.tomcat_log_path_dict.items():
-                        logging.info('%s : %s', key, value)
-                except ValueError as error:
-                    logging.warning('Tomcat path not initialized. %s', error)
-                except Exception as error:
-                        logging.warning(error)
-                
-                logging.info('\n')
-                try:
-                    initializedPath_object.initialize_prism_path()
-                    logging.info('PRISM PATH INITIALIZED')
-                    formatter = "#" * 100
-                    logging.info('%s', formatter)
-                    for key, value in initializedPath_object.prism_log_path_dict.items():
-                        logging.info('%s : %s', key, value)
-                except ValueError as error:
-                    logging.warning('Prism path not initialized. %s', error)
-                except Exception as error:
-                    logging.warning(error)
-                    
-                logging.info('\n')
-                
-                try:
-                    initializedPath_object.initialize_sms_path()
-                    logging.info('SMS PATH INITIALIZED')
-                    formatter = "#" * 100
-                    logging.info('%s', formatter)
-                    for key, value in initializedPath_object.sms_log_path_dict.items():
-                        logging.info('%s : %s', key, value)
-                except ValueError as error:
-                    logging.warning('SMS path not initialized. %s', error)
-                except Exception as error:
-                    logging.warning(error)
-                    
-                logging.info('\n')
+                    if initializedPath_object.is_tomcat_tlog_path or initializedPath_object.is_prism_tlog_path or initializedPath_object.is_sms_tlog_path:
+                        is_tomcat_tlog_path = initializedPath_object.is_tomcat_tlog_path
+                        is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
+                        is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
+                        
+                        processor_object = PROCESSOR(msisdn, input_date, outputDirectory_object, file)
+                        processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
+                    else:
+                        logging.error('Transaction log path initialization failed.')
 
-                if initializedPath_object.is_tomcat_tlog_path or initializedPath_object.is_prism_tlog_path or initializedPath_object.is_sms_tlog_path:
-                    is_tomcat_tlog_path = initializedPath_object.is_tomcat_tlog_path
-                    is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
-                    is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
-                    
-                    processor_object = PROCESSOR(msisdn, input_date, outputDirectory_object, file)
-                    processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
+                    logging.info('Log aggregation finished')
+                    logging.info("**********************************")
                 else:
-                    logging.error('Since none of the process running. Process failed to aggregate log.')
-
-                logging.info('Log aggregation finished')
-                logging.info("**********************************")
+                    logging.error('config.properties file does not exists. Hence process failed')
                 
             else:
                 logging.error('Invalid input. Log aggregation failed to process')

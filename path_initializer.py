@@ -22,6 +22,10 @@ class LogPathFinder():
         self.is_tomcat_tlog_path = False
         self.is_prism_tlog_path = False
         self.is_sms_tlog_path = False
+        self.is_access_path = False
+        self.is_tomcat_daemon_path = False
+        self.is_prismd_daemon_path = False
+        self.is_smsd_daemon_path = False
         
         self.logger_list = []
         self.logger_dict = {}
@@ -74,37 +78,52 @@ class LogPathFinder():
         self.generic_server_reverse_map_log_path = "generic_server_reverse_map_log_path"
         self.generic_server_reverse_map_log_backup_path = "generic_server_reverse_map_log_backup_path"
 
-    def parse_transaction_logging(self):
+    def parse_transaction_logging(self, pname):
         """
         Parse conf
         """
         config = ConfigParser()
         config.read(self.file)
         
-        for pname in config.sections():
-            if pname == "tomcat_access":
-                self.tomcat_log_path_dict[self.tomcat_access_path] = config[pname]['ACCESS_LOG']
+        if config.has_option('tomcat_access', 'ACCESS_LOG'):
+            self.tomcat_log_path_dict[self.tomcat_access_path] = config['tomcat_access']['ACCESS_LOG']
+            self.is_access_path = True
+        else:
+            logging.info('access log path not configured in config.properties. Hence will not be fetched')
+            
+        if pname == 'tomcat':
+            self.tomcat_log_path_dict[self.tomcat_base_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/"
+            self.tomcat_log_path_dict[self.tomcat_tlog_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/TLOG/"
+            self.is_tomcat_tlog_path = True
                 
-            elif pname == "tomcat":
-                self.tomcat_log_path_dict[self.tomcat_base_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/"
-                self.tomcat_log_path_dict[self.tomcat_tlog_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/TLOG/"
-                self.is_tomcat_tlog_path = True
-                
+            if config.has_option('tomcat', 'LOG4J2_XML'):
                 self.parse_logger(config[pname]['LOG4J2_XML'], pname)
+                self.is_tomcat_daemon_path = True
+            else:
+                logging.error('tomcat LOG4J2_XML not configured in config.properties')
 
-            elif pname == "prismd":
-                self.prism_log_path_dict[self.prism_base_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/"
-                self.prism_log_path_dict[self.prism_tlog_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/TLOG/"
-                self.is_prism_tlog_path = True
+        elif pname == 'prismd':
+            self.prism_log_path_dict[self.prism_base_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/"
+            self.prism_log_path_dict[self.prism_tlog_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/TLOG/"
+            self.is_prism_tlog_path = True
                 
+            if config.has_option('prismd', 'LOG4J2_XML'):
                 self.parse_logger(config[pname]['LOG4J2_XML'], pname)
-                        
-            elif pname == "smsd":
-                self.sms_log_path_dict[self.sms_base_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/"
-                self.sms_log_path_dict[self.sms_tlog_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/TLOG/"
-                self.is_sms_tlog_path = True
+                self.is_prismd_daemon_path = True
+            else:
+                logging.error('prismd LOG4J2_XML not configured in config.properties')
+                            
+        elif pname == 'smsd':
+            self.sms_log_path_dict[self.sms_base_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/"
+            self.sms_log_path_dict[self.sms_tlog_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/TLOG/"
+            self.is_sms_tlog_path = True
                 
+            if config.has_option('smsd', 'LOG4J2_XML'):
                 self.parse_logger(config[pname]['LOG4J2_XML'], pname)
+                self.is_smsd_daemon_path = True
+            else:
+                logging.error('smsd LOG4J2_XML not configured in config.properties')
+                    
 
     def parse_logger(self, log4j, pname):
         """
@@ -240,34 +259,34 @@ class LogPathFinder():
         except ET.ParseError as ex:
             logging.debug(ex)
     
-    def initialize_tomcat_path(self):
+    def initialize_tomcat_path(self, tomcat):
         """
         Initialize tomcat path.
         """
         try:
-            self.parse_transaction_logging()
+            self.parse_transaction_logging(tomcat)
         except ValueError as error:
             raise ValueError(error)
         except Exception as error:
             raise
 
-    def initialize_prism_path(self):
+    def initialize_prism_path(self, prismd):
         """
         Initialize prism path
         """
         try:
-            self.parse_transaction_logging()
+            self.parse_transaction_logging(prismd)
         except ValueError as error:
             raise ValueError(error)
         except Exception as error:
             raise
     
-    def initialize_sms_path(self):
+    def initialize_sms_path(self, smsd):
         """
         Initialize sms path
         """
         try:
-            self.parse_transaction_logging()
+            self.parse_transaction_logging(smsd)
         except ValueError as error:
             raise ValueError(error)
         except Exception as error:

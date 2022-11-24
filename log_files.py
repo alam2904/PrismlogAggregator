@@ -165,235 +165,271 @@ class LogFileFinder():
         function to find prism daemon log file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            prism_daemon_log_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_daemon_log_path]}"
-            if prism_daemon_log_path:
-                return prism_daemon_log_path
-            else:
+        if logPath_object.is_prismd_daemon_path:
+            try:
+                prism_daemon_log_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_daemon_log_path]}"
+                if prism_daemon_log_path:
+                    return prism_daemon_log_path
+                else:
+                    logging.debug('Prism daemon log path does not exists')
+                return None
+            except KeyError as ex:
                 logging.debug('Prism daemon log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-            logging.debug('Prism daemon log path does not exists')
     
     def tomcat_daemonlog_file(self):
         """
         function to find tomcat daemon log file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            tomcat_daemon_log_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_daemon_log_path]}"
-            if tomcat_daemon_log_path:
-                return tomcat_daemon_log_path
-            else:
+        if logPath_object.is_tomcat_daemon_path:
+            try:
+                tomcat_daemon_log_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_daemon_log_path]}"
+                if tomcat_daemon_log_path:
+                    return tomcat_daemon_log_path
+                else:
+                    logging.debug('Tomcat daemon log path does not exists')
+                return None
+            except KeyError as ex:
                 logging.debug('Tomcat daemon log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-            logging.debug('Tomcat daemon log path does not exists')
             
     def sms_daemonlog_file(self):
         """
         function to find sms daemon log file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            sms_daemon_log_path = f"{logPath_object.sms_log_path_dict[logPath_object.sms_daemon_log_path]}"
-            if sms_daemon_log_path:
-                return sms_daemon_log_path
-            else:
+        if logPath_object.is_smsd_daemon_path:
+            try:
+                sms_daemon_log_path = f"{logPath_object.sms_log_path_dict[logPath_object.sms_daemon_log_path]}"
+                if sms_daemon_log_path:
+                    return sms_daemon_log_path
+                else:
+                    logging.debug('Sms daemon log path does not exists')
+                return None
+            except KeyError as ex:
                 logging.debug('Sms daemon log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-            logging.debug('Sms daemon log path does not exists')
     
     def prism_rootlog_file(self):
         """
         function to find prism root log file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            prism_root_log_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_root_log_path]}"
-            if prism_root_log_path:
-                return prism_root_log_path
-            else:
+        if logPath_object.is_prismd_daemon_path:
+            try:
+                prism_root_log_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_root_log_path]}"
+                if prism_root_log_path:
+                    return prism_root_log_path
+                else:
+                    logging.debug('Prism root log path does not exists')
+                return None
+            except KeyError as ex:
                 logging.debug('Prism root log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-            logging.debug('Prism root log path does not exists')
-            
     
     def tomcat_rootlog_file(self):
         """
         function to find tomcat root log file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            tomcat_root_log_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_root_log_path]}"
-            if tomcat_root_log_path:
-                return tomcat_root_log_path
-            else:
+        if logPath_object.is_tomcat_daemon_path:
+            try:
+                tomcat_root_log_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_root_log_path]}"
+                if tomcat_root_log_path:
+                    return tomcat_root_log_path
+                else:
+                    logging.debug('Tomcat root log path does not exists')
+                return None
+            except KeyError as ex:
                 logging.debug('Tomcat root log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-            logging.debug('Tomcat root log path does not exists')
             
     def sms_rootlog_file(self):
         """
         function to find sms root log file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            sms_root_log_path = f"{logPath_object.sms_log_path_dict[logPath_object.sms_root_log_path]}"
-            if sms_root_log_path:
-                return sms_root_log_path
-            else:
+        if logPath_object.is_smsd_daemon_path:
+            try:
+                sms_root_log_path = f"{logPath_object.sms_log_path_dict[logPath_object.sms_root_log_path]}"
+                if sms_root_log_path:
+                    return sms_root_log_path
+                else:
+                    logging.debug('Sms root log path does not exists')
+                return None
+            except KeyError as ex:
                 logging.debug('Sms root log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-            logging.debug('Sms root log path does not exists')
-            
 
     def prism_daemonlog_backup_file(self):
         """
         function to find prism daemon log backup file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            prism_daemon_log_backup = f"{logPath_object.prism_log_path_dict[logPath_object.prism_daemon_log_backup_path]}"
-            
-            backup_date = self.input_date
-            date = self.get_backup_date(backup_date)
+        if logPath_object.is_prismd_daemon_path:
+            try:
+                prism_daemon_log_backup = f"{logPath_object.prism_log_path_dict[logPath_object.prism_daemon_log_backup_path]}"
+                
+                backup_date = self.input_date
+                date = self.get_backup_date(backup_date)
 
-            prism_daemon_log_backup_path = f"{prism_daemon_log_backup}{date[0]}-{date[1]}/prismD-{date[0]}-{date[1]}-{date[2]}*.gz"
-            
-            if prism_daemon_log_backup_path:
-                return prism_daemon_log_backup_path
-            else:
-                logging.debug('Prism daemon backup log path does not exists')
+                prism_daemon_log_backup_path = f"{prism_daemon_log_backup}{date[0]}-{date[1]}/prismD-{date[0]}-{date[1]}-{date[2]}*.gz"
+                
+                if prism_daemon_log_backup_path:
+                    return prism_daemon_log_backup_path
+                else:
+                    logging.debug('Prism daemon backup log path does not exists')
+                return None
+            except KeyError as ex:
+                    logging.debug('Prism daemon backup log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-                logging.debug('Prism daemon backup log path does not exists')
     
     def tomcat_daemonlog_backup_file(self):
         """
         function to find tomcat daemon log backup file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            tomcat_daemon_log_backup = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_daemon_log_backup_path]}"
-            
-            backup_date = self.input_date
-            date = self.get_backup_date(backup_date)
+        if logPath_object.is_tomcat_daemon_path:
+            try:
+                tomcat_daemon_log_backup = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_daemon_log_backup_path]}"
+                
+                backup_date = self.input_date
+                date = self.get_backup_date(backup_date)
 
-            tomcat_daemon_log_backup_path = f"{tomcat_daemon_log_backup}{date[0]}-{date[1]}/tomcat-{date[0]}-{date[1]}-{date[2]}*.gz"
-            
-            if tomcat_daemon_log_backup_path:
-                return tomcat_daemon_log_backup_path
-            else:
-                logging.debug('Tomcat daemon backup log path does not exists')
+                tomcat_daemon_log_backup_path = f"{tomcat_daemon_log_backup}{date[0]}-{date[1]}/tomcat-{date[0]}-{date[1]}-{date[2]}*.gz"
+                
+                if tomcat_daemon_log_backup_path:
+                    return tomcat_daemon_log_backup_path
+                else:
+                    logging.debug('Tomcat daemon backup log path does not exists')
+                return None
+            except KeyError as ex:
+                    logging.debug('Tomcat daemon backup log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-                logging.debug('Tomcat daemon backup log path does not exists')
                 
     def sms_daemonlog_backup_file(self):
         """
         function to find sms daemon log backup file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            sms_daemon_log_backup = f"{logPath_object.sms_log_path_dict[logPath_object.sms_daemon_log_backup_path]}"
-            
-            backup_date = self.input_date
-            date = self.get_backup_date(backup_date)
+        if logPath_object.is_sms_daemon_path:
+            try:
+                sms_daemon_log_backup = f"{logPath_object.sms_log_path_dict[logPath_object.sms_daemon_log_backup_path]}"
+                
+                backup_date = self.input_date
+                date = self.get_backup_date(backup_date)
 
-            sms_daemon_log_backup_path = f"{sms_daemon_log_backup}{date[0]}-{date[1]}/smsD-{date[0]}-{date[1]}-{date[2]}*.gz"
-            
-            if sms_daemon_log_backup_path:
-                return sms_daemon_log_backup_path
-            else:
-                logging.debug('Sms daemon backup log path does not exists')
+                sms_daemon_log_backup_path = f"{sms_daemon_log_backup}{date[0]}-{date[1]}/smsD-{date[0]}-{date[1]}-{date[2]}*.gz"
+                
+                if sms_daemon_log_backup_path:
+                    return sms_daemon_log_backup_path
+                else:
+                    logging.debug('Sms daemon backup log path does not exists')
+                return None
+            except KeyError as ex:
+                    logging.debug('Sms daemon backup log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-                logging.debug('Sms daemon backup log path does not exists')
-            
 
     def prism_rootlog_backup_file(self):
         """
         function to find prism root log backup file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            prism_root_log_backup = f"{logPath_object.prism_log_path_dict[logPath_object.prism_root_log_backup_path]}"
-            
-            backup_date = self.input_date
-            date = self.get_backup_date(backup_date)
-            
-            prism_root_log_backup_path = f"{prism_root_log_backup}{date[0]}-{date[1]}/root-{date[0]}-{date[1]}-{date[2]}*.gz"
-            
-            if prism_root_log_backup_path:
-                return prism_root_log_backup_path
-            else:
-                logging.debug('Prism root backup log path does not exists')
+        if logPath_object.is_prismd_daemon_path:
+            try:
+                prism_root_log_backup = f"{logPath_object.prism_log_path_dict[logPath_object.prism_root_log_backup_path]}"
+                
+                backup_date = self.input_date
+                date = self.get_backup_date(backup_date)
+                
+                prism_root_log_backup_path = f"{prism_root_log_backup}{date[0]}-{date[1]}/root-{date[0]}-{date[1]}-{date[2]}*.gz"
+                
+                if prism_root_log_backup_path:
+                    return prism_root_log_backup_path
+                else:
+                    logging.debug('Prism root backup log path does not exists')
+                return None
+            except KeyError as ex:
+                    logging.debug('Prism root backup log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-                logging.debug('Prism root backup log path does not exists')
     
     def tomcat_rootlog_backup_file(self):
         """
         function to find tomcat root log backup file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            tomcat_root_log_backup = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_root_log_backup_path]}"
-            
-            backup_date = self.input_date
-            date = self.get_backup_date(backup_date)
-            
-            tomcat_root_log_backup_path = f"{tomcat_root_log_backup}{date[0]}-{date[1]}/root-{date[0]}-{date[1]}-{date[2]}*.gz"
-            
-            if tomcat_root_log_backup_path:
-                return tomcat_root_log_backup_path
-            else:
-                logging.debug('Tomcat root backup log path does not exists')
+        if logPath_object.is_tomcat_daemon_path:
+            try:
+                tomcat_root_log_backup = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_root_log_backup_path]}"
+                
+                backup_date = self.input_date
+                date = self.get_backup_date(backup_date)
+                
+                tomcat_root_log_backup_path = f"{tomcat_root_log_backup}{date[0]}-{date[1]}/root-{date[0]}-{date[1]}-{date[2]}*.gz"
+                
+                if tomcat_root_log_backup_path:
+                    return tomcat_root_log_backup_path
+                else:
+                    logging.debug('Tomcat root backup log path does not exists')
+                return None
+            except KeyError as ex:
+                    logging.debug('Tomcat root backup log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-                logging.debug('Tomcat root backup log path does not exists')
             
     def sms_rootlog_backup_file(self):
         """
         function to find sms root log backup file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            sms_root_log_backup = f"{logPath_object.sms_log_path_dict[logPath_object.sms_root_log_backup_path]}"
-            
-            backup_date = self.input_date
-            date = self.get_backup_date(backup_date)
-            
-            sms_root_log_backup_path = f"{sms_root_log_backup}{date[0]}-{date[1]}/root-{date[0]}-{date[1]}-{date[2]}*.gz"
-            
-            if sms_root_log_backup_path:
-                return sms_root_log_backup_path
-            else:
-                logging.debug('Sms root backup log path does not exists')
+        if logPath_object.is_smsd_daemon_path:
+            try:
+                sms_root_log_backup = f"{logPath_object.sms_log_path_dict[logPath_object.sms_root_log_backup_path]}"
+                
+                backup_date = self.input_date
+                date = self.get_backup_date(backup_date)
+                
+                sms_root_log_backup_path = f"{sms_root_log_backup}{date[0]}-{date[1]}/root-{date[0]}-{date[1]}-{date[2]}*.gz"
+                
+                if sms_root_log_backup_path:
+                    return sms_root_log_backup_path
+                else:
+                    logging.debug('Sms root backup log path does not exists')
+                return None
+            except KeyError as ex:
+                    logging.debug('Sms root backup log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-                logging.debug('Sms root backup log path does not exists')
                 
     def tomcat_queue_id_99_log_file(self):
         """
         function to find tomcat queue_id_99 log file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            queue_id_99_log_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_queue_id_processor_99_log_path]}"
-            
-            if queue_id_99_log_path:
-                return queue_id_99_log_path
-            else:
+        if logPath_object.is_tomcat_daemon_path:
+            try:
+                queue_id_99_log_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_queue_id_processor_99_log_path]}"
+                
+                if queue_id_99_log_path:
+                    return queue_id_99_log_path
+                else:
+                    logging.debug('tomcat queue_id_99 log path does not exists')
+                return None
+            except KeyError as ex:
                 logging.debug('tomcat queue_id_99 log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-            logging.debug('tomcat queue_id_99 log path does not exists')
             
     
     def prism_queue_id_99_log_file(self):
@@ -401,32 +437,38 @@ class LogFileFinder():
         function to find prism queue_id_99 log file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            queue_id_99_log_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_queue_id_processor_99_log_path]}"
-            
-            if queue_id_99_log_path:
-                return queue_id_99_log_path
-            else:
-                logging.debug('prism queue_id_99 log path does not exists')
+        if logPath_object.is_prismd_daemon_path:
+            try:
+                queue_id_99_log_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_queue_id_processor_99_log_path]}"
+                
+                if queue_id_99_log_path:
+                    return queue_id_99_log_path
+                else:
+                    logging.debug('prism queue_id_99 log path does not exists')
+                return None
+            except KeyError as ex:
+                    logging.debug('prism queue_id_99 log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-                logging.debug('prism queue_id_99 log path does not exists')
     
     def sms_queue_id_99_log_file(self):
         """
         function to find sms queue_id_99 log file path
         """
         logPath_object = self.initializedPath_object
-        try:
-            queue_id_99_log_path = f"{logPath_object.sms_log_path_dict[logPath_object.sms_queue_id_processor_99_log_path]}"
-            
-            if queue_id_99_log_path:
-                return queue_id_99_log_path
-            else:
-                logging.debug('sms queue_id_99 log path does not exists')
+        if logPath_object.is_smsd_daemon_path:
+            try:
+                queue_id_99_log_path = f"{logPath_object.sms_log_path_dict[logPath_object.sms_queue_id_processor_99_log_path]}"
+                
+                if queue_id_99_log_path:
+                    return queue_id_99_log_path
+                else:
+                    logging.debug('sms queue_id_99 log path does not exists')
+                return None
+            except KeyError as ex:
+                    logging.debug('sms queue_id_99 log path does not exists')
+        else:
             return None
-        except KeyError as ex:
-                logging.debug('sms queue_id_99 log path does not exists')
             
 
     def get_backup_date(self, input_date):
