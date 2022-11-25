@@ -68,51 +68,60 @@ class Main:
                     config.read(file)
             
                     if config.has_option('tomcat', 'TRANS_BASE_DIR'):
-                        try:
-                            initializedPath_object.initialize_tomcat_path('tomcat')
-                            logging.info('TOMCAT PATH INITIALIZED')
-                            formatter = "#" * 100
-                            logging.info('%s', formatter)
-                            for key, value in initializedPath_object.tomcat_log_path_dict.items():
-                                logging.info('%s : %s', key, value)
-                        except ValueError as error:
-                            logging.warning('Tomcat path not initialized. %s', error)
-                        except Exception as error:
-                                logging.warning(error)
+                        if config['tomcat']['TRANS_BASE_DIR']:
+                            try:
+                                initializedPath_object.initialize_tomcat_path('tomcat')
+                                logging.info('TOMCAT PATH INITIALIZED')
+                                formatter = "#" * 100
+                                logging.info('%s', formatter)
+                                for key, value in initializedPath_object.tomcat_log_path_dict.items():
+                                    logging.info('%s : %s', key, value)
+                            except ValueError as error:
+                                logging.warning('Tomcat path not initialized. %s', error)
+                            except Exception as error:
+                                    logging.warning(error)
+                        else:
+                            logging.error('tomcat TRANS_BASE_DIR path not present in config.properties')
                     else:
                         logging.error('tomcat TRANS_BASE_DIR path not present in config.properties')
                     
                     logging.info('\n')
                     
                     if config.has_option('prismd', 'TRANS_BASE_DIR'):
-                        try:
-                            initializedPath_object.initialize_prism_path('prismd')
-                            logging.info('PRISM PATH INITIALIZED')
-                            formatter = "#" * 100
-                            logging.info('%s', formatter)
-                            for key, value in initializedPath_object.prism_log_path_dict.items():
-                                logging.info('%s : %s', key, value)
-                        except ValueError as error:
-                            logging.warning('Prism path not initialized. %s', error)
-                        except Exception as error:
-                            logging.warning(error)
+                        if config['prismd']['TRANS_BASE_DIR']:
+                            try:
+                                initializedPath_object.initialize_prism_path('prismd')
+                                logging.info('PRISM PATH INITIALIZED')
+                                formatter = "#" * 100
+                                logging.info('%s', formatter)
+                                for key, value in initializedPath_object.prism_log_path_dict.items():
+                                    logging.info('%s : %s', key, value)
+                            except ValueError as error:
+                                logging.warning('Prism path not initialized. %s', error)
+                            except Exception as error:
+                                logging.warning(error)
+                        else:
+                            logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                     else:
                         logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                         
                     logging.info('\n')
                     
                     if config.has_option('smsd', 'TRANS_BASE_DIR'):
-                        try:
-                            initializedPath_object.initialize_sms_path('smsd')
-                            logging.info('SMS PATH INITIALIZED')
-                            formatter = "#" * 100
-                            logging.info('%s', formatter)
-                            for key, value in initializedPath_object.sms_log_path_dict.items():
-                                logging.info('%s : %s', key, value)
-                        except ValueError as error:
-                            logging.warning('SMS path not initialized. %s', error)
-                        except Exception as error:
-                            logging.warning(error)
+                        if config['smsd']['TRANS_BASE_DIR']:
+                            try:
+                                initializedPath_object.initialize_sms_path('smsd')
+                                logging.info('SMS PATH INITIALIZED')
+                                formatter = "#" * 100
+                                logging.info('%s', formatter)
+                                for key, value in initializedPath_object.sms_log_path_dict.items():
+                                    logging.info('%s : %s', key, value)
+                            except ValueError as error:
+                                logging.warning('SMS path not initialized. %s', error)
+                            except Exception as error:
+                                logging.warning(error)
+                        else:
+                            logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                     else:
                         logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                         

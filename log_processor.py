@@ -14,7 +14,7 @@ class PROCESSOR:
         self.file = file
         self.today_date_time = datetime.strftime(datetime.today(), "%Y-%m-%d")
         
-        self.outputDirectory_object = outputDirectory_object/
+        self.outputDirectory_object = outputDirectory_object
         self.prismd_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_prismd.log"
         self.tomcat_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_tomcat.log"
         self.smsd_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_smsd.log"

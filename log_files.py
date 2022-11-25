@@ -80,7 +80,7 @@ class LogFileFinder():
                 for prism_billing_files in billing_tlog_files_tmp:
                     tlog_files.append(prism_billing_files)
                     
-            else:
+            if not bool(billing_tlog_files_log) and not bool(billing_tlog_files_tmp):
                 logging.debug('Prism billing tlog directory does not have %s dated files', input_trans_date)
             
             return tlog_files
@@ -113,8 +113,8 @@ class LogFileFinder():
             if bool(billing_tlog_files_tmp):
                 for tomcat_billing_files in billing_tlog_files_tmp:
                     tlog_files.append(tomcat_billing_files)
-                
-            else:
+            
+            if not bool(billing_tlog_files_log) and not bool(billing_tlog_files_tmp):
                 logging.debug('Tomcat billing tlog directory does not have %s dated files', input_trans_date)
                 
             return tlog_files
@@ -148,7 +148,7 @@ class LogFileFinder():
                 for sms_files in sms_tlog_files_tmp:
                     tlog_files.append(sms_files)
                     
-            else:
+            if not bool(sms_tlog_files_log) and not bool(sms_tlog_files_tmp):
                 logging.debug('Sms tlog directory does not have %s dated files', input_trans_date)
             
             return tlog_files
@@ -321,7 +321,7 @@ class LogFileFinder():
         function to find sms daemon log backup file path
         """
         logPath_object = self.initializedPath_object
-        if logPath_object.is_sms_daemon_path:
+        if logPath_object.is_smsd_daemon_path:
             try:
                 sms_daemon_log_backup = f"{logPath_object.sms_log_path_dict[logPath_object.sms_daemon_log_backup_path]}"
                 

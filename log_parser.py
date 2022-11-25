@@ -100,10 +100,6 @@ class TDLogParser:
                 
                 if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
                     self.fetch_access_log(msisdn, "/subscription/ActivateSubscription?", access_path)
-                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'R':
-                    self.fetch_access_log(msisdn, "/subscription/RealTimeActivate?", access_path)
-                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'J':
-                    self.fetch_access_log(msisdn, "/subscription/RealTimeActivate?", access_path)
                 elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
                     self.fetch_access_log(msisdn, "/subscription/DeactivateSubscription?", access_path)
                 elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'E':
