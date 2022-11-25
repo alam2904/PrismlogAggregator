@@ -196,7 +196,7 @@ class DaemonLog:
             log_writer = FileWriter()
             try:
                 if is_backup_path:
-                    worker_thread_log = subprocess.check_output(f"zgrep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                    worker_thread_log = subprocess.check_output(f"zcat {logPath} | grep -a {self.worker_thread}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     record = [data for data in worker_thread_log]
 
                 else:
@@ -215,7 +215,8 @@ class DaemonLog:
             log_writer = FileWriter()
             try:
                 if is_backup_path:
-                    worker_thread_log = subprocess.check_output(f"zgrep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                    
+                    worker_thread_log = subprocess.check_output(f"zcat {logPath} | grep -a {self.worker_thread}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     record = [data for data in worker_thread_log]
 
                 else:
@@ -234,7 +235,7 @@ class DaemonLog:
             log_writer = FileWriter()
             try:
                 if is_backup_path:
-                    worker_thread_log = subprocess.check_output(f"zgrep -a {self.worker_thread} {logPath}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                    worker_thread_log = subprocess.check_output(f"zcat {logPath} | grep -a {self.worker_thread}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     record = [data for data in worker_thread_log]
                         
                 else:
