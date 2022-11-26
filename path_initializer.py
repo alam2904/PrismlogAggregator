@@ -12,9 +12,9 @@ class LogPathFinder():
     """
     Path finder class
     """
-    def __init__(self, file):
+    def __init__(self, config):
         
-        self.file = file
+        self.config = config
         self.is_tomcat = False
         self.is_prsim = False
         self.is_sms = False
@@ -82,8 +82,8 @@ class LogPathFinder():
         """
         Parse conf
         """
-        config = ConfigParser()
-        config.read(self.file)
+        # config = ConfigParser()
+        config = self.config
         
         if config.has_option('tomcat_access', 'ACCESS_LOG'):
             self.tomcat_log_path_dict[self.tomcat_access_path] = config['tomcat_access']['ACCESS_LOG']

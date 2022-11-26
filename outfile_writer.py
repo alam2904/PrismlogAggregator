@@ -1,18 +1,43 @@
 import logging
 import os
+import re
 
 class FileWriter:
         
     def write_access_log(self, issue_tlog_path, acc_log):
         logging.info('Access log found. Writing to a file : %s', issue_tlog_path)
-        with open(issue_tlog_path, "a") as write_file:
-            write_file.writelines(acc_log)
+        try:
+            with open(issue_tlog_path, "r") as write_file:
+                for line in write_file:
+                    if acc_log == line:
+                        logging.info('access log exists in tlog out file.')
+                        break
+                else:
+                    with open(issue_tlog_path, "a") as write_file:
+                        logging.info('appending')
+                        write_file.writelines(acc_log)
+        except FileNotFoundError as ex:
+            with open(issue_tlog_path, "a") as write_file:
+                write_file.writelines(acc_log)
             
     def write_issue_tlog(self, issue_tlog_path, issue_tlog_data):
         logging.info('Writing issue tlog to a file: %s', issue_tlog_path)
+        
+        try:   
+            with open(issue_tlog_path, "r") as write_file:
+                for line in write_file:
+                    if issue_tlog_data == line:
+                        logging.info('tlog exists in tlog out file.')
+                        break
+                else:
+                    with open(issue_tlog_path, "a") as write_file:
+                        logging.info('appending')
+                        write_file.writelines(issue_tlog_data)
+        except FileNotFoundError as ex:
+            with open(issue_tlog_path, "a") as write_file:
+                logging.info('file not found. appending')
+                write_file.writelines(issue_tlog_data)
             
-        with open(issue_tlog_path, "a") as write_file:
-            write_file.writelines(issue_tlog_data)
             
     def write_complete_thread_log(self, record, thread_outfile):
         if os.path.isfile(thread_outfile) and os.path.getsize(thread_outfile) != 0:
