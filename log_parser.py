@@ -141,7 +141,8 @@ class TDLogParser:
             
             if os.path.isfile(self.issue_tlog_path) and os.path.getsize(self.issue_tlog_path) != 0:
                 os.remove(self.issue_tlog_path)
-            
+                
+            logging.info('access log is: %s', self.acc_log)
             if self.acc_log:
                 log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
                

@@ -8,19 +8,20 @@ class PROCESSOR:
     Processor class
     """
     def __init__(self, msisdn, input_date, outputDirectory_object, file):
+
         self.msisdn = msisdn
         self.input_date = input_date
         self.outputDirectory_object = outputDirectory_object
         self.file = file
         self.today_date_time = datetime.strftime(datetime.today(), "%Y-%m-%d")
-        
+
         self.outputDirectory_object = outputDirectory_object
-        self.prismd_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_prismd.log"
-        self.tomcat_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_tomcat.log"
-        self.smsd_thread_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_smsd.log"
-        self.trimmed_prism_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_trimmed_prismd.log"
-        self.trimmed_tomcat_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_trimmed_tomcat.log"
-        self.issue_tlog_path = f"{self.outputDirectory_object}/{self.msisdn}_{self.input_date}_{self.today_date_time}_issue_tlog_record.txt"
+        self.prismd_thread_outfile = f"{self.outputDirectory_object}/{self.input_date}_{self.msisdn}_{self.today_date_time}_prismd.log"
+        self.tomcat_thread_outfile = f"{self.outputDirectory_object}/{self.input_date}_{self.msisdn}_{self.today_date_time}_tomcat.log"
+        self.smsd_thread_outfile = f"{self.outputDirectory_object}/{self.input_date}_{self.msisdn}_{self.today_date_time}_smsd.log"
+        self.trimmed_prism_outfile = f"{self.outputDirectory_object}/{self.input_date}_{self.msisdn}_{self.today_date_time}_trimmed_prismd.log"
+        self.trimmed_tomcat_outfile = f"{self.outputDirectory_object}/{self.input_date}_{self.msisdn}_{self.today_date_time}_trimmed_tomcat.log"
+        self.issue_tlog_path = f"{self.outputDirectory_object}/{self.input_date}_{self.msisdn}_{self.today_date_time}_issue_tlog_record.txt"
 
     def process(self, is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object):
         dictionary_of_tlogs = {}

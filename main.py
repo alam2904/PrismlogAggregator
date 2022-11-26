@@ -12,56 +12,68 @@ from input_validation import InputValidation
 from path_initializer import LogPathFinder
 from log_processor import PROCESSOR
 from configparser import ConfigParser
+
 class Main:
 
     def init(self):
-        
         logging.basicConfig(filename='log_aggregator.log', filemode='w', format='[%(asctime)s,%(msecs)d]%(pathname)s:(%(lineno)d)-%(levelname)s - %(message)s', datefmt='%y-%m-%d %H:%M:%S', level=logging.DEBUG)
         
         start = time.time()
         logging.debug(start)
-        #default retention period.
-        r_period = 3
-        file = Path('config.properties')
-        if file.exists():
-            config = ConfigParser()
-            config.read(file)
-            if config.has_option('outdata_retention_period', 'retention'):
-                r_period = int(config['outdata_retention_period']['retention'])
-                logging.info('out file retention period: %s', r_period)
-                bdt = datetime.today() - timedelta(days=r_period)
-                back_date = datetime.strftime(bdt, "%Y-%m-%d")
-                logging.info('back date: %s', back_date)
+        
+        num_argv = len(sys.argv)
+        logging.debug('Number of arguments passed is %s', num_argv - 1)
+        
+        if num_argv == 3 or num_argv == 4:
+            if num_argv == 4:
+                logging.debug('Arguments passed are : msisdn=%s, search_date=%s and automation=%s', sys.argv[1], sys.argv[2], sys.argv[3])
             else:
-                logging.info('data rentention in config.properties not defined. Default is 3 days.')
-                bdt = datetime.today() - timedelta(days=r_period)
-                back_date = datetime.strftime(bdt, "%Y-%m-%d")
-                logging.info('back date: %s', back_date)
-            
-            outputDirectory_object = Path('out')
-            try:
-                outputDirectory_object.mkdir(exist_ok=False)
-            except FileExistsError as error:
-                logging.info('out directory already exists. Going to fetch %s dated files and remove.', back_date)
-                outfiles = [p for p in outputDirectory_object.glob(f"*_{back_date}_*.*")]
-                if bool(outfiles):
-                    for file in outfiles:
-                        if os.path.isfile(file):
-                            os.remove(file)
-                            logging.info('back dated files removed: %s', file)
-                        else:
-                            logging.info('back dated file does not exists: %s', file)
-                else:
-                    logging.info('back dated file does not exists')
-
-            logging.info('Log aggregation started')
-            logging.info("******************************")
-
-            num_argv = len(sys.argv)
-            logging.debug('Number of arguments passed is %s', num_argv - 1)
-
-            if num_argv == 3:
                 logging.debug('Arguments passed are : msisdn=%s and search_date=%s', sys.argv[1], sys.argv[2])
+            
+            #default retention period.
+            r_period = 3
+            file = Path('config.properties')
+            if file.exists():
+                config = ConfigParser()
+                config.read(file)
+                if config.has_option('outdata_retention_period', 'retention'):
+                    r_period = int(config['outdata_retention_period']['retention'])
+                    logging.info('out file retention period: %s', r_period)
+                    bdt = datetime.today() - timedelta(days=r_period)
+                    back_date = datetime.strftime(bdt, "%Y-%m-%d")
+                    logging.info('back date: %s', back_date)
+                else:
+                    logging.info('data rentention in config.properties not defined. Default is 3 days.')
+                    bdt = datetime.today() - timedelta(days=r_period)
+                    back_date = datetime.strftime(bdt, "%Y-%m-%d")
+                    logging.info('back date: %s', back_date)
+                
+                if num_argv == 4:
+                    outputDirectory_object = Path('out')
+                    try:
+                        outputDirectory_object.mkdir(exist_ok=False)
+                    except FileExistsError as error:
+                        logging.info('out directory already exists.')
+                    
+                    outputDirectory_object = Path('out/automation')
+                    try:
+                        outputDirectory_object.mkdir(exist_ok=False)
+                    except FileExistsError as error:
+                        logging.info('out/automation directory already exists. Going to fetch %s dated files and remove.', back_date)
+                        
+                else:
+                    outputDirectory_object = Path('out')
+                    try:
+                        outputDirectory_object.mkdir(exist_ok=False)
+                    except FileExistsError as error:
+                        logging.info('out directory already exists. Going to fetch %s dated files and remove.', back_date)
+                
+                self.remove_backdated_files(outputDirectory_object, back_date)
+                
+                logging.info('Log aggregation started')
+                logging.info("******************************")
+
+                
                 validation_object = InputValidation(sys.argv[1], sys.argv[2])
 
                 try:
@@ -72,10 +84,10 @@ class Main:
                     logging.exception(error)
 
                 logging.info('\n')
-                
+                    
                 if validation_object.is_input_valid:
                     initializedPath_object = LogPathFinder(config)
-                
+                    
                     if config.has_option('tomcat', 'TRANS_BASE_DIR'):
                         if config['tomcat']['TRANS_BASE_DIR']:
                             try:
@@ -93,9 +105,9 @@ class Main:
                             logging.error('tomcat TRANS_BASE_DIR path not present in config.properties')
                     else:
                         logging.error('tomcat TRANS_BASE_DIR path not present in config.properties')
-                        
+                            
                     logging.info('\n')
-                        
+                            
                     if config.has_option('prismd', 'TRANS_BASE_DIR'):
                         if config['prismd']['TRANS_BASE_DIR']:
                             try:
@@ -113,9 +125,9 @@ class Main:
                             logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                     else:
                         logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
-                            
+                                
                     logging.info('\n')
-                        
+                            
                     if config.has_option('smsd', 'TRANS_BASE_DIR'):
                         if config['smsd']['TRANS_BASE_DIR']:
                             try:
@@ -133,41 +145,52 @@ class Main:
                             logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                     else:
                         logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
-                            
+                                
                     logging.info('\n')
 
                     if initializedPath_object.is_tomcat_tlog_path or initializedPath_object.is_prism_tlog_path or initializedPath_object.is_sms_tlog_path:
                         is_tomcat_tlog_path = initializedPath_object.is_tomcat_tlog_path
                         is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
                         is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
-                            
+                                
                         processor_object = PROCESSOR(msisdn, input_date, outputDirectory_object, file)
                         processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
                     else:
                         logging.error('Transaction log path initialization failed.')
 
-                        logging.info('Log aggregation finished')
+                        logging.info('Log aggregation finished.')
                         logging.info("**********************************")
                 else:
-                    logging.error('Invalid input. Log aggregation failed to process')
-                    logging.info("**********************************")
-
+                    logging.error('Invalid input. Log aggregation failed to process.')
+                    logging.info("****************************************************")
             else:
-                logging.error('Invalid number of arguments passed')
-                logging.debug('Log aggregation failed to process')
-                logging.info("**********************************")
-
-            end = time.time()
-            logging.debug(end)
-            
-            duration = end - start
-            logging.debug('Total time taken %s', duration)
-            
-            if Path('log_aggregator.log').exists():
-                shutil.move('log_aggregator.log', 'out/log_aggregator.log')
+                logging.error('config.properties file does not exists. Hence process failed')
         else:
-            logging.error('config.properties file does not exists. Hence process failed')
-        
+            logging.error('Invalid number of arguments passed.')
+            logging.debug('Log aggregation failed to process.')
+            logging.info("******************************************")
+
+        end = time.time()
+        logging.debug(end)
+            
+        duration = end - start
+        logging.debug('Total time taken %s', duration)
+            
+        if Path('log_aggregator.log').exists():
+            shutil.move('log_aggregator.log', 'out/log_aggregator.log')
+    
+    def remove_backdated_files(self, outputDirectory_object, back_date):
+        outfiles = [p for p in outputDirectory_object.glob(f"*_{back_date}_*.*")]
+        if bool(outfiles):
+            for file in outfiles:
+                if os.path.isfile(file):
+                    os.remove(file)
+                    logging.info('back dated files removed: %s', file)
+                else:
+                    logging.info('back dated file does not exists: %s', file)
+        else:
+            logging.info('back dated file does not exists')
+                            
 if __name__ == '__main__':
     main_object = Main()
     main_object.init()
