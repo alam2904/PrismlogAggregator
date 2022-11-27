@@ -60,7 +60,10 @@ class Main:
                         outputDirectory_object.mkdir(exist_ok=False)
                     except FileExistsError as error:
                         logging.info('out/automation directory already exists. Going to fetch %s dated files and remove.', back_date)
-                        
+                    
+                    logging.info('TLog aggregation for automation started')
+                    logging.info("*******************************************")
+                    
                 else:
                     outputDirectory_object = Path('out')
                     try:
@@ -68,23 +71,24 @@ class Main:
                     except FileExistsError as error:
                         logging.info('out directory already exists. Going to fetch %s dated files and remove.', back_date)
                 
+                    logging.info('Log aggregation started')
+                    logging.info("******************************")
+                    
                 self.remove_backdated_files(outputDirectory_object, back_date)
-                
-                logging.info('Log aggregation started')
-                logging.info("******************************")
 
-                
                 validation_object = InputValidation(sys.argv[1], sys.argv[2])
-
+                
                 try:
-                    # msisdn = validation_object.validate_msisdn()
-                    msisdn = sys.argv[1]
-                    input_date = validation_object.validate_date()
+                    if num_argv == 4:
+                        fmsisdn, input_date = self.validate_input(validation_object, num_argv)
+                    else:
+                        fmsisdn, input_date = self.validate_input(validation_object, num_argv)
                 except Exception as error:
                     logging.exception(error)
-
+                msisdn = sys.argv[1]
+                
                 logging.info('\n')
-                    
+                
                 if validation_object.is_input_valid:
                     initializedPath_object = LogPathFinder(config)
                     
@@ -152,9 +156,13 @@ class Main:
                         is_tomcat_tlog_path = initializedPath_object.is_tomcat_tlog_path
                         is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
                         is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
-                                
-                        processor_object = PROCESSOR(msisdn, input_date, outputDirectory_object, file)
-                        processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
+                    
+                        if num_argv == 4:          
+                            processor_object = PROCESSOR(msisdn, fmsisdn, input_date, outputDirectory_object, file, validation_object)
+                            processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
+                        else:
+                            processor_object = PROCESSOR(msisdn, fmsisdn, input_date, outputDirectory_object, file, validation_object)
+                            processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
                     else:
                         logging.error('Transaction log path initialization failed.')
 
@@ -190,6 +198,21 @@ class Main:
                     logging.info('back dated file does not exists: %s', file)
         else:
             logging.info('back dated file does not exists')
+    
+    def validate_input(self, validation_object, cmd_argv):
+        try:
+            fmsisdn = validation_object.validate_msisdn()
+            input_date = validation_object.validate_date()
+            if cmd_argv == 3:
+                return (fmsisdn, input_date)
+            else:
+                try:
+                    validation_object.validate_timedtdata(sys.argv[3])
+                    return (fmsisdn, input_date)
+                except Exception as error:
+                    raise
+        except Exception as error:
+            raise
                             
 if __name__ == '__main__':
     main_object = Main()

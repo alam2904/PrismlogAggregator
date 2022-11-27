@@ -61,6 +61,11 @@ class FileWriter:
                     with open(trimmed_thread_outfile, "a") as write_file:
                         write_file.writelines(line)
         return True
+    
+    def write_automation_tlog_data(self, tlog_data_automation_outfile, tlog_record_list):    
+        data = [data for data in tlog_record_list]
+        with open(tlog_data_automation_outfile, "a") as write_file:
+            write_file.writelines(data)
         
         
             
