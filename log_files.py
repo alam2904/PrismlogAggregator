@@ -58,6 +58,39 @@ class LogFileFinder():
             self.set_sms_path(False)
             logging.debug('Sms tlog path does not exists')
 
+    def prism_billing_tlog_files_automation(self):
+        """
+        function to find prism tlog file path for automation
+        """
+        tlog_files = []
+        logPath_object = self.initializedPath_object
+        
+        prism_tlog_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_tlog_log_path]}/BILLING"
+        path = Path(rf"{prism_tlog_path}")
+
+        try:
+            billing_tlog_files_tmp = [p for p in path.glob(f"TLOG_BILLING_*.tmp")]
+            billing_tlog_files_log = [p for p in path.glob(f"TLOG_BILLING_*.log")]
+            
+            if bool(billing_tlog_files_log):
+                for prism_billing_files in billing_tlog_files_log:
+                    tlog_files.append(prism_billing_files)
+            if bool(billing_tlog_files_tmp):
+                for prism_billing_files in billing_tlog_files_tmp:
+                    tlog_files.append(prism_billing_files)
+            
+            if not bool(billing_tlog_files_log) and not bool(billing_tlog_files_tmp):
+                logging.debug('Prism billing tlog directory does not have files')
+            
+            return tlog_files
+
+        except ValueError as error:
+            logging.exception(error)
+        except Exception as error:
+            logging.exception(error)
+        
+        return None
+    
     def prism_billing_tlog_files(self, input_trans_date):
         """
         function to find prism tlog file path
@@ -83,6 +116,39 @@ class LogFileFinder():
             if not bool(billing_tlog_files_log) and not bool(billing_tlog_files_tmp):
                 logging.debug('Prism billing tlog directory does not have %s dated files', input_trans_date)
             
+            return tlog_files
+
+        except ValueError as error:
+            logging.exception(error)
+        except Exception as error:
+            logging.exception(error)
+        
+        return None
+    
+    def tomcat_billing_tlog_files_automation(self):
+        """
+        function to find tomcat tlog file path for automation
+        """
+        tlog_files = []
+        logPath_object = self.initializedPath_object
+
+        tomcat_tlog_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_tlog_log_path]}BILLING_REALTIME"
+        path = Path(rf"{tomcat_tlog_path}")
+
+        try:
+            billing_tlog_files_tmp = [p for p in path.glob(f"TLOG_BILLING_REALTIME_*.tmp")]
+            billing_tlog_files_log = [p for p in path.glob(f"TLOG_BILLING_REALTIME_*.log")]
+            if bool(billing_tlog_files_log):
+                for tomcat_billing_files in billing_tlog_files_log:
+                    tlog_files.append(tomcat_billing_files)
+                
+            if bool(billing_tlog_files_tmp):
+                for tomcat_billing_files in billing_tlog_files_tmp:
+                    tlog_files.append(tomcat_billing_files)
+            
+            if not bool(billing_tlog_files_log) and not bool(billing_tlog_files_tmp):
+                logging.debug('Tomcat billing tlog directory does not have files')
+                
             return tlog_files
 
         except ValueError as error:

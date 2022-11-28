@@ -80,7 +80,7 @@ class Main:
                 
                 try:
                     if num_argv == 4:
-                        fmsisdn, input_date = self.validate_input(validation_object, num_argv)
+                        fmsisdn = self.validate_input(validation_object, num_argv)
                     else:
                         fmsisdn, input_date = self.validate_input(validation_object, num_argv)
                 except Exception as error:
@@ -131,24 +131,24 @@ class Main:
                         logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                                 
                     logging.info('\n')
-                            
-                    if config.has_option('smsd', 'TRANS_BASE_DIR'):
-                        if config['smsd']['TRANS_BASE_DIR']:
-                            try:
-                                initializedPath_object.initialize_sms_path('smsd')
-                                logging.info('SMS PATH INITIALIZED')
-                                formatter = "#" * 100
-                                logging.info('%s', formatter)
-                                for key, value in initializedPath_object.sms_log_path_dict.items():
-                                    logging.info('%s : %s', key, value)
-                            except ValueError as error:
-                                logging.warning('SMS path not initialized. %s', error)
-                            except Exception as error:
-                                logging.warning(error)
+                    if not num_argv == 4:
+                        if config.has_option('smsd', 'TRANS_BASE_DIR'):
+                            if config['smsd']['TRANS_BASE_DIR']:
+                                try:
+                                    initializedPath_object.initialize_sms_path('smsd')
+                                    logging.info('SMS PATH INITIALIZED')
+                                    formatter = "#" * 100
+                                    logging.info('%s', formatter)
+                                    for key, value in initializedPath_object.sms_log_path_dict.items():
+                                        logging.info('%s : %s', key, value)
+                                except ValueError as error:
+                                    logging.warning('SMS path not initialized. %s', error)
+                                except Exception as error:
+                                    logging.warning(error)
+                            else:
+                                logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                         else:
                             logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
-                    else:
-                        logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                                 
                     logging.info('\n')
 
@@ -158,8 +158,8 @@ class Main:
                         is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
                     
                         if num_argv == 4:          
-                            processor_object = PROCESSOR(msisdn, fmsisdn, input_date, outputDirectory_object, file, validation_object)
-                            processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
+                            processor_object = PROCESSOR(msisdn, fmsisdn, None, outputDirectory_object, file, validation_object)
+                            processor_object.process_automation(is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object)
                         else:
                             processor_object = PROCESSOR(msisdn, fmsisdn, input_date, outputDirectory_object, file, validation_object)
                             processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
@@ -202,13 +202,13 @@ class Main:
     def validate_input(self, validation_object, cmd_argv):
         try:
             fmsisdn = validation_object.validate_msisdn()
-            input_date = validation_object.validate_date()
             if cmd_argv == 3:
+                input_date = validation_object.validate_date()
                 return (fmsisdn, input_date)
             else:
                 try:
-                    validation_object.validate_timedtdata(sys.argv[3])
-                    return (fmsisdn, input_date)
+                    validation_object.validate_timedtdata(sys.argv[2], sys.argv[3])
+                    return (fmsisdn)
                 except Exception as error:
                     raise
         except Exception as error:

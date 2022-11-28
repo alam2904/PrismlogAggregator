@@ -46,22 +46,24 @@ class InputValidation:
             self.is_input_valid = False
             raise
         
-    def validate_timedtdata(self, timedtdata):
+    def validate_timedtdata(self, key, requested_minute):
         """
         Validate tdata time.
         """
         try:
-            tdata, stDelta = timedtdata.split("=")
-            dt = int(stDelta)
-            logging.info('tdata param: %s and time delta: %s', tdata, stDelta)
-            cur_date_time = datetime.now() 
-            diff_date_time = cur_date_time - timedelta(minutes=dt)
-    
-            self.f_cur_date_time = datetime.strftime(cur_date_time, "%Y-%m-%d %H:%M:%S")
-            self.f_diff_date_time = datetime.strftime(diff_date_time, "%Y-%m-%d %H:%M:%S")
-            logging.info('formatted current datetime %s - time delta %s = formatted diff datetime %s ', self.f_cur_date_time, dt, self.f_diff_date_time)
-            self.is_tlog = True
+            if key == "tlog":
+                dt = int(requested_minute)
+                logging.info('tdata param: %s and time delta: %s', key, requested_minute)
+                cur_date_time = datetime.now() 
+                diff_date_time = cur_date_time - timedelta(minutes=dt)
+        
+                self.f_cur_date_time = datetime.strftime(cur_date_time, "%Y%m%d%H%M%S")
+                self.f_diff_date_time = datetime.strftime(diff_date_time, "%Y%m%d%H%M%S")
+                logging.info('formatted current datetime %s - time delta %s = formatted diff datetime %s ', self.f_cur_date_time, dt, self.f_diff_date_time)
+                self.is_tlog = True
+                self.is_input_valid = True
+            else:
+                logging.info('key entered is: %s. It should be "tlog"', key)
         except Exception as error:
-            logging.error('Invalid argument: %s".', timedtdata)
-            self.is_input_valid = False
+            logging.error('Invalid argument: %s".', requested_minute)
             raise
