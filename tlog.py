@@ -38,8 +38,8 @@ class Tlog:
                 else:
                     for file in prism_billing_tlog_files:
                         with open(file, "r") as read_file:
-                            record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
-            
+                            # record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
+                            record = [data for data in read_file.readlines() if re.search(self.msisdn,data, re.DOTALL)]
                             if record:
                                 for data in record:
                                     self.tlog_record_list_prism.append(data)
@@ -99,8 +99,8 @@ class Tlog:
                 else:
                     for file in sms_tlog_files:
                         with open(file, "r") as read_file:
-                            record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
-            
+                            # record = [data for data in read_file.readlines() if re.search(r"\b{}\b".format(str(self.msisdn)),data)]
+                            record = [data for data in read_file.readlines() if re.search(self.msisdn,data, re.DOTALL)]
                             if record:
                                 for data in record:
                                     self.tlog_record_list_sms.append(data)
