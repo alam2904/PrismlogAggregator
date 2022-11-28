@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from outfile_writer import FileWriter
+import subprocess
 
 class AutoTlog:
     
@@ -14,20 +15,18 @@ class AutoTlog:
         for record in billing_tlog_files:
             splited_data = record.split("|")
             splited_timestamp = splited_data[0].split(",")
-            logging.info('time data: %s', splited_timestamp[0])
             tlog_time = datetime.strptime(splited_timestamp[0], "%Y-%m-%d %H:%M:%S")
             tlog_timest = datetime.strftime(tlog_time, "%Y%m%d%H%M%S")
             tlog_timestamp = datetime.strptime(tlog_timest, "%Y%m%d%H%M%S")
-            logging.info('start date: %s and tlog timestamp: %s and end date: %s', start_date, tlog_timestamp, end_date)
-            if tlog_timestamp >= start_date and tlog_timestamp <= end_date:
-                logging.info('reached if')   
+            if tlog_timestamp >= start_date and tlog_timestamp <= end_date:  
                 self.tlog_record_list.append(record)
-            else:
-                logging.info('reached else')
         
         if self.tlog_record_list:
             writer = FileWriter()
             writer.write_automation_tlog_data(tlog_data_automation_outfile, self.tlog_record_list)
+            # process = subprocess.Popen(['cat', f"{tlog_data_automation_outfile}"], stdout=subprocess.PIPE)
+            # stdout = process.communicate()[0]
+            # print(stdout)
             return True
         else:
             return False

@@ -32,9 +32,9 @@ class PROCESSOR:
         tlog_record_list_tomcat = []
 
         st_date = datetime.strptime(self.validation_object.f_diff_date_time, "%Y%m%d%H%M%S")
-        end_date = datetime.strptime(self.validation_object.f_cur_date_time, "%Y%m%d%H%M%S")
+        # end_date = datetime.strptime(self.validation_object.f_cur_date_time, "%Y%m%d%H%M%S")
         
-        tlog_data_automation_outfile = f"{self.outputDirectory_object}/{st_date}_{end_date}_{self.today_date}_tlog_data.txt"
+        tlog_data_automation_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{st_date}_{self.today_date}_tlog_data.txt"
         
         tlogParser_object = TlogParser(self.msisdn, self.input_date, None, tlog_record_list_prism, tlog_record_list_tomcat, None, initializedPath_object)
         # tlogParser_object = TlogParser(self.msisdn, tlog_record_list_prism, tlog_record_list_tomcat, initializedPath_object)
