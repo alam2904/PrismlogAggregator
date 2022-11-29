@@ -14,7 +14,7 @@ class PROCESSOR:
         self.input_date = input_date
         self.outputDirectory_object = outputDirectory_object
         self.file = file
-        self.today_date = datetime.strftime(datetime.today(), "%Y-%m-%d")
+        self.today_date = str(datetime.strftime(datetime.today(), "%Y-%m-%d")).replace("-", "")
         # self.today_date_time = datetime.strftime(datetime.today(), "%Y-%m-%d %H:%M:%S")
         self.validation_object = validation_object
         
@@ -31,7 +31,8 @@ class PROCESSOR:
         tlog_record_list_prism = []
         tlog_record_list_tomcat = []
 
-        st_date = datetime.strptime(self.validation_object.f_diff_date_time, "%Y%m%d%H%M%S")
+        # st_date = datetime.strptime(self.validation_object.f_diff_date_time, "%Y%m%d%H%M%S")
+        st_date = round(datetime.now().timestamp() * 1000)
         # end_date = datetime.strptime(self.validation_object.f_cur_date_time, "%Y%m%d%H%M%S")
         
         tlog_data_automation_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{st_date}_{self.today_date}_tlog_data.txt"

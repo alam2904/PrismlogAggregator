@@ -1,5 +1,6 @@
 import logging
 import os
+import subprocess
 
 class FileWriter:
         
@@ -63,9 +64,15 @@ class FileWriter:
         return True
     
     def write_automation_tlog_data(self, tlog_data_automation_outfile, tlog_record_list):    
-        data = [data for data in tlog_record_list]
-        with open(tlog_data_automation_outfile, "a") as write_file:
-            write_file.writelines(data)
+        # data = [data for data in tlog_record_list]
+        for data in tlog_record_list:
+            print(data)
+            with open(tlog_data_automation_outfile, "a") as write_file:
+                write_file.writelines(data)
+            
+        # process = subprocess.Popen(['cat', f"{tlog_data_automation_outfile} > /tmp"], stdout=subprocess.PIPE)
+        # stdout = process.communicate()[0]
+        # print(stdout)
         
         
             

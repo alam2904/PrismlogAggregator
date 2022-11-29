@@ -24,9 +24,6 @@ class AutoTlog:
         if self.tlog_record_list:
             writer = FileWriter()
             writer.write_automation_tlog_data(tlog_data_automation_outfile, self.tlog_record_list)
-            # process = subprocess.Popen(['cat', f"{tlog_data_automation_outfile}"], stdout=subprocess.PIPE)
-            # stdout = process.communicate()[0]
-            # print(stdout)
             return True
         else:
             return False

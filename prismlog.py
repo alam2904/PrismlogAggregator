@@ -40,7 +40,7 @@ class Main:
                     r_period = int(config['outdata_retention_period']['retention'])
                     logging.info('out file retention period: %s', r_period)
                     bdt = datetime.today() - timedelta(days=r_period)
-                    back_date = datetime.strftime(bdt, "%Y-%m-%d")
+                    back_date = str(datetime.strftime(bdt, "%Y-%m-%d")).replace("-", "")
                     logging.info('back date: %s', back_date)
                 else:
                     logging.info('data rentention in config.properties not defined. Default is 3 days.')
@@ -55,7 +55,7 @@ class Main:
                     except FileExistsError as error:
                         logging.info('out directory already exists.')
                     
-                    outputDirectory_object = Path('out/automation')
+                    outputDirectory_object = Path('out/prism_auto_log')
                     try:
                         outputDirectory_object.mkdir(exist_ok=False)
                     except FileExistsError as error:
@@ -66,6 +66,12 @@ class Main:
                     
                 else:
                     outputDirectory_object = Path('out')
+                    try:
+                        outputDirectory_object.mkdir(exist_ok=False)
+                    except FileExistsError as error:
+                        logging.info('out directory already exists.')
+                    
+                    outputDirectory_object = Path('out/prism_agg_log')
                     try:
                         outputDirectory_object.mkdir(exist_ok=False)
                     except FileExistsError as error:
