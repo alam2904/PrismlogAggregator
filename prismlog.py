@@ -13,6 +13,7 @@ from input_validation import InputValidation
 from path_initializer import LogPathFinder
 from log_processor import PROCESSOR
 from configparser import ConfigParser
+from zipfile import ZipFile
 
 class Main:
 
@@ -25,8 +26,8 @@ class Main:
         num_argv = len(sys.argv)
         logging.debug('Number of arguments passed is %s', num_argv - 1)
         
-        if num_argv == 3 or num_argv == 4:
-            if num_argv == 4:
+        if num_argv == 4 or num_argv == 5:
+            if num_argv == 5:
                 logging.debug('Arguments passed are : msisdn=%s, search_date=%s and automation=%s', sys.argv[1], sys.argv[2], sys.argv[3])
             else:
                 logging.debug('Arguments passed are : msisdn=%s and search_date=%s', sys.argv[1], sys.argv[2])
@@ -49,7 +50,7 @@ class Main:
                     back_date = datetime.strftime(bdt, "%Y-%m-%d")
                     logging.info('back date: %s', back_date)
                 
-                if num_argv == 4:
+                if num_argv == 5:
                     outputDirectory_object = Path('out')
                     try:
                         outputDirectory_object.mkdir(exist_ok=False)
@@ -86,7 +87,7 @@ class Main:
                 validation_object = InputValidation(sys.argv[1], sys.argv[2])
                 
                 try:
-                    if num_argv == 4:
+                    if num_argv == 5:
                         fmsisdn = self.validate_input(validation_object, num_argv)
                     else:
                         fmsisdn, input_date = self.validate_input(validation_object, num_argv)
@@ -138,7 +139,7 @@ class Main:
                         logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                                 
                     logging.info('\n')
-                    if not num_argv == 4:
+                    if not num_argv == 5:
                         if config.has_option('smsd', 'TRANS_BASE_DIR'):
                             if config['smsd']['TRANS_BASE_DIR']:
                                 try:
@@ -164,7 +165,7 @@ class Main:
                         is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
                         is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
                     
-                        if num_argv == 4:          
+                        if num_argv == 5:          
                             processor_object = PROCESSOR(msisdn, fmsisdn, None, outputDirectory_object, file, validation_object)
                             processor_object.process_automation(is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object)
                         else:
@@ -190,9 +191,28 @@ class Main:
             
         duration = end - start
         logging.debug('Total time taken %s', duration)
-            
+        
+        #move log_aggregator.log from current directory to respective directory.
+        log = outputDirectory_object/"log_aggregator.log"
         if Path('log_aggregator.log').exists():
-            shutil.move('log_aggregator.log', 'out/log_aggregator.log')
+            try:
+                shutil.move('log_aggregator.log', f'{outputDirectory_object}/')
+            except Exception as error:
+                if os.path.isfile(outputDirectory_object/"log_aggregator.log"):
+                    logging.info('log_aggregator.log file already exists. Hence removing and copying it.')
+                    os.remove(log)
+                shutil.move('log_aggregator.log', f'{outputDirectory_object}/')
+        
+        #zipping the content of respective out file as per execution
+        logging.info('out directory: %s', outputDirectory_object)
+        if num_argv == 4:
+            with ZipFile(f"{sys.argv[3]}_outfile.zip", "w") as zip:
+                for path in Path(outputDirectory_object).rglob("*.*"):
+                    zip.write(path)
+        elif num_argv == 5:
+            with ZipFile(f"{sys.argv[4]}_outfile.zip", "w") as zip:
+                for path in Path(outputDirectory_object).rglob("*.*"):
+                    zip.write(path)
     
     def remove_backdated_files(self, outputDirectory_object, back_date):
         outfiles = [p for p in outputDirectory_object.glob(f"*_{back_date}_*.*")]
@@ -209,7 +229,7 @@ class Main:
     def validate_input(self, validation_object, cmd_argv):
         try:
             fmsisdn = validation_object.validate_msisdn()
-            if cmd_argv == 3:
+            if cmd_argv == 4:
                 input_date = validation_object.validate_date()
                 return (fmsisdn, input_date)
             else:

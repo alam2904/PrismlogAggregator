@@ -72,11 +72,12 @@ class LogFileFinder():
             billing_tlog_files_tmp = [p for p in path.glob(f"TLOG_BILLING_*.tmp")]
             billing_tlog_files_log = [p for p in path.glob(f"TLOG_BILLING_*.log")]
             
-            if bool(billing_tlog_files_log):
-                for prism_billing_files in billing_tlog_files_log:
-                    tlog_files.append(prism_billing_files)
             if bool(billing_tlog_files_tmp):
                 for prism_billing_files in billing_tlog_files_tmp:
+                    tlog_files.append(prism_billing_files)
+            
+            if bool(billing_tlog_files_log):
+                for prism_billing_files in billing_tlog_files_log:
                     tlog_files.append(prism_billing_files)
             
             if not bool(billing_tlog_files_log) and not bool(billing_tlog_files_tmp):
@@ -106,13 +107,14 @@ class LogFileFinder():
             billing_tlog_files_tmp = [p for p in path.glob(f"TLOG_BILLING_{input_trans_date}*.tmp")]
             billing_tlog_files_log = [p for p in path.glob(f"TLOG_BILLING_{input_trans_date}*.log")]
             
-            if bool(billing_tlog_files_log):
-                for prism_billing_files in billing_tlog_files_log:
-                    tlog_files.append(prism_billing_files)
             if bool(billing_tlog_files_tmp):
                 for prism_billing_files in billing_tlog_files_tmp:
                     tlog_files.append(prism_billing_files)
                     
+            if bool(billing_tlog_files_log):
+                for prism_billing_files in billing_tlog_files_log:
+                    tlog_files.append(prism_billing_files)
+            
             if not bool(billing_tlog_files_log) and not bool(billing_tlog_files_tmp):
                 logging.debug('Prism billing tlog directory does not have %s dated files', input_trans_date)
             
