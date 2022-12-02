@@ -188,15 +188,15 @@ class TDLogParser:
                     if re.search(r"\b{}\b".format(str(msisdn)),data):
                         self.acc_log = f"{data}{self.new_line}"
         except subprocess.CalledProcessError as ex:
-            try: 
-                access_log = subprocess.check_output(f"grep {search_string} {self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/{config['tomcat_access']['PREFIX']}*.{config['tomcat_access']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            # try: 
+            #     access_log = subprocess.check_output(f"grep {search_string} {self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/{config['tomcat_access']['PREFIX']}*.{config['tomcat_access']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 
-                for record in access_log.splitlines():
-                    for data in record.split("-"):
-                        if re.search(r"\b{}\b".format(str(msisdn)),data):
-                            self.acc_log = f"{data}{self.new_line}"
-            except subprocess.CalledProcessError as ex:            
-                logging.info('No access log found')
+            #     for record in access_log.splitlines():
+            #         for data in record.split("-"):
+            #             if re.search(r"\b{}\b".format(str(msisdn)),data):
+            #                 self.acc_log = f"{data}{self.new_line}"
+            # except subprocess.CalledProcessError as ex:            
+            logging.info('No access log found')
         
 
     def parse_tlog(self, tlogTags, is_tlog):

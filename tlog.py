@@ -4,7 +4,7 @@ tlog module
 import logging
 import re
 from log_files import LogFileFinder
-from automation_tlog import AutoTlog
+from automation import Automation
 
 
 class Tlog:
@@ -29,7 +29,7 @@ class Tlog:
         logfile_object.prism_billing_tlog_path()
         
         if logfile_object.is_prism_billing_tlog_path:
-            auto_tlog = AutoTlog()
+            auto_tlog = Automation()
             
             tlog_file = logfile_object.prism_billing_tlog_files_automation()
             if tlog_file != None:
@@ -83,7 +83,7 @@ class Tlog:
         logfile_object.tomcat_billing_tlog_path()
         
         if logfile_object.is_tomcat_billing_tlog_path:
-            auto_tlog = AutoTlog()
+            auto_tlog = Automation()
             
             tlog_file = logfile_object.tomcat_billing_tlog_files_automation()
             if tlog_file != None:

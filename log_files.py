@@ -2,7 +2,7 @@
 path finder class
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 
@@ -16,6 +16,7 @@ class LogFileFinder():
         self.is_prism_billing_tlog_path = False
         self.is_tomcat_billing_tlog_path = False
         self.is_sms_tlog_path = False
+        self.alog_files_list = []
     
     def prism_billing_tlog_path(self):
         
@@ -57,6 +58,37 @@ class LogFileFinder():
         else:
             self.set_sms_path(False)
             logging.debug('Sms tlog path does not exists')
+            
+    def access_log_files_automation(self, config_object, end_date):
+        # logPath_object = self.initializedPath_object
+        
+        i = 0
+        while True:
+            s_date = str(datetime.strptime(str(self.input_date + timedelta(days=i)).split(" ")[0], "%Y-%m-%d")).split(" ")[0]
+            e_date = str(end_date).split(" ")[0]
+            
+            alog_path = f"{self.initializedPath_object}/"
+            path = Path(rf"{alog_path}")
+
+            try:
+                alog_files = [p for p in path.glob(f"{config_object['tomcat_access']['PREFIX']}.{s_date}*.{config_object['tomcat_access']['SUFFIX']}")]
+                logging.info('access log file is: %s', alog_files)
+                if bool(alog_files):
+                    for alog_file in alog_files:
+                        self.alog_files_list.append(alog_file)
+                
+                else:
+                    logging.debug('access log directory does not have %s file', s_date)
+                
+                if s_date == e_date:
+                    break
+                else:
+                    i += 1
+
+            except ValueError as error:
+                logging.exception(error)
+            except Exception as error:
+                logging.exception(error)
 
     def prism_billing_tlog_files_automation(self):
         """
@@ -72,12 +104,13 @@ class LogFileFinder():
             billing_tlog_files_tmp = [p for p in path.glob(f"TLOG_BILLING_*.tmp")]
             billing_tlog_files_log = [p for p in path.glob(f"TLOG_BILLING_*.log")]
             
-            if bool(billing_tlog_files_tmp):
-                for prism_billing_files in billing_tlog_files_tmp:
-                    tlog_files.append(prism_billing_files)
             
             if bool(billing_tlog_files_log):
                 for prism_billing_files in billing_tlog_files_log:
+                    tlog_files.append(prism_billing_files)
+            
+            if bool(billing_tlog_files_tmp):
+                for prism_billing_files in billing_tlog_files_tmp:
                     tlog_files.append(prism_billing_files)
             
             if not bool(billing_tlog_files_log) and not bool(billing_tlog_files_tmp):
@@ -107,12 +140,13 @@ class LogFileFinder():
             billing_tlog_files_tmp = [p for p in path.glob(f"TLOG_BILLING_{input_trans_date}*.tmp")]
             billing_tlog_files_log = [p for p in path.glob(f"TLOG_BILLING_{input_trans_date}*.log")]
             
-            if bool(billing_tlog_files_tmp):
-                for prism_billing_files in billing_tlog_files_tmp:
-                    tlog_files.append(prism_billing_files)
                     
             if bool(billing_tlog_files_log):
                 for prism_billing_files in billing_tlog_files_log:
+                    tlog_files.append(prism_billing_files)
+            
+            if bool(billing_tlog_files_tmp):
+                for prism_billing_files in billing_tlog_files_tmp:
                     tlog_files.append(prism_billing_files)
             
             if not bool(billing_tlog_files_log) and not bool(billing_tlog_files_tmp):
@@ -140,6 +174,7 @@ class LogFileFinder():
         try:
             billing_tlog_files_tmp = [p for p in path.glob(f"TLOG_BILLING_REALTIME_*.tmp")]
             billing_tlog_files_log = [p for p in path.glob(f"TLOG_BILLING_REALTIME_*.log")]
+            
             if bool(billing_tlog_files_log):
                 for tomcat_billing_files in billing_tlog_files_log:
                     tlog_files.append(tomcat_billing_files)
@@ -174,6 +209,7 @@ class LogFileFinder():
         try:
             billing_tlog_files_tmp = [p for p in path.glob(f"TLOG_BILLING_REALTIME_{input_trans_date}*.tmp")]
             billing_tlog_files_log = [p for p in path.glob(f"TLOG_BILLING_REALTIME_{input_trans_date}*.log")]
+            
             if bool(billing_tlog_files_log):
                 for tomcat_billing_files in billing_tlog_files_log:
                     tlog_files.append(tomcat_billing_files)

@@ -17,6 +17,7 @@ class InputValidation:
         self.f_cur_date_time = ""
         self.f_diff_date_time = ""
         self.is_tlog = False
+        self.keyword = ""
 
     def validate_msisdn(self):
         """
@@ -51,7 +52,8 @@ class InputValidation:
         Validate tdata time.
         """
         try:
-            if key == "tlog":
+            if key == "tlog" or "alog":
+                self.keyword = key
                 dt = int(requested_minute)
                 logging.info('tdata param: %s and time delta: %s', key, requested_minute)
                 cur_date_time = datetime.now() 

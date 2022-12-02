@@ -1,6 +1,7 @@
 from datetime import datetime
 from tlog_parser import TlogParser
 from log_parser import TDLogParser
+from automation import Automation
 import logging
 
 class PROCESSOR:
@@ -35,22 +36,34 @@ class PROCESSOR:
         st_date = round(datetime.now().timestamp() * 1000)
         # end_date = datetime.strptime(self.validation_object.f_cur_date_time, "%Y%m%d%H%M%S")
         
-        tlog_data_automation_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{st_date}_{self.today_date}_tlog_data.txt"
         
         tlogParser_object = TlogParser(self.msisdn, self.input_date, None, tlog_record_list_prism, tlog_record_list_tomcat, None, initializedPath_object)
         # tlogParser_object = TlogParser(self.msisdn, tlog_record_list_prism, tlog_record_list_tomcat, initializedPath_object)
         
-        if is_tomcat_tlog_path:
-            logging.debug('Tomcat tlog path exists.')
-            if tlogParser_object.parse_tomcat_automation(self.validation_object, tlog_data_automation_outfile):
-                pass
+        if self.validation_object.keyword == "alog":
+            if initializedPath_object.is_access_path:
+                data_automation_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{st_date}_{self.today_date}_alog_data.txt"
+                auto = Automation()
                 
-        if is_prism_tlog_path:
-            logging.debug('Prism tlog path exists.')
-            if tlogParser_object.parse_prism_automation(self.validation_object, tlog_data_automation_outfile):
-                pass
-        else:
-            logging.error('tlog path does not exists. Hence tlog data could not be fetched.')
+                access_path = initializedPath_object.tomcat_log_path_dict[initializedPath_object.tomcat_access_path]
+                auto.parse_alog_btw_timestamps(self.msisdn, self.validation_object, data_automation_outfile, access_path)
+            else:
+                logging.error('access path does not exists.')
+        
+        elif self.validation_object.keyword == "tlog":
+            if is_tomcat_tlog_path:
+                logging.debug('Tomcat tlog path exists.')
+                data_automation_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{st_date}_{self.today_date}_tlog_data.txt"
+                
+                if tlogParser_object.parse_tomcat_automation(self.validation_object, data_automation_outfile):
+                    pass
+                    
+            if is_prism_tlog_path:
+                logging.debug('Prism tlog path exists.')
+                if tlogParser_object.parse_prism_automation(self.validation_object, data_automation_outfile):
+                    pass
+            else:
+                logging.error('tlog path does not exists. Hence tlog data could not be fetched.')
             
     def process(self, is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object):
         dictionary_of_tlogs = {}

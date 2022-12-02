@@ -9,6 +9,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import shutil
 import os
+import zipfile
 from input_validation import InputValidation
 from path_initializer import LogPathFinder
 from log_processor import PROCESSOR
@@ -185,12 +186,6 @@ class Main:
             logging.error('Invalid number of arguments passed.')
             logging.debug('Log aggregation failed to process.')
             logging.info("******************************************")
-
-        end = time.time()
-        logging.debug(end)
-            
-        duration = end - start
-        logging.debug('Total time taken %s', duration)
         
         #move log_aggregator.log from current directory to respective directory.
         log = outputDirectory_object/"log_aggregator.log"
@@ -203,16 +198,22 @@ class Main:
                     os.remove(log)
                 shutil.move('log_aggregator.log', f'{outputDirectory_object}/')
         
-        #zipping the content of respective out file as per execution
+
         logging.info('out directory: %s', outputDirectory_object)
         if num_argv == 4:
-            with ZipFile(f"{sys.argv[3]}_outfile.zip", "w") as zip:
+            with ZipFile(f"{sys.argv[3]}_outfile.zip", "w", compression= zipfile.ZIP_DEFLATED) as zip:
                 for path in Path(outputDirectory_object).rglob("*.*"):
                     zip.write(path)
         elif num_argv == 5:
-            with ZipFile(f"{sys.argv[4]}_outfile.zip", "w") as zip:
+            with ZipFile(f"{sys.argv[4]}_outfile.zip", "w", compression= zipfile.ZIP_DEFLATED) as zip:
                 for path in Path(outputDirectory_object).rglob("*.*"):
                     zip.write(path)
+        
+        end = time.time()
+        logging.debug(end)
+            
+        duration = end - start
+        logging.debug('Total time taken %s', duration)
     
     def remove_backdated_files(self, outputDirectory_object, back_date):
         outfiles = [p for p in outputDirectory_object.glob(f"*_{back_date}_*.*")]
