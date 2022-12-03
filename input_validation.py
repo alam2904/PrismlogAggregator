@@ -52,7 +52,7 @@ class InputValidation:
         Validate tdata time.
         """
         try:
-            if key == "tlog" or "alog":
+            if key == "tlog" or "alog" or "plog":
                 self.keyword = key
                 dt = int(requested_minute)
                 logging.info('tdata param: %s and time delta: %s', key, requested_minute)

@@ -41,6 +41,8 @@ class TDLogParser:
         self.issue_tlog_data_prism = ""
         self.issue_tlog_data_tomcat = ""
         self.issue_tlog_data_sms = ""
+        self.issue_plog_data_prism = ""
+        self.issue_plog_data_tomcat = ""
         #tomcat and prism issue flags
         self.is_error_tlog = False
         self.is_lowbal_tlog = False
@@ -121,6 +123,14 @@ class TDLogParser:
                 log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
             
             self.issue_tlog_data_prism = tlogParser_object.filtered_prism_tlog[-1]
+            
+            if self.dictionary_of_search_value["THREAD"] == str(tlogParser_object.filtered_prism_plog[-1]).split("|")[1]:
+                
+                self.issue_plog_data_prism = tlogParser_object.filtered_prism_plog[1]
+                log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_plog_data_prism)
+            else:
+                logging.info("worker thread: %s could not be found in prism perf log.")
+                    
             log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_prism)
             
         
@@ -147,6 +157,13 @@ class TDLogParser:
                 log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
                
             self.issue_tlog_data_tomcat = tlogParser_object.filtered_tomcat_tlog[-1]
+            
+            if self.dictionary_of_search_value["THREAD"] == str(tlogParser_object.filtered_tomcat_plog[-1]).split("|")[1]:
+                self.issue_plog_data_tomcat = tlogParser_object.filtered_tomcat_plog[-1]
+                log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_plog_data_tomcat)
+            else:
+                logging.info("worker thread: %s could not be found in tomcat perf log.")
+                
             log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_tomcat)
                 
         else:

@@ -70,6 +70,14 @@ class FileWriter:
             with open(tlog_data_automation_outfile, "a") as write_file:
                 write_file.writelines(data)
     
+    def write_automation_plog_data(self, plog_data_automation_outfile, plog_record_list):    
+        # data = [data for data in tlog_record_list]
+
+        for data in plog_record_list:
+            print(data)
+            with open(plog_data_automation_outfile, "a") as write_file:
+                write_file.writelines(data)
+    
     def write_automation_alog_data(self, alog_data_automation_outfile, alog_record_list):    
         # data = [data for data in tlog_record_list]
 

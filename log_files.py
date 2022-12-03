@@ -16,6 +16,8 @@ class LogFileFinder():
         self.is_prism_billing_tlog_path = False
         self.is_tomcat_billing_tlog_path = False
         self.is_sms_tlog_path = False
+        self.is_tomcat_perf_log_path = False
+        self.is_prism_perf_log_path = False
         self.alog_files_list = []
     
     def prism_billing_tlog_path(self):
@@ -32,6 +34,20 @@ class LogFileFinder():
             self.set_prism_billing_path(False)
             logging.debug('Prism BILLING tlog path does not exists')
     
+    def prism_perf_log_path(self):
+        
+        log_path = self.initializedPath_object
+
+        prism_plog_path = f"{log_path.prism_log_path_dict[log_path.prism_tlog_log_path]}/PERF"
+        path = Path(rf"{prism_plog_path}")
+
+        if path.exists():
+            logging.debug('Prism perf log path exists.')
+            self.set_prism_perf_path(True)
+        else:
+            self.set_prism_perf_path(False)
+            logging.debug('Prism perf log path does not exists')
+    
     def tomcat_billing_tlog_path(self):
         
         log_path = self.initializedPath_object
@@ -44,6 +60,19 @@ class LogFileFinder():
         else:
             self.set_tomcat_billing_path(False)
             logging.debug('Tomcat BILLING tlog path does not exists')
+    
+    def tomcat_perf_log_path(self):
+        
+        log_path = self.initializedPath_object
+        tomcat_plog_path = f"{log_path.tomcat_log_path_dict[log_path.tomcat_tlog_log_path]}PERF"
+        path = Path(rf"{tomcat_plog_path}")
+
+        if path.exists():
+            logging.debug('Tomcat perf log path exists.')
+            self.set_tomcat_perf_path(True)
+        else:
+            self.set_tomcat_perf_path(True)
+            logging.debug('Tomcat perf log path does not exists')
     
     def sms_tlog_path(self):
         
@@ -125,6 +154,41 @@ class LogFileFinder():
         
         return None
     
+    def prism_perf_log_files_automation(self):
+        """
+        function to find prism perf log files for automation
+        """
+        plog_files = []
+        logPath_object = self.initializedPath_object
+        
+        prism_plog_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_tlog_log_path]}/PERF"
+        path = Path(rf"{prism_plog_path}")
+
+        try:
+            plog_files_tmp = [p for p in path.glob(f"TLOG_PERF_*.tmp")]
+            plog_files_log = [p for p in path.glob(f"TLOG_PERF_*.log")]
+            
+            
+            if bool(plog_files_log):
+                for prism_perf_files in plog_files_log:
+                    plog_files.append(prism_perf_files)
+            
+            if bool(plog_files_tmp):
+                for prism_perf_files in plog_files_tmp:
+                    plog_files.append(prism_perf_files)
+            
+            if not bool(plog_files_log) and not bool(plog_files_tmp):
+                logging.debug('Prism perf log directory does not have files.')
+            
+            return plog_files
+
+        except ValueError as error:
+            logging.exception(error)
+        except Exception as error:
+            logging.exception(error)
+        
+        return None
+    
     def prism_billing_tlog_files(self, input_trans_date):
         """
         function to find prism tlog file path
@@ -153,6 +217,42 @@ class LogFileFinder():
                 logging.debug('Prism billing tlog directory does not have %s dated files', input_trans_date)
             
             return tlog_files
+
+        except ValueError as error:
+            logging.exception(error)
+        except Exception as error:
+            logging.exception(error)
+        
+        return None
+    
+    def prism_perf_log_files(self, input_trans_date):
+        """
+        function to find prism plog file path
+        """
+        plog_files = []
+        
+        logPath_object = self.initializedPath_object
+
+        prism_plog_path = f"{logPath_object.prism_log_path_dict[logPath_object.prism_tlog_log_path]}/PERF"
+        path = Path(rf"{prism_plog_path}")
+
+        try:
+            plog_files_tmp = [p for p in path.glob(f"TLOG_PERF_{input_trans_date}*.tmp")]
+            plog_files_log = [p for p in path.glob(f"TLOG_PERF_{input_trans_date}*.log")]
+            
+                    
+            if bool(plog_files_log):
+                for prism_perf_files in plog_files_log:
+                    plog_files.append(prism_perf_files)
+            
+            if bool(plog_files_tmp):
+                for prism_perf_files in plog_files_tmp:
+                    plog_files.append(prism_perf_files)
+            
+            if not bool(plog_files_log) and not bool(plog_files_tmp):
+                logging.debug('Prism perf log directory does not have %s dated files', input_trans_date)
+            
+            return plog_files
 
         except ValueError as error:
             logging.exception(error)
@@ -195,6 +295,40 @@ class LogFileFinder():
         
         return None
     
+    def tomcat_perf_log_files_automation(self):
+        """
+        function to find tomcat tlog file path for automation
+        """
+        plog_files = []
+        logPath_object = self.initializedPath_object
+
+        tomcat_plog_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_tlog_log_path]}PERF"
+        path = Path(rf"{tomcat_plog_path}")
+
+        try:
+            plog_files_tmp = [p for p in path.glob(f"TLOG_PERF_*.tmp")]
+            plog_files_log = [p for p in path.glob(f"TLOG_PERF_*.log")]
+            
+            if bool(plog_files_log):
+                for tomcat_perf_files in plog_files_log:
+                    plog_files.append(tomcat_perf_files)
+                
+            if bool(plog_files_tmp):
+                for tomcat_perf_files in plog_files_tmp:
+                    plog_files.append(tomcat_perf_files)
+            
+            if not bool(plog_files_log) and not bool(plog_files_tmp):
+                logging.debug('Tomcat perf log directory does not have files.')
+                
+            return plog_files
+
+        except ValueError as error:
+            logging.exception(error)
+        except Exception as error:
+            logging.exception(error)
+        
+        return None
+    
     def tomcat_billing_tlog_files(self, input_trans_date):
         """
         function to find tomcat tlog file path
@@ -222,6 +356,41 @@ class LogFileFinder():
                 logging.debug('Tomcat billing tlog directory does not have %s dated files', input_trans_date)
                 
             return tlog_files
+
+        except ValueError as error:
+            logging.exception(error)
+        except Exception as error:
+            logging.exception(error)
+        
+        return None
+    
+    def tomcat_perf_log_files(self, input_trans_date):
+        """
+        function to find tomcat plog file path
+        """
+        plog_files = []
+        
+        logPath_object = self.initializedPath_object
+
+        tomcat_plog_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_tlog_log_path]}PERF"
+        path = Path(rf"{tomcat_plog_path}")
+
+        try:
+            plog_files_tmp = [p for p in path.glob(f"TLOG_PERF_{input_trans_date}*.tmp")]
+            plog_files_log = [p for p in path.glob(f"TLOG_PERF_{input_trans_date}*.log")]
+            
+            if bool(plog_files_log):
+                for tomcat_perf_files in plog_files_log:
+                    plog_files.append(tomcat_perf_files)
+                
+            if bool(plog_files_tmp):
+                for tomcat_perf_files in plog_files_tmp:
+                    plog_files.append(tomcat_perf_files)
+            
+            if not bool(plog_files_log) and not bool(plog_files_tmp):
+                logging.debug('Tomcat perf log directory does not have %s dated files', input_trans_date)
+                
+            return plog_files
 
         except ValueError as error:
             logging.exception(error)
@@ -584,9 +753,16 @@ class LogFileFinder():
     def set_prism_billing_path(self, is_prism_billing_tlog_path):
         self.is_prism_billing_tlog_path = is_prism_billing_tlog_path
     
+    
     def set_tomcat_billing_path(self, is_tomcat_billing_tlog_path):
         self.is_tomcat_billing_tlog_path = is_tomcat_billing_tlog_path
+    
+    def set_tomcat_perf_path(self, is_tomcat_perf_log_path):
+        self.is_tomcat_perf_log_path = is_tomcat_perf_log_path
 
+    def set_prism_perf_path(self, is_prism_perf_log_path):
+        self.is_prism_perf_log_path = is_prism_perf_log_path
+    
     def set_sms_path(self, is_sms_tlog_path):
         self.is_sms_tlog_path = is_sms_tlog_path
     
@@ -594,7 +770,13 @@ class LogFileFinder():
         return self.is_prism_billing_tlog_path
     
     def get_tomcat_path(self):
-        return self.is_prism_billing_tlog_path
+        return self.is_tomcat_billing_tlog_path
     
     def get_sms_path(self):
         return self.is_sms_tlog_path
+    
+    def get_tomcat_perf_path(self):
+        return self.is_tomcat_perf_log_path
+    
+    def get_prism_perf_path(self):
+        return self.is_prism_perf_log_path
