@@ -5,6 +5,7 @@ import logging
 import re
 from log_files import LogFileFinder
 from automation import Automation
+from input_validation import InputValidation
 
 
 class Tlog:
@@ -81,11 +82,12 @@ class Tlog:
         else:
             return False
     
-    def get_prism_billing_tlog(self):
+    def get_prism_billing_tlog(self, validation_object):
         """
         calling path finder method
         """
         logfile_object = LogFileFinder(self.input_date, self.initializedPath_object)
+        tlog_record = []
 
         logfile_object.prism_billing_tlog_path()
         
@@ -98,7 +100,12 @@ class Tlog:
                         record = [data for data in read_file.readlines() if re.search(self.msisdn,data, re.DOTALL)]
                         if record:
                             for data in record:
-                                self.tlog_record_list_prism.append(data)
+                                tlog_record.append(data)
+
+                if tlog_record:
+                    for data in tlog_record: 
+                        if validation_object.service_keyword == str(data).split("|")[6]:
+                            self.tlog_record_list_prism.append(data)
                 return True
             else:
                 return False
@@ -134,7 +141,6 @@ class Tlog:
         calling path finder method for automation
         """
         logfile_object = LogFileFinder(self.input_date, self.initializedPath_object)
-        # logfile_object = LogFileFinder(self.initializedPath_object)
 
         logfile_object.tomcat_billing_tlog_path()
         
@@ -164,7 +170,6 @@ class Tlog:
         calling path finder method for automation
         """
         logfile_object = LogFileFinder(self.input_date, self.initializedPath_object)
-        # logfile_object = LogFileFinder(self.initializedPath_object)
 
         logfile_object.tomcat_perf_log_path()
         
@@ -213,10 +218,11 @@ class Tlog:
         else:
             return False
     
-    def get_tomcat_billing_tlog(self):
+    def get_tomcat_billing_tlog(self, validation_object):
         """
         calling path finder method
         """
+        tlog_record = []
         logfile_object = LogFileFinder(self.input_date, self.initializedPath_object)
 
         logfile_object.tomcat_billing_tlog_path()
@@ -227,21 +233,27 @@ class Tlog:
                 tomcat_billing_tlog_files = list(logfile_object.tomcat_billing_tlog_files(self.input_date))
                 for file in tomcat_billing_tlog_files:
                     with open(file, "r") as read_file:
-                        record = [data for data in read_file.readlines() if re.search(self.msisdn,data, re.DOTALL)]
-                                    
+                        record = [data for data in read_file.readlines() if re.search(self.msisdn,data, re.DOTALL)]    
                         if record:
                             for data in record:
-                                self.tlog_record_list_tomcat.append(data)
+                                tlog_record.append(data)
+                
+                if tlog_record:
+                    for data in tlog_record:
+                        if validation_object.service_keyword == str(data).split("|")[6]:
+                            self.tlog_record_list_tomcat.append(data)
+                        
                 return True
             else:
                 return False
         else:
             return False
     
-    def get_sms_tlog(self):
+    def get_sms_tlog(self, validation_object):
         """
         calling path finder method
         """
+        tlog_record = []
         logfile_object = LogFileFinder(self.input_date, self.initializedPath_object)
 
         logfile_object.sms_tlog_path()
@@ -255,7 +267,13 @@ class Tlog:
                         record = [data for data in read_file.readlines() if re.search(self.msisdn,data, re.DOTALL)]
                         if record:
                             for data in record:
-                                self.tlog_record_list_sms.append(data)
+                                tlog_record.append(data)
+                
+                if tlog_record:
+                    for data in tlog_record:
+                        if validation_object.service_keyword == str(data).split("|")[6]:
+                            self.tlog_record_list_sms.append(data)
+                        
                 return True
             else:
                 return False

@@ -125,8 +125,7 @@ class TDLogParser:
             self.issue_tlog_data_prism = tlogParser_object.filtered_prism_tlog[-1]
             
             if self.dictionary_of_search_value["THREAD"] == str(tlogParser_object.filtered_prism_plog[-1]).split("|")[1]:
-                
-                self.issue_plog_data_prism = tlogParser_object.filtered_prism_plog[1]
+                self.issue_plog_data_prism = tlogParser_object.filtered_prism_plog[-1]
                 log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_plog_data_prism)
             else:
                 logging.info("worker thread: %s could not be found in prism perf log.")

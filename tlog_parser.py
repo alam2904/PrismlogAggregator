@@ -59,7 +59,7 @@ class TlogParser:
             
         return is_parsed
     
-    def parse_prism(self):
+    def parse_prism(self, validation_object):
         """
         Call to retreive prism tlog files and parse.
         """
@@ -67,7 +67,7 @@ class TlogParser:
         
         tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list_prism, self.tlog_record_list_tomcat, self.tlog_record_list_sms, self.plog_record_list_prism, self.plog_record_list_tomcat, self.initializedPath_object)
     
-        if tlog_object.get_prism_billing_tlog():
+        if tlog_object.get_prism_billing_tlog(validation_object):
             self.filtered_prism_tlog = tlog_object.tlog_record_list_prism
             
             if self.filtered_prism_tlog: 
@@ -126,14 +126,14 @@ class TlogParser:
             logging.info('No tomcat tlog/plog data found')
         return is_parsed
     
-    def parse_tomcat(self):
+    def parse_tomcat(self, validation_object):
         """
         Call to retreive tomcat tlog files and parse.
         """
         is_parsed = False
         tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list_prism, self.tlog_record_list_tomcat, self.tlog_record_list_sms, self.plog_record_list_prism, self.plog_record_list_tomcat, self.initializedPath_object)
     
-        if tlog_object.get_tomcat_billing_tlog():
+        if tlog_object.get_tomcat_billing_tlog(validation_object):
             self.filtered_tomcat_tlog = tlog_object.tlog_record_list_tomcat
                 
             if self.filtered_tomcat_tlog:        
@@ -161,14 +161,14 @@ class TlogParser:
             logging.info('No tomcat tlog data found')
         return is_parsed
 
-    def parse_sms(self):
+    def parse_sms(self, validation_object):
         """
         Call to retreive sms tlog files and parse.
         """
         is_parsed = False
         tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list_prism, self.tlog_record_list_tomcat, self.tlog_record_list_sms, None, None, self.initializedPath_object)
     
-        if tlog_object.get_sms_tlog():
+        if tlog_object.get_sms_tlog(validation_object):
             self.filtered_sms_tlog = tlog_object.tlog_record_list_sms
                 
             if self.filtered_sms_tlog:    

@@ -97,7 +97,7 @@ class PROCESSOR:
         
         if is_tomcat_tlog_path:
             logging.debug('Tomcat tlog path exists.')
-            if tlogParser_object.parse_tomcat():
+            if tlogParser_object.parse_tomcat(self.validation_object):
                 daemonLogParser_object = TDLogParser(self.msisdn, self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile, self.trimmed_tomcat_outfile, self.trimmed_prism_outfile, self.issue_tlog_path, self.file)
                 daemonLogParser_object.parse(tlogParser_object, self.msisdn)
             else:
@@ -105,7 +105,7 @@ class PROCESSOR:
                 
         if is_prism_tlog_path:
             logging.debug('Prism tlog path exists.')
-            if tlogParser_object.parse_prism():   
+            if tlogParser_object.parse_prism(self.validation_object):   
                 daemonLogParser_object = TDLogParser(self.msisdn, self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile, self.trimmed_tomcat_outfile, self.trimmed_prism_outfile, self.issue_tlog_path, self.file)
                 daemonLogParser_object.parse(tlogParser_object, self.msisdn)
             else:
@@ -113,7 +113,7 @@ class PROCESSOR:
         
         if is_sms_tlog_path:
             logging.debug('Sms tlog path exists.')
-            if tlogParser_object.parse_sms():
+            if tlogParser_object.parse_sms(self.validation_object):
                 daemonLogParser_object = TDLogParser(self.msisdn, self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value_sms, worker_log_recod_list, initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile, self.trimmed_tomcat_outfile, self.trimmed_prism_outfile, self.issue_tlog_path, self.file)
                 daemonLogParser_object.parse_sms_td(tlogParser_object, self.msisdn)
             else:

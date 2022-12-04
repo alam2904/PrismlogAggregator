@@ -28,8 +28,8 @@ class Main:
         logging.debug('Number of arguments passed is %s', num_argv - 1)
         
         if num_argv == 4 or num_argv == 5:
-            if num_argv == 5:
-                logging.debug('Arguments passed are : msisdn=%s, search_date=%s and automation=%s', sys.argv[1], sys.argv[2], sys.argv[3])
+            if num_argv == 4:
+                logging.debug('Arguments passed are - msisdn:%s and automattion_log:%s', sys.argv[1], sys.argv[2])
             else:
                 logging.debug('Arguments passed are : msisdn=%s and search_date=%s', sys.argv[1], sys.argv[2])
             
@@ -51,7 +51,7 @@ class Main:
                     back_date = datetime.strftime(bdt, "%Y-%m-%d")
                     logging.info('back date: %s', back_date)
                 
-                if num_argv == 5:
+                if num_argv == 4:
                     outputDirectory_object = Path('out')
                     try:
                         outputDirectory_object.mkdir(exist_ok=False)
@@ -88,7 +88,7 @@ class Main:
                 validation_object = InputValidation(sys.argv[1], sys.argv[2])
                 
                 try:
-                    if num_argv == 5:
+                    if num_argv == 4:
                         fmsisdn = self.validate_input(validation_object, num_argv)
                     else:
                         fmsisdn, input_date = self.validate_input(validation_object, num_argv)
@@ -140,7 +140,7 @@ class Main:
                         logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
                                 
                     logging.info('\n')
-                    if not num_argv == 5:
+                    if not num_argv == 4:
                         if config.has_option('smsd', 'TRANS_BASE_DIR'):
                             if config['smsd']['TRANS_BASE_DIR']:
                                 try:
@@ -166,7 +166,7 @@ class Main:
                         is_prism_tlog_path = initializedPath_object.is_prism_tlog_path
                         is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
                     
-                        if num_argv == 5:          
+                        if num_argv == 4:          
                             processor_object = PROCESSOR(msisdn, fmsisdn, None, outputDirectory_object, file, validation_object)
                             processor_object.process_automation(is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object)
                         else:
@@ -200,12 +200,12 @@ class Main:
         
 
         logging.info('out directory: %s', outputDirectory_object)
-        if num_argv == 4:
-            with ZipFile(f"{sys.argv[3]}_outfile.zip", "w", compression= zipfile.ZIP_DEFLATED) as zip:
+        if num_argv == 5:
+            with ZipFile(f"{sys.argv[4]}_outfile.zip", "w", compression= zipfile.ZIP_DEFLATED) as zip:
                 for path in Path(outputDirectory_object).rglob("*.*"):
                     zip.write(path)
-        elif num_argv == 5:
-            with ZipFile(f"{sys.argv[4]}_outfile.zip", "w", compression= zipfile.ZIP_DEFLATED) as zip:
+        elif num_argv == 4:
+            with ZipFile(f"{sys.argv[3]}_outfile.zip", "w", compression= zipfile.ZIP_DEFLATED) as zip:
                 for path in Path(outputDirectory_object).rglob("*.*"):
                     zip.write(path)
         
@@ -230,12 +230,13 @@ class Main:
     def validate_input(self, validation_object, cmd_argv):
         try:
             fmsisdn = validation_object.validate_msisdn()
-            if cmd_argv == 4:
+            if cmd_argv == 5:
                 input_date = validation_object.validate_date()
+                validation_object.validate_srvkey(sys.argv[3])
                 return (fmsisdn, input_date)
             else:
                 try:
-                    validation_object.validate_timedtdata(sys.argv[2], sys.argv[3])
+                    validation_object.validate_timedtdata(sys.argv[2])
                     return (fmsisdn)
                 except Exception as error:
                     raise
