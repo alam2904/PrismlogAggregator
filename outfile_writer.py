@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 class FileWriter:
         
@@ -62,28 +63,27 @@ class FileWriter:
                         write_file.writelines(line)
         return True
     
-    def write_automation_tlog_data(self, tlog_data_automation_outfile, tlog_record_list):    
-        # data = [data for data in tlog_record_list]
-
+    def write_automation_tlog_data(self, tlog_data_automation_outfile, tlog_record_list):
+        
         for data in tlog_record_list:
-            print(data)
             with open(tlog_data_automation_outfile, "a") as write_file:
                 write_file.writelines(data)
+                sys.stdout.write(data)
     
     def write_automation_plog_data(self, plog_data_automation_outfile, plog_record_list):    
         # data = [data for data in tlog_record_list]
 
         for data in plog_record_list:
-            print(data)
             with open(plog_data_automation_outfile, "a") as write_file:
                 write_file.writelines(data)
+                sys.stdout.write(data)
     
     def write_automation_alog_data(self, alog_data_automation_outfile, alog_record_list):    
         # data = [data for data in tlog_record_list]
 
         for data in alog_record_list:
-            print(data)
             new_line = '\n'
             with open(alog_data_automation_outfile, "a") as write_file:
                 write_file.writelines(f"{data}{new_line}")
+                sys.stdout.write(f"{data}{new_line}")
     

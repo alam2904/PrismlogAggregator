@@ -204,6 +204,7 @@ class Main:
             with ZipFile(f"{sys.argv[4]}_outfile.zip", "w", compression= zipfile.ZIP_DEFLATED) as zip:
                 for path in Path(outputDirectory_object).rglob("*.*"):
                     zip.write(path)
+                
         elif num_argv == 4:
             with ZipFile(f"{sys.argv[3]}_outfile.zip", "w", compression= zipfile.ZIP_DEFLATED) as zip:
                 for path in Path(outputDirectory_object).rglob("*.*"):

@@ -684,26 +684,6 @@ class LogFileFinder():
                     logging.debug('Sms root backup log path does not exists')
         else:
             return None
-                
-    def tomcat_queue_id_99_log_file(self):
-        """
-        function to find tomcat queue_id_99 log file path
-        """
-        logPath_object = self.initializedPath_object
-        if logPath_object.is_tomcat_daemon_path:
-            try:
-                queue_id_99_log_path = f"{logPath_object.tomcat_log_path_dict[logPath_object.tomcat_queue_id_processor_99_log_path]}"
-                
-                if queue_id_99_log_path:
-                    return queue_id_99_log_path
-                else:
-                    logging.debug('tomcat queue_id_99 log path does not exists')
-                return None
-            except KeyError as ex:
-                logging.debug('tomcat queue_id_99 log path does not exists')
-        else:
-            return None
-            
     
     def prism_queue_id_99_log_file(self):
         """

@@ -31,55 +31,48 @@ class DaemonLog:
         calling path finder method
         """
         logPath_object = LogFileFinder(self.input_date, self.initializedPath_object)
+
         try:
-            is_tqlog = self.find_tomcat_log(logPath_object.tomcat_queue_id_99_log_file(), self.is_backup_path)
-            if is_tqlog:
-                logging.debug('Issue thread [%s] found in tomcat queue_id_99 log and will be parsed for any issue.', self.worker_thread)
-                return is_tqlog
+            is_tdlog = self.find_tomcat_log(logPath_object.tomcat_daemonlog_file(), self.is_backup_path)
+            if is_tdlog:
+                logging.debug('Issue thread [%s] found in tomcat daemon log and will be parsed for any issue.', self.worker_thread)
+                return is_tdlog
         except subprocess.CalledProcessError as ex:
-            logging.warning('Tomcat queue_id_99 log path does not exists or issue thread [%s] could not be found.', self.worker_thread) 
-            logging.debug('Going to check tomcat log.')
+            logging.warning('Tomcat daemon log path does not exists or issue thread [%s] could not be found.',self.worker_thread) 
+            logging.debug('Going to check root log.')
+
             try:
-                is_tdlog = self.find_tomcat_log(logPath_object.tomcat_daemonlog_file(), self.is_backup_path)
-                if is_tdlog:
-                    logging.debug('Issue thread [%s] found in tomcat daemon log and will be parsed for any issue.', self.worker_thread)
-                    return is_tdlog
+                is_trlog = self.find_tomcat_log(logPath_object.tomcat_rootlog_file(), self.is_backup_path)
+                if is_trlog:
+                    logging.debug('Issue thread [%s] found in tomcat root log and will be parsed for any issue.', self.worker_thread)
+                    return is_trlog
+
             except subprocess.CalledProcessError as ex:
-                logging.warning('Tomcat daemon log path does not exists or issue thread [%s] could not be found.',self.worker_thread) 
-                logging.debug('Going to check root log.')
+                logging.warning('Tomcat root log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
+                logging.debug('Going to check tomcat backup log path')
 
                 try:
-                    is_trlog = self.find_tomcat_log(logPath_object.tomcat_rootlog_file(), self.is_backup_path)
-                    if is_trlog:
-                        logging.debug('Issue thread [%s] found in tomcat root log and will be parsed for any issue.', self.worker_thread)
-                        return is_trlog
+                    self.is_backup_path = True
+                    is_tdblog = self.find_tomcat_log(logPath_object.tomcat_daemonlog_backup_file(), self.is_backup_path)
+                    if is_tdblog:
+                        logging.debug('Issue thread [%s] found in tomcat daemon backup log and will be parsed for any issue.', self.worker_thread)
+                        return is_tdblog
 
                 except subprocess.CalledProcessError as ex:
-                    logging.warning('Tomcat root log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
-                    logging.debug('Going to check tomcat backup log path')
+                    logging.warning('Tomcat backup log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
+                    logging.debug('Going to check root backup log path')
 
                     try:
                         self.is_backup_path = True
-                        is_tdblog = self.find_tomcat_log(logPath_object.tomcat_daemonlog_backup_file(), self.is_backup_path)
-                        if is_tdblog:
-                            logging.debug('Issue thread [%s] found in tomcat daemon backup log and will be parsed for any issue.', self.worker_thread)
-                            return is_tdblog
-
+                        is_trblog = self.find_tomcat_log(logPath_object.tomcat_rootlog_backup_file(), self.is_backup_path)
+                        if is_trblog:
+                            logging.debug('Issue thread [%s] found in tomcat root backup log and will be parsed for any issue.', self.worker_thread)
+                            return is_trblog
                     except subprocess.CalledProcessError as ex:
-                        logging.warning('Tomcat backup log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
-                        logging.debug('Going to check root backup log path')
-
-                        try:
-                            self.is_backup_path = True
-                            is_trblog = self.find_tomcat_log(logPath_object.tomcat_rootlog_backup_file(), self.is_backup_path)
-                            if is_trblog:
-                                logging.debug('Issue thread [%s] found in tomcat root backup log and will be parsed for any issue.', self.worker_thread)
-                                return is_trblog
-                        except subprocess.CalledProcessError as ex:
-                            logging.warning('Tomcat root backup log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
-                            logging.error(ex)
-                            logging.error('No tomcat logs could be found against %s or log may not be in debug mode', self.worker_thread)
-                            return False
+                        logging.warning('Tomcat root backup log path does not exists or issue thread [%s] could not be found.', self.worker_thread)
+                        logging.error(ex)
+                        logging.error('No tomcat logs could be found against %s or log may not be in debug mode', self.worker_thread)
+                        return False
     
     def get_prism_log(self):
         """

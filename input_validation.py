@@ -60,6 +60,7 @@ class InputValidation:
                 logging.debug('key: %s entered is valid and value: %s entered is a valid string', key, value)
             else:
                 self.is_input_valid = False
+                logging.error('Eigther key: %s entered is not valid or value: %s entered is not a valid string', key, value)
         except Exception as error:
             logging.error('Eigther key: %s entered is not valid or value: %s entered is not a valid string', key, value)
             self.is_input_valid = False
