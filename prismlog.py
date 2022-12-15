@@ -186,7 +186,7 @@ class Main:
             logging.error('Invalid number of arguments passed.')
             logging.debug('Log aggregation failed to process.')
             logging.info("******************************************")
-        
+            
         #move log_aggregator.log from current directory to respective directory.
         log = outputDirectory_object/"log_aggregator.log"
         if Path('log_aggregator.log').exists():
@@ -201,14 +201,18 @@ class Main:
 
         logging.info('out directory: %s', outputDirectory_object)
         if num_argv == 5:
-            with ZipFile(f"{sys.argv[4]}_outfile.zip", "w", compression= zipfile.ZIP_DEFLATED) as zip:
+            out_zipFile = f"{sys.argv[4]}_outfile.zip"
+            with ZipFile(out_zipFile, "w", compression= zipfile.ZIP_DEFLATED) as zip:
                 for path in Path(outputDirectory_object).rglob("*.*"):
                     zip.write(path)
+                print(f"OARM_OUTPUT_FILENAME|{Path(out_zipFile).absolute()}")
                 
         elif num_argv == 4:
-            with ZipFile(f"{sys.argv[3]}_outfile.zip", "w", compression= zipfile.ZIP_DEFLATED) as zip:
+            out_zipFile = f"{sys.argv[3]}_outfile.zip"
+            with ZipFile(out_zipFile, "w", compression= zipfile.ZIP_DEFLATED) as zip:
                 for path in Path(outputDirectory_object).rglob("*.*"):
                     zip.write(path)
+                print(f"OARM_OUTPUT_FILENAME|{Path(out_zipFile).absolute()}")
         
         end = time.time()
         logging.debug(end)
