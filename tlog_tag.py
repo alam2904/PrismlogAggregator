@@ -114,6 +114,14 @@ class TlogSmsTag(Enum):
     SMS_PENDING = "P"
     SMS_SUSPENDED = "S"
     SMS_QUEUED = "Q"
+    
+class webapps(Enum):
+    servlet_mapping = ["/subscription/ActivateSubscription?", "/subscription/DeactivateSubscription?", 
+                       "/subscription/EventCharge?", "/subscription/UpgradeSubscription?", 
+                       "/subscription/TriggerCharge?", "/subscription/ChargeGift?", 
+                       "/subscription/AddRenewalTrigger?", "/subscription/RealTimeActivate?", 
+                       "/subscription/RealTimeDeactivate?", "/subscription/RealTimeCharge?", 
+                       "/subscription/RealTimeTransactionRefund?"]
 
 class TaskType(Enum):
     """
@@ -137,6 +145,7 @@ class TaskType(Enum):
     GENERIC_TASK3 = "G3"
     GENERIC_TASK4 = "G4"
     GENERIC_TASK5 = "G5"
-
-# for status in TlogErrorTag:
-#     print(status.value)
+    
+# if __name__ == '__main__':
+#     for status in webapps:
+#         print(status.value)

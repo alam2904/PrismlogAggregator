@@ -11,37 +11,38 @@ import re
 import os
 from daemon_log import DaemonLog
 from outfile_writer import FileWriter
+from configparser import ConfigParser
 from tlog_tag import TaskType, TlogAwaitPushTag, TlogAwaitPushTimeOutTag, TlogErrorTag, TlogHandlerExp, TlogLowBalTag, TlogRetryTag, TlogNHFTag, TlogSmsTag
 
 class TDLogParser:
     """
     Parse the daemon log based on tlog input
     """
-    def __init__(self, msisdn, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, is_tomcat, is_prism, is_sms, tomcat_thread_outfile, prismd_thread_outfile, smsd_thread_outfile, trimmed_tomcat_outfile, trimmed_prism_outfile, issue_tlog_path):
+    def __init__(self, msisdn, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, tomcat_thread_outfile, prismd_thread_outfile, smsd_thread_outfile, trimmed_tomcat_outfile, trimmed_prism_outfile, issue_tlog_path, file):
         self.msisdn = msisdn
         self.input_date = input_date
         self.initializedPath_object = initializedPath_object
         self.dictionary_of_tlogs = dictionary_of_tlogs
         self.dictionary_of_search_value = dictionary_of_search_value
         self.worker_log_recod_list = worker_log_recod_list
-        self.is_tomcat = is_tomcat
-        self.is_prism = is_prism
-        self.is_sms = is_sms
+
         self.__initial_index = 0
         self.__final_index = 0
         self.__task_type = ""
-        # self.is_prism_processing_required = True
-        #out files
+
         self.tomcat_thread_outfile = tomcat_thread_outfile
         self.prismd_thread_outfile = prismd_thread_outfile
         self.smsd_thread_outfile = smsd_thread_outfile
         self.trimmed_tomcat_outfile = trimmed_tomcat_outfile
         self.trimmed_prism_outfile = trimmed_prism_outfile
         self.issue_tlog_path = issue_tlog_path
+        self.file = file
         
         self.issue_tlog_data_prism = ""
         self.issue_tlog_data_tomcat = ""
         self.issue_tlog_data_sms = ""
+        self.issue_plog_data_prism = ""
+        self.issue_plog_data_tomcat = ""
         #tomcat and prism issue flags
         self.is_error_tlog = False
         self.is_lowbal_tlog = False
@@ -58,6 +59,7 @@ class TDLogParser:
         self.acc_log = []
         self.new_line = '\n'
         self.is_issue_in_thread = False
+
 
     def parse(self, tlogParser_object, msisdn):
         """
@@ -93,24 +95,25 @@ class TDLogParser:
         
         # if tlogParser_object.filtered_prism_tlog and self.is_prism_processing_required and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog or self.is_timeout_tlog or self.is_handler_exp):
         if tlogParser_object.filtered_prism_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog or self.is_timeout_tlog or self.is_handler_exp):
+            
+            if self.initializedPath_object.is_access_path:
+                access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
+                logging.info('Issue tlog found. Going to fetch access log.')
                 
-            access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
-            logging.info('Issue tlog found. Going to fetch access log.')
-                
-            if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
-                self.fetch_access_log(msisdn, "/subscription/ActivateSubscription?", access_path)
-            elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
-                self.fetch_access_log(msisdn, "/subscription/DeactivateSubscription?", access_path)
-            elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'E':
-                self.fetch_access_log(msisdn, "/subscription/EventCharge?", access_path)
-            elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'U':
-                self.fetch_access_log(msisdn, "/subscription/UpgradeSubscription?", access_path)
-            elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'T':
-                self.fetch_access_log(msisdn, "/subscription/TriggerCharge?", access_path)
-            elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'G':
-                self.fetch_access_log(msisdn, "/subscription/ChargeGift?", access_path)
-            elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'V':
-                self.fetch_access_log(msisdn, "/subscription/AddRenewalTrigger?", access_path)
+                if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
+                    self.fetch_access_log(msisdn, "/subscription/ActivateSubscription?", access_path)
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
+                    self.fetch_access_log(msisdn, "/subscription/DeactivateSubscription?", access_path)
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'E':
+                    self.fetch_access_log(msisdn, "/subscription/EventCharge?", access_path)
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'U':
+                    self.fetch_access_log(msisdn, "/subscription/UpgradeSubscription?", access_path)
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'T':
+                    self.fetch_access_log(msisdn, "/subscription/TriggerCharge?", access_path)
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'G':
+                    self.fetch_access_log(msisdn, "/subscription/ChargeGift?", access_path)
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'V':
+                    self.fetch_access_log(msisdn, "/subscription/AddRenewalTrigger?", access_path)
 
             if not tlogParser_object.filtered_tomcat_tlog:
                 if os.path.isfile(self.issue_tlog_path) and os.path.getsize(self.issue_tlog_path) != 0:
@@ -120,30 +123,46 @@ class TDLogParser:
                 log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
             
             self.issue_tlog_data_prism = tlogParser_object.filtered_prism_tlog[-1]
+            
+            if self.dictionary_of_search_value["THREAD"] == str(tlogParser_object.filtered_prism_plog[-1]).split("|")[1]:
+                self.issue_plog_data_prism = tlogParser_object.filtered_prism_plog[-1]
+                log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_plog_data_prism)
+            else:
+                logging.info("worker thread: %s could not be found in prism perf log.")
+                    
             log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_prism)
             
         
         elif tlogParser_object.filtered_tomcat_tlog and (self.is_error_tlog or self.is_lowbal_tlog or self.is_retry_tlog or self.is_nhf_tlog or self.is_await_push_tlog or self.is_handler_exp):
             
-            access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
+            if self.initializedPath_object.is_access_path:
+                access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
             
-            logging.info('Issue tlog found. Going to fetch access log.')
-            if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeActivate?", access_path)
-            elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeDeactivate?", access_path)
-            elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'E':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeCharge?", access_path)
-            elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'F':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeTransactionRefund?", access_path)
+                logging.info('Issue tlog found. Going to fetch access log.')
+                if self.dictionary_of_tlogs["CHARGE_TYPE"] == 'A':
+                    self.fetch_access_log(msisdn, "/subscription/RealTimeActivate?", access_path)
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'D':
+                    self.fetch_access_log(msisdn, "/subscription/RealTimeDeactivate?", access_path)
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'E':
+                    self.fetch_access_log(msisdn, "/subscription/RealTimeCharge?", access_path)
+                elif self.dictionary_of_tlogs["CHARGE_TYPE"] == 'F':
+                    self.fetch_access_log(msisdn, "/subscription/RealTimeTransactionRefund?", access_path)
             
             if os.path.isfile(self.issue_tlog_path) and os.path.getsize(self.issue_tlog_path) != 0:
                 os.remove(self.issue_tlog_path)
-            
+                
+            logging.info('access log is: %s', self.acc_log)
             if self.acc_log:
                 log_writer.write_access_log(self.issue_tlog_path, self.acc_log)
                
             self.issue_tlog_data_tomcat = tlogParser_object.filtered_tomcat_tlog[-1]
+            
+            if self.dictionary_of_search_value["THREAD"] == str(tlogParser_object.filtered_tomcat_plog[-1]).split("|")[1]:
+                self.issue_plog_data_tomcat = tlogParser_object.filtered_tomcat_plog[-1]
+                log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_plog_data_tomcat)
+            else:
+                logging.info("worker thread: %s could not be found in tomcat perf log.")
+                
             log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_tomcat)
                 
         else:
@@ -175,23 +194,25 @@ class TDLogParser:
         self.get_trimmed_thread_log()
     
     def fetch_access_log(self, msisdn, search_string, access_path):
+        config = ConfigParser()
+        config.read(self.file)
         try:
-            access_log = subprocess.check_output(f"grep {search_string} {access_path}/localhost_access_log*.txt", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config['tomcat_access']['PREFIX']}*.{config['tomcat_access']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
             
             for record in access_log.splitlines():
                 for data in record.split("-"):
                     if re.search(r"\b{}\b".format(str(msisdn)),data):
                         self.acc_log = f"{data}{self.new_line}"
         except subprocess.CalledProcessError as ex:
-            try: 
-                access_log = subprocess.check_output(f"grep {search_string} {self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/localhost_access_log*.txt", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            # try: 
+            #     access_log = subprocess.check_output(f"grep {search_string} {self.initializedPath_object.dict_of_process_dir['tomcat']['PROCESS_HOME_DIR']}/{access_path}/{config['tomcat_access']['PREFIX']}*.{config['tomcat_access']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 
-                for record in access_log.splitlines():
-                    for data in record.split("-"):
-                        if re.search(r"\b{}\b".format(str(msisdn)),data):
-                            self.acc_log = f"{data}{self.new_line}"
-            except subprocess.CalledProcessError as ex:            
-                logging.info('No access log found')
+            #     for record in access_log.splitlines():
+            #         for data in record.split("-"):
+            #             if re.search(r"\b{}\b".format(str(msisdn)),data):
+            #                 self.acc_log = f"{data}{self.new_line}"
+            # except subprocess.CalledProcessError as ex:            
+            logging.info('No access log found')
         
 
     def parse_tlog(self, tlogTags, is_tlog):
@@ -226,7 +247,7 @@ class TDLogParser:
         if len(self.issue_tlog_data_tomcat) != 0:
             
             if not self.is_await_push_tlog:
-                logging.info('Going to fetch tomcat daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
+                logging.info('Going to fetch daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
                 daemonLog_object = DaemonLog(self.msisdn, self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile)
                 daemonLog_object.get_tomcat_log()
                 
@@ -282,7 +303,7 @@ class TDLogParser:
         if len(self.issue_tlog_data_prism) != 0:
             if not self.is_timeout_tlog and not self.is_await_push_tlog:
                 
-                logging.info('Going to fetch prism daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
+                logging.info('Going to fetch daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
                 daemonLog_object = DaemonLog(self.msisdn, self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile)
                 daemonLog_object.get_prism_log()
                 logging.info('daemon out file: %s', self.prismd_thread_outfile)
@@ -342,7 +363,7 @@ class TDLogParser:
         
         if len(self.issue_tlog_data_sms) != 0 and self.is_issue_sms_tlog:
                 
-            logging.info('Going to fetch sms daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
+            logging.info('Going to fetch daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
             daemonLog_object = DaemonLog(self.msisdn, self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile)
             daemonLog_object.get_sms_log()
     
