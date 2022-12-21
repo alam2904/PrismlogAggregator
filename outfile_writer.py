@@ -16,9 +16,11 @@ class FileWriter:
                     with open(issue_tlog_path, "a") as write_file:
                         logging.info('appending')
                         write_file.writelines(acc_log)
+                    
         except FileNotFoundError as ex:
             with open(issue_tlog_path, "a") as write_file:
                 write_file.writelines(acc_log)
+        
             
     def write_issue_tlog(self, issue_tlog_path, issue_tlog_data):
         logging.info('Writing issue tlog to a file: %s', issue_tlog_path)
@@ -32,6 +34,7 @@ class FileWriter:
                     with open(issue_tlog_path, "a") as write_file:
                         logging.info('appending')
                         write_file.writelines(issue_tlog_data)
+            
         except FileNotFoundError as ex:
             try:
                 with open(issue_tlog_path, "a") as write_file:
@@ -47,6 +50,7 @@ class FileWriter:
         try:    
             with open(thread_outfile, "a") as write_file:
                 write_file.writelines(record)
+            
         except FileNotFoundError as error:
             logging.info('file not found to write.')
             

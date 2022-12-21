@@ -8,7 +8,7 @@ class PROCESSOR:
     """
     Processor class
     """
-    def __init__(self, msisdn, fmsisdn, input_date, outputDirectory_object, file, validation_object):
+    def __init__(self, msisdn, fmsisdn, input_date, outputDirectory_object, file, validation_object, random_arg):
 
         self.msisdn = msisdn
         self.mdn = fmsisdn
@@ -18,14 +18,15 @@ class PROCESSOR:
         self.today_date = str(datetime.strftime(datetime.today(), "%Y-%m-%d")).replace("-", "")
         # self.today_date_time = datetime.strftime(datetime.today(), "%Y-%m-%d %H:%M:%S")
         self.validation_object = validation_object
+        self.random_arg = random_arg
         
         self.outputDirectory_object = outputDirectory_object
-        self.prismd_thread_outfile = f"{self.outputDirectory_object}/{self.input_date}_{self.mdn}_{self.today_date}_prismd.log"
-        self.tomcat_thread_outfile = f"{self.outputDirectory_object}/{self.input_date}_{self.mdn}_{self.today_date}_tomcat.log"
-        self.smsd_thread_outfile = f"{self.outputDirectory_object}/{self.input_date}_{self.mdn}_{self.today_date}_smsd.log"
-        self.trimmed_prism_outfile = f"{self.outputDirectory_object}/{self.input_date}_{self.mdn}_{self.today_date}_trimmed_prismd.log"
-        self.trimmed_tomcat_outfile = f"{self.outputDirectory_object}/{self.input_date}_{self.mdn}_{self.today_date}_trimmed_tomcat.log"
-        self.issue_tlog_path = f"{self.outputDirectory_object}/{self.input_date}_{self.mdn}_{self.today_date}_issue_tlog_record.txt"
+        self.prismd_thread_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_prismd.log"
+        self.tomcat_thread_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_tomcat.log"
+        self.smsd_thread_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_smsd.log"
+        self.trimmed_prism_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_trimmed_prismd.log"
+        self.trimmed_tomcat_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_trimmed_tomcat.log"
+        self.issue_tlog_path = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_issue_tlog_record.txt"
                 
         
     def process_automation(self, is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object):
@@ -44,7 +45,7 @@ class PROCESSOR:
         
         if self.validation_object.keyword == "alog":
             if initializedPath_object.is_access_path:
-                data_automation_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{st_date}_{self.today_date}_alog_data.txt"
+                data_automation_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.msisdn}_{st_date}_{self.today_date}_alog_data.txt"
                 auto = Automation()
                 
                 access_path = initializedPath_object.tomcat_log_path_dict[initializedPath_object.tomcat_access_path]
@@ -53,9 +54,9 @@ class PROCESSOR:
                 logging.error('access path does not exists.')
         
         elif self.validation_object.keyword == "tlog":
+            data_automation_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.msisdn}_{st_date}_{self.today_date}_tlog_data.txt"
             if is_tomcat_tlog_path:
                 logging.debug('Tomcat tlog path exists.')
-                data_automation_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{st_date}_{self.today_date}_tlog_data.txt"
                 
                 if tlogParser_object.parse_tomcat_automation(self.validation_object, data_automation_outfile, self.validation_object.keyword):
                     pass
@@ -68,9 +69,9 @@ class PROCESSOR:
                 logging.error('tlog path does not exists. Hence tlog data could not be fetched.')
         
         elif self.validation_object.keyword == "plog":
+            data_automation_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.msisdn}_{st_date}_{self.today_date}_plog_data.txt"
             if is_tomcat_tlog_path:
                 logging.debug('Tomcat tlog path exists.')
-                data_automation_outfile = f"{self.outputDirectory_object}/{self.msisdn}_{st_date}_{self.today_date}_plog_data.txt"
                 
                 if tlogParser_object.parse_tomcat_automation(self.validation_object, data_automation_outfile, self.validation_object.keyword):
                     pass

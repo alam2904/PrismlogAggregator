@@ -3,7 +3,6 @@
 importing modules
 """
 import sys
-import time
 import logging
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -21,8 +20,8 @@ class Main:
     def init(self):
         logging.basicConfig(filename='log_aggregator.log', filemode='w', format='[%(asctime)s,%(msecs)d]%(pathname)s:(%(lineno)d)-%(levelname)s - %(message)s', datefmt='%y-%m-%d %H:%M:%S', level=logging.DEBUG)
         
-        start = time.time()
-        logging.debug(start)
+        start = datetime.now()
+        logging.debug('start of execution time: %s', start)
         
         num_argv = len(sys.argv)
         logging.debug('Number of arguments passed is %s', num_argv - 1)
@@ -167,10 +166,10 @@ class Main:
                         is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
                     
                         if num_argv == 4:          
-                            processor_object = PROCESSOR(msisdn, fmsisdn, None, outputDirectory_object, file, validation_object)
+                            processor_object = PROCESSOR(msisdn, fmsisdn, None, outputDirectory_object, file, validation_object, sys.argv[3])
                             processor_object.process_automation(is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object)
                         else:
-                            processor_object = PROCESSOR(msisdn, fmsisdn, input_date, outputDirectory_object, file, validation_object)
+                            processor_object = PROCESSOR(msisdn, fmsisdn, input_date, outputDirectory_object, file, validation_object, sys.argv[4])
                             processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
                     else:
                         logging.error('Transaction log path initialization failed.')
@@ -191,7 +190,14 @@ class Main:
         log = outputDirectory_object/"log_aggregator.log"
         if Path('log_aggregator.log').exists():
             try:
-                shutil.move('log_aggregator.log', f'{outputDirectory_object}/')
+                for path in Path(outputDirectory_object).rglob(f"*_log_aggregator.log"):
+                    if path:
+                        logging.info('*_log_aggregator.log file already exists. Hence removing the old log files and copying the new to the path.')
+                        os.remove(path)
+                if num_argv == 5:
+                    shutil.move('log_aggregator.log', f'{outputDirectory_object}/{sys.argv[4]}_log_aggregator.log')
+                elif num_argv == 4:
+                    shutil.move('log_aggregator.log', f'{outputDirectory_object}/{sys.argv[3]}_log_aggregator.log')
             except Exception as error:
                 if os.path.isfile(outputDirectory_object/"log_aggregator.log"):
                     logging.info('log_aggregator.log file already exists. Hence removing and copying it.')
@@ -200,26 +206,28 @@ class Main:
         
 
         logging.info('out directory: %s', outputDirectory_object)
+        
+        end = datetime.now()
+        logging.debug('end of execution time: %s', end)
+            
+        duration = end.timestamp() - start.timestamp()
+        logging.debug('Total time taken %s', duration)
+        
         if num_argv == 5:
-            out_zipFile = f"{sys.argv[4]}_outfile.zip"
-            with ZipFile(out_zipFile, "w", compression= zipfile.ZIP_DEFLATED) as zip:
-                for path in Path(outputDirectory_object).rglob("*.*"):
+            out_zipFile = f"{sys.argv[4]}_{Path('outfile.zip')}"
+            with ZipFile(out_zipFile, "a", compression= zipfile.ZIP_DEFLATED) as zip:
+                for path in Path(outputDirectory_object).rglob(f"{sys.argv[4]}_*.*"):
                     zip.write(path)
-                print(f"OARM_OUTPUT_FILENAME|{Path(out_zipFile).absolute()}")
+            print(f"OARM_OUTPUT_FILENAME|{Path(out_zipFile).absolute()}")
                 
         elif num_argv == 4:
-            out_zipFile = f"{sys.argv[3]}_outfile.zip"
-            with ZipFile(out_zipFile, "w", compression= zipfile.ZIP_DEFLATED) as zip:
-                for path in Path(outputDirectory_object).rglob("*.*"):
+            out_zipFile = f"{sys.argv[3]}_{Path('outfile.zip')}"
+            with ZipFile(out_zipFile, "a", compression= zipfile.ZIP_DEFLATED) as zip:
+                for path in Path(outputDirectory_object).rglob(f"{sys.argv[3]}_*.*"):
                     zip.write(path)
-                print(f"OARM_OUTPUT_FILENAME|{Path(out_zipFile).absolute()}")
+            print(f"OARM_OUTPUT_FILENAME|{Path(out_zipFile).absolute()}")
         
-        end = time.time()
-        logging.debug(end)
-            
-        duration = end - start
-        logging.debug('Total time taken %s', duration)
-    
+        
     def remove_backdated_files(self, outputDirectory_object, back_date):
         outfiles = [p for p in outputDirectory_object.glob(f"*_{back_date}_*.*")]
         if bool(outfiles):
