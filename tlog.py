@@ -5,8 +5,6 @@ import logging
 import re
 from log_files import LogFileFinder
 from automation import Automation
-from input_validation import InputValidation
-
 
 class Tlog:
     """
