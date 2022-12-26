@@ -19,6 +19,7 @@ class PROCESSOR:
         # self.today_date_time = datetime.strftime(datetime.today(), "%Y-%m-%d %H:%M:%S")
         self.validation_object = validation_object
         self.random_arg = random_arg
+        self.dict_key = ""
         
         self.outputDirectory_object = outputDirectory_object
         self.prismd_thread_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_prismd.log"
@@ -91,6 +92,10 @@ class PROCESSOR:
         plog_record_list_tomcat = []
         plog_record_list_prism = []
         worker_log_recod_list = []
+        dictionary_tlog_to_search = {}
+        
+        is_error_tlog = is_lowbal_tlog = is_retry_tlog = is_nhf_tlog = is_await_push_tlog = is_timeout_tlog = is_handler_exp = False
+        
         dictionary_of_search_value = {"TIMESTAMP" : "","THREAD" : "","MSISDN" : "","SUB_TYPE" : "","CHARGE_TYPE": ""}
         dictionary_of_search_value_sms = {"TIMESTAMP": "","THREAD" : "","MSISDN" : "","SRNO" : "","HANDLER" : "","STATUS" : "","REMARKS": ""}
 
@@ -99,23 +104,36 @@ class PROCESSOR:
         if is_tomcat_tlog_path:
             logging.debug('Tomcat tlog path exists.')
             if tlogParser_object.parse_tomcat(self.validation_object):
-                daemonLogParser_object = TDLogParser(self.msisdn, self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile, self.trimmed_tomcat_outfile, self.trimmed_prism_outfile, self.issue_tlog_path, self.file)
-                daemonLogParser_object.parse(tlogParser_object, self.msisdn)
+                
+                logging.info('dictionary of tlogs: %s', tlogParser_object.dictionary_of_tlogs)
+                if tlogParser_object.dictionary_of_tlogs:
+                    for key, value in tlogParser_object.dictionary_of_tlogs.items():
+                        daemonLogParser_object = TDLogParser(self.msisdn, self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile, self.trimmed_tomcat_outfile, self.trimmed_prism_outfile, self.issue_tlog_path, self.file, dictionary_tlog_to_search, self.dict_key)
+                        daemonLogParser_object.parse(tlogParser_object, self.msisdn, key, value, is_error_tlog, is_lowbal_tlog, is_retry_tlog, is_nhf_tlog, is_await_push_tlog, is_timeout_tlog, is_handler_exp)
+                else:
+                    logging.error('No issue tlog found. Hence not fetching the tomcat log.')
             else:
-                logging.error('No issue tlog found. Hence not fetching the tomcat log.')
+                logging.error('No tlog found. Hence not fetching the tomcat log.')
                 
         if is_prism_tlog_path:
             logging.debug('Prism tlog path exists.')
             if tlogParser_object.parse_prism(self.validation_object):   
-                daemonLogParser_object = TDLogParser(self.msisdn, self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile, self.trimmed_tomcat_outfile, self.trimmed_prism_outfile, self.issue_tlog_path, self.file)
-                daemonLogParser_object.parse(tlogParser_object, self.msisdn)
+            
+                logging.info('dictionary of tlogs: %s', tlogParser_object.dictionary_of_tlogs)
+                if tlogParser_object.dictionary_of_tlogs:
+                    for key, value in tlogParser_object.dictionary_of_tlogs.items():
+                        daemonLogParser_object = TDLogParser(self.msisdn, self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile, self.trimmed_tomcat_outfile, self.trimmed_prism_outfile, self.issue_tlog_path, self.file, dictionary_tlog_to_search, self.dict_key)
+                        logging.info('key: %s and thread : %s', key, tlogParser_object.dictionary_of_tlogs[key])
+                        daemonLogParser_object.parse(tlogParser_object, self.msisdn, key, value, is_error_tlog, is_lowbal_tlog, is_retry_tlog, is_nhf_tlog, is_await_push_tlog, is_timeout_tlog, is_handler_exp)
+                else:
+                    logging.error('No issue tlog found. Hence not fetching the prism log.')
             else:
-                logging.error('No issue tlog found. Hence not fetching the prism log.')
+                logging.error('No tlog found. Hence not fetching the prism log.')
         
         if is_sms_tlog_path:
             logging.debug('Sms tlog path exists.')
             if tlogParser_object.parse_sms(self.validation_object):
-                daemonLogParser_object = TDLogParser(self.msisdn, self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value_sms, worker_log_recod_list, initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile, self.trimmed_tomcat_outfile, self.trimmed_prism_outfile, self.issue_tlog_path, self.file)
+                daemonLogParser_object = TDLogParser(self.msisdn, self.input_date, tlogParser_object.dictionary_of_tlogs, dictionary_of_search_value_sms, worker_log_recod_list, initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile, self.trimmed_tomcat_outfile, self.trimmed_prism_outfile, self.issue_tlog_path, self.file, dictionary_tlog_to_search, self.dict_key)
                 daemonLogParser_object.parse_sms_td(tlogParser_object, self.msisdn)
             else:
                 logging.error('No issue tlog found. Hence not fetching the sms log.')
