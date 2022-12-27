@@ -3,10 +3,8 @@ importing required modules
 """
 import logging
 import subprocess
-from subprocess import PIPE
 import signal
 from datetime import datetime
-from pathlib import Path
 import re
 import os
 from daemon_log import DaemonLog
@@ -107,7 +105,8 @@ class TDLogParser:
             logging.debug('Hence not fetching the daemon log. Will check if more issue tlogs present.')
             
     def process_prism_log(self, tlogParser_object, log_writer, msisdn):
-        tlog_index = self.dict_key.split("_")[1]
+        # tlog_index = self.dict_key.split("_")[1]
+        tlog_index = self.dictionary_tlog_to_search[self.dict_key]["THREAD"]
         if self.initializedPath_object.is_access_path:
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
             logging.info('Issue tlog found. Going to fetch access log.')
@@ -159,7 +158,8 @@ class TDLogParser:
             logging.info("worker thread: %s could not be found in prism perf log.")
         
     def process_tomcat_log(self, tlogParser_object, log_writer, msisdn):
-        tlog_index = self.dict_key.split("_")[1]
+        # tlog_index = self.dict_key.split("_")[1]
+        tlog_index = self.dictionary_tlog_to_search[self.dict_key]["THREAD"]
         if self.initializedPath_object.is_access_path:
             access_path = self.initializedPath_object.tomcat_log_path_dict[self.initializedPath_object.tomcat_access_path]
             logging.info('Issue tlog found. Going to fetch access log.')
@@ -245,43 +245,17 @@ class TDLogParser:
                             a_date = [temp.split("]")[0].split("[")[1].split(" ")[0].split(":") for temp in temp_record.split(",")]
                             acc_date = f'{a_date[0][0]}{a_date[0][1]}:{a_date[0][2]}'
                             acc_log_date = datetime.strptime(acc_date, "%d/%b/%Y%H:%M")
-                            logging.info('access log date: %s', acc_log_date)
 
                             r_date = str(self.dictionary_tlog_to_search[self.dict_key]["TIMESTAMP"].split(",")[0]).split(":")
                             req_date = f'{r_date[0]}:{r_date[1]}'
                             tlog_req_date = datetime.strptime(req_date, "%Y-%m-%d %H:%M")
                             
-                            logging.info('tlog request date: %s', tlog_req_date)
-                            
                             if acc_log_date == tlog_req_date:
                                 acc_log = f'{record.split("- -")[1].strip()}{self.new_line}'
             return acc_log
-                    # else:
-                    #     acc_log = temp_record
-                    #     logging.info('else record: %s', acc_log)
                  
         except subprocess.CalledProcessError as ex:            
             logging.info('No access log found')
-        
-        # try:
-        #     access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config['tomcat_access']['PREFIX']}*.{config['tomcat_access']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-            
-        #     for record in access_log.splitlines():
-        #         if re.search(msisdn,record, re.DOTALL):
-        #             temp_record = f'{record.split("- -")[1]}'
-        #             logging.info('temp record: %s', temp_record.split("[")[1].split("]")[0].split(" ")[0])
-        #             data = [data.split("refid=")[1].split("&")[0] for data in temp_record.split(",") if data.split("refid=")]
-        #             logging.info('request date: %s', str(self.dictionary_tlog_to_search[self.dict_key]["REQUEST_DATE"]).split(","))
-        #             for refid in str(self.dictionary_tlog_to_search[self.dict_key]).split(","):
-        #                 if f'refId={data[0]}' == refid.split("]")[0]:
-        #                     self.acc_log.append(f'{record.split("- -")[1].strip()}{self.new_line}')
-        #                     break
-        #             else:
-        #                 self.acc_log.append(f'{record.split("- -")[1].strip()}{self.new_line}')
-                            
-        # except subprocess.CalledProcessError as ex:            
-        #     logging.info('No access log found')
-        
 
     def parse_tlog(self, tlogTags, is_tlog, key, value):
         for keyy, valuee in value.items():
@@ -308,7 +282,8 @@ class TDLogParser:
         Get daemon log for the given thread
         """
         log_writer = FileWriter()
-        tlog_index = self.dict_key.split("_")[1]
+        # tlog_index = self.dict_key.split("_")[1]
+        tlog_index = self.dictionary_tlog_to_search[self.dict_key]["THREAD"]
         
         self.tomcat_thread_outfile = f'{self.tomcat_thread_outfile.split(".log")[0]}_{tlog_index}.log'
         self.prismd_thread_outfile = f'{self.prismd_thread_outfile.split(".log")[0]}_{tlog_index}.log'

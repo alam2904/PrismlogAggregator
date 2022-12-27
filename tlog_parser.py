@@ -3,7 +3,6 @@ tlog parser module
 """
 import logging
 from tlog import Tlog
-from input_validation import InputValidation
 
 class TlogParser:
     """
@@ -114,10 +113,6 @@ class TlogParser:
                         
                         for key, record in self.sbn_prism_perf_log_list.items():
                             self.filtered_prism_plog.append(record)
-                            
-                        # self.filtered_prism_plog = tlog_object.plog_record_list_prism
-                        # logging.info('perf log data : %s', self.filtered_prism_plog[-1].split("|"))
-                    
                     else:
                         logging.error('No prism perf log found for given msisdn: %s', self.msisdn)
                     
@@ -178,16 +173,7 @@ class TlogParser:
             for key, record in self.sbn_tomcat_tlog_list.items():
                 self.filtered_tomcat_tlog.append(record)
                 
-            if self.filtered_tomcat_tlog:        
-                # tlog_data = self.filtered_tomcat_tlog[-1].split("|")
-                # logging.info('tlog data : %s', tlog_data)
-                # tlog_key_value = ["TIMESTAMP","THREAD","SITE_ID","MSISDN","SUB_TYPE","SBN_ID/EVT_ID","SRV_KEYWORD","CHARGE_TYPE","PARENT_KEYWORD","AMOUNT","MODE","USER","REQUEST_DATE","INVOICE_DATE","EXPIRY_DATE","RETRY_COUNT","CYCLE_STATUS","GRACE_COUNT","GRACE_RETRY_COUNT","NEW_SRV_KEYWORD","INFER_SUB_STATUS","CHARGE_KEYWORD","TRIGGER_ID","PACK_KEY","PARENT_ID","APP_NAME","SITE_NAME","[STCK=NEW_TYPE,MESSAGE]","[CBAL=STATUS,BAL_AMOUNT,CHGMODE,BILLING_REFID,RETCODE,RETMSG,BAL]","[RSRV=STATUS,BAL_AMOUNT,CHGMODE,BILLING_REFID,RETCODE,RETMSG,BAL]","[CHG=PMT_STATUS,BILL_AMOUNT,CHGMODE,BILLING_REFID,RETCODE,RETMSG,RCHG_FILE_CHG,BAL]","[REMT=REMOTE_STATUS,RETCODE,RETMSG]","[CBCK=STATUS,RETCODE,RETMSG]","[CONTENT_ID=[ContentInfo]]","[CAMPAIGN_ID=[campaignId]]","[TOTAL_CHG_AMNT=[totalChgAmnt]]","[RECO:[ReconciliationData]]","[TSK = TASK_TYPE,TASK_STATUS,PAYMENT STATUS,CHARGE_SCHEDULE,NEXT_BILL_DATE]"]
-                    
-                # for counter, tlog_header in enumerate(tlog_key_value):
-                #     try:
-                #         self.dictionary_of_tlogs[tlog_header] = self.data_in_tlog(tlog_data, counter)
-                #     except IndexError as ex:
-                #         logging.info('Ignoring header index mapping')
+            if self.filtered_tomcat_tlog:
                 
                 for ntlog, data in enumerate(self.filtered_tomcat_tlog):
                     tlog_data = data.split("|")
