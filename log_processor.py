@@ -22,12 +22,12 @@ class PROCESSOR:
         self.dict_key = ""
         
         self.outputDirectory_object = outputDirectory_object
-        self.prismd_thread_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_prismd.log"
-        self.tomcat_thread_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_tomcat.log"
-        self.smsd_thread_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_smsd.log"
-        self.trimmed_prism_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_trimmed_prismd.log"
-        self.trimmed_tomcat_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_trimmed_tomcat.log"
-        self.issue_tlog_path = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}_issue_tlog_record.txt"
+        self.prismd_thread_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}__prismd.log"
+        self.tomcat_thread_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}__tomcat.log"
+        self.smsd_thread_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}__smsd.log"
+        self.trimmed_prism_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}__trimmed_prismd.log"
+        self.trimmed_tomcat_outfile = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}__trimmed_tomcat.log"
+        self.issue_tlog_path = f"{self.outputDirectory_object}/{self.random_arg}_{self.input_date}_{self.mdn}_{self.today_date}__issue_tlog_record.txt"
                 
         
     def process_automation(self, is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object):

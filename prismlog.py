@@ -229,7 +229,7 @@ class Main:
         
         
     def remove_backdated_files(self, outputDirectory_object, back_date):
-        outfiles = [p for p in outputDirectory_object.glob(f"*_{back_date}_*.*")]
+        outfiles = [p for p in outputDirectory_object.glob(f"*_{back_date}__*.*")]
         if bool(outfiles):
             for file in outfiles:
                 if os.path.isfile(file):

@@ -38,6 +38,24 @@ class FileWriter:
                     write_file.writelines(issue_tlog_data)
             except FileNotFoundError as error:
                 logging.info('file not found to write.')
+    
+    def write_issue_plog(self, issue_tlog_path, issue_plog_data, tlog_index):
+        issue_tlog_path = f'{issue_tlog_path.split(".txt")[0]}_{tlog_index}.txt'
+        try:   
+            with open(issue_tlog_path, "r") as write_file:
+                for line in write_file:
+                    if issue_plog_data == line:
+                        break
+                else:
+                    with open(issue_tlog_path, "a") as write_file:
+                        write_file.writelines(issue_plog_data)
+            
+        except FileNotFoundError as ex:
+            try:
+                with open(issue_tlog_path, "a") as write_file:
+                    write_file.writelines(issue_plog_data)
+            except FileNotFoundError as error:
+                logging.info('file not found to write.')
             
     def write_complete_thread_log(self, record, thread_outfile):
         if os.path.isfile(thread_outfile) and os.path.getsize(thread_outfile) != 0:

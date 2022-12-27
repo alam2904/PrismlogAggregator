@@ -49,7 +49,7 @@ class TDLogParser:
         self.is_issue_sms_tlog = False
         
         self.task = ""
-        self.acc_log = []
+        self.acc_log = ""
         self.new_line = '\n'
         self.is_issue_in_thread = False
         self.dict_key = dict_key
@@ -113,28 +113,29 @@ class TDLogParser:
             logging.info('Issue tlog found. Going to fetch access log.')
         
         if self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'A':
-            self.fetch_access_log(msisdn, "/subscription/ActivateSubscription?", access_path)
+            acc_log = self.fetch_access_log(msisdn, "/subscription/ActivateSubscription?", access_path)
         elif self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'D':
-            self.fetch_access_log(msisdn, "/subscription/DeactivateSubscription?", access_path)
+            acc_log = self.fetch_access_log(msisdn, "/subscription/DeactivateSubscription?", access_path)
         elif self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'E':
-            self.fetch_access_log(msisdn, "/subscription/EventCharge?", access_path)
+            acc_log = self.fetch_access_log(msisdn, "/subscription/EventCharge?", access_path)
         elif self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'U':
-            self.fetch_access_log(msisdn, "/subscription/UpgradeSubscription?", access_path)
+            acc_log = self.fetch_access_log(msisdn, "/subscription/UpgradeSubscription?", access_path)
         elif self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'T':
-            self.fetch_access_log(msisdn, "/subscription/TriggerCharge?", access_path)
+            acc_log = self.fetch_access_log(msisdn, "/subscription/TriggerCharge?", access_path)
         elif self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'G':
-            self.fetch_access_log(msisdn, "/subscription/ChargeGift?", access_path)
+            acc_log = self.fetch_access_log(msisdn, "/subscription/ChargeGift?", access_path)
         elif self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'V':
-            self.fetch_access_log(msisdn, "/subscription/AddRenewalTrigger?", access_path)
+            acc_log = self.fetch_access_log(msisdn, "/subscription/AddRenewalTrigger?", access_path)
 
         if not tlogParser_object.filtered_tomcat_tlog:
             if os.path.isfile(self.issue_tlog_path) and os.path.getsize(self.issue_tlog_path) != 0:
                 os.remove(self.issue_tlog_path)
                 
-        if self.acc_log:  
+        if acc_log:
+            logging.info('access log to write: %s', acc_log)
             log_writer.write_access_log(self.issue_tlog_path, f"NON_REALTIME_ACCESS_LOG\n", tlog_index)
             log_writer.write_issue_tlog(self.issue_tlog_path, f"**************************\n", tlog_index)
-            log_writer.write_access_log(self.issue_tlog_path, self.acc_log, tlog_index)
+            log_writer.write_access_log(self.issue_tlog_path, acc_log, tlog_index)
         
         for data in tlogParser_object.filtered_prism_tlog:
             if self.dictionary_tlog_to_search[self.dict_key]["THREAD"] == data.split("|")[1]:
@@ -143,15 +144,17 @@ class TDLogParser:
                 log_writer.write_issue_tlog(self.issue_tlog_path, f"PRISM_TLOG\n", tlog_index)
                 log_writer.write_issue_tlog(self.issue_tlog_path, f"***************\n", tlog_index)
                 log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_prism, tlog_index)
+                break
             
         if tlogParser_object.filtered_prism_plog:
             for data in tlogParser_object.filtered_prism_plog:
                 if self.dictionary_tlog_to_search[self.dict_key]["THREAD"] == data.split("|")[1]:
                     self.issue_plog_data_prism = data
-                    log_writer.write_issue_tlog(self.issue_tlog_path, f"\n", tlog_index)
-                    log_writer.write_issue_tlog(self.issue_tlog_path, f"PRISM_PERF_LOG\n", tlog_index)
-                    log_writer.write_issue_tlog(self.issue_tlog_path, f"*****************\n", tlog_index)
-                    log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_plog_data_prism, tlog_index)
+                    log_writer.write_issue_plog(self.issue_tlog_path, f"\n", tlog_index)
+                    log_writer.write_issue_plog(self.issue_tlog_path, f"\nPRISM_PERF_LOG\n", tlog_index)
+                    log_writer.write_issue_plog(self.issue_tlog_path, f"*****************\n", tlog_index)
+                    log_writer.write_issue_plog(self.issue_tlog_path, self.issue_plog_data_prism, tlog_index)
+                    break
         else:
             logging.info("worker thread: %s could not be found in prism perf log.")
         
@@ -162,21 +165,22 @@ class TDLogParser:
             logging.info('Issue tlog found. Going to fetch access log.')
             
             if self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'A':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeActivate?", access_path)
+                acc_log = self.fetch_access_log(msisdn, "/subscription/RealTimeActivate?", access_path)
             elif self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'D':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeDeactivate?", access_path)
+                acc_log = self.fetch_access_log(msisdn, "/subscription/RealTimeDeactivate?", access_path)
             elif self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'E':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeCharge?", access_path)
+                acc_log = self.fetch_access_log(msisdn, "/subscription/RealTimeCharge?", access_path)
             elif self.dictionary_tlog_to_search[self.dict_key]["CHARGE_TYPE"] == 'F':
-                self.fetch_access_log(msisdn, "/subscription/RealTimeTransactionRefund?", access_path)
+                acc_log = self.fetch_access_log(msisdn, "/subscription/RealTimeTransactionRefund?", access_path)
         
         if os.path.isfile(self.issue_tlog_path) and os.path.getsize(self.issue_tlog_path) != 0:
             os.remove(self.issue_tlog_path)
         
-        if self.acc_log:  
+        if acc_log:
+            logging.info('access log to write: %s', acc_log)
             log_writer.write_access_log(self.issue_tlog_path, f"REALTIME_ACCESS_LOG\n", tlog_index)
             log_writer.write_issue_tlog(self.issue_tlog_path, f"***********************\n", tlog_index)
-            log_writer.write_access_log(self.issue_tlog_path, self.acc_log, tlog_index)
+            log_writer.write_access_log(self.issue_tlog_path, acc_log, tlog_index)
         
         for data in tlogParser_object.filtered_tomcat_tlog:
             if self.dictionary_tlog_to_search[self.dict_key]["THREAD"] == data.split("|")[1]:
@@ -185,15 +189,17 @@ class TDLogParser:
                 log_writer.write_issue_tlog(self.issue_tlog_path, f"TOMCAT_TLOG\n", tlog_index)
                 log_writer.write_issue_tlog(self.issue_tlog_path, f"************\n", tlog_index)
                 log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_tomcat, tlog_index)
+                break
             
         if tlogParser_object.filtered_tomcat_plog:
             for data in tlogParser_object.filtered_tomcat_plog:
                 if self.dictionary_tlog_to_search[self.dict_key]["THREAD"] == data.split("|")[1]:
                     self.issue_plog_data_tomcat = data
-                    log_writer.write_issue_tlog(self.issue_tlog_path, f"\n", tlog_index)
-                    log_writer.write_issue_tlog(self.issue_tlog_path, f"\nTOMCAT_PERF_LOG\n", tlog_index)
-                    log_writer.write_issue_tlog(self.issue_tlog_path, f"*****************\n", tlog_index)
-                    log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_plog_data_tomcat, tlog_index)
+                    log_writer.write_issue_plog(self.issue_tlog_path, f"\n", tlog_index)
+                    log_writer.write_issue_plog(self.issue_tlog_path, f"\nTOMCAT_PERF_LOG\n", tlog_index)
+                    log_writer.write_issue_plog(self.issue_tlog_path, f"*****************\n", tlog_index)
+                    log_writer.write_issue_plog(self.issue_tlog_path, self.issue_plog_data_tomcat, tlog_index)
+                    break
         else:
             logging.info("worker thread: %s could not be found in tomcat perf log.")
     
@@ -222,27 +228,59 @@ class TDLogParser:
     def fetch_access_log(self, msisdn, search_string, access_path):
         config = ConfigParser()
         config.read(self.file)
+        acc_log = ""
         
         try:
             access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config['tomcat_access']['PREFIX']}*.{config['tomcat_access']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-            
             for record in access_log.splitlines():
                 if re.search(msisdn,record, re.DOTALL):
                     temp_record = f'{record.split("- -")[1]}'
                     data = [data.split("refid=")[1].split("&")[0] for data in temp_record.split(",") if data.split("refid=")]
-                    # for key, value in self.dictionary_tlog_to_search.items():
-                        # for keyy, valuee in value.items():
+                    
                     for refid in str(self.dictionary_tlog_to_search[self.dict_key]).split(","):
-                        if f'refId={data[0]}' == refid.split("]")[0]:
-                            logging.info('TRUE')
-                            # logging.info("refid=%s and tlog: %s", data[0], str(self.dictionary_tlog_to_search[self.dict_key]))
-                            self.acc_log.append(f'{record.split("- -")[1].strip()}{self.new_line}')
-                            break
-                    else:
-                        self.acc_log.append(f'{record.split("- -")[1].strip()}{self.new_line}')
+                        if f'refId={data[0]}' == refid.split("]")[0] and data[0] != "1":
+                            acc_log = f'{record.split("- -")[1].strip()}{self.new_line}'
+                        
+                        elif data[0] == "1":
+                            a_date = [temp.split("]")[0].split("[")[1].split(" ")[0].split(":") for temp in temp_record.split(",")]
+                            acc_date = f'{a_date[0][0]}{a_date[0][1]}:{a_date[0][2]}'
+                            acc_log_date = datetime.strptime(acc_date, "%d/%b/%Y%H:%M")
+                            logging.info('access log date: %s', acc_log_date)
+
+                            r_date = str(self.dictionary_tlog_to_search[self.dict_key]["TIMESTAMP"].split(",")[0]).split(":")
+                            req_date = f'{r_date[0]}:{r_date[1]}'
+                            tlog_req_date = datetime.strptime(req_date, "%Y-%m-%d %H:%M")
                             
+                            logging.info('tlog request date: %s', tlog_req_date)
+                            
+                            if acc_log_date == tlog_req_date:
+                                acc_log = f'{record.split("- -")[1].strip()}{self.new_line}'
+            return acc_log
+                    # else:
+                    #     acc_log = temp_record
+                    #     logging.info('else record: %s', acc_log)
+                 
         except subprocess.CalledProcessError as ex:            
             logging.info('No access log found')
+        
+        # try:
+        #     access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config['tomcat_access']['PREFIX']}*.{config['tomcat_access']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            
+        #     for record in access_log.splitlines():
+        #         if re.search(msisdn,record, re.DOTALL):
+        #             temp_record = f'{record.split("- -")[1]}'
+        #             logging.info('temp record: %s', temp_record.split("[")[1].split("]")[0].split(" ")[0])
+        #             data = [data.split("refid=")[1].split("&")[0] for data in temp_record.split(",") if data.split("refid=")]
+        #             logging.info('request date: %s', str(self.dictionary_tlog_to_search[self.dict_key]["REQUEST_DATE"]).split(","))
+        #             for refid in str(self.dictionary_tlog_to_search[self.dict_key]).split(","):
+        #                 if f'refId={data[0]}' == refid.split("]")[0]:
+        #                     self.acc_log.append(f'{record.split("- -")[1].strip()}{self.new_line}')
+        #                     break
+        #             else:
+        #                 self.acc_log.append(f'{record.split("- -")[1].strip()}{self.new_line}')
+                            
+        # except subprocess.CalledProcessError as ex:            
+        #     logging.info('No access log found')
         
 
     def parse_tlog(self, tlogTags, is_tlog, key, value):
