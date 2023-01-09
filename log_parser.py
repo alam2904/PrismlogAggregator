@@ -1,7 +1,10 @@
 """
 importing required modules
 """
+import json
 import logging
+from pathlib import Path
+import socket
 import subprocess
 import signal
 from datetime import datetime
@@ -16,7 +19,7 @@ class TDLogParser:
     """
     Parse the daemon log based on tlog input
     """
-    def __init__(self, msisdn, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, tomcat_thread_outfile, prismd_thread_outfile, smsd_thread_outfile, trimmed_tomcat_outfile, trimmed_prism_outfile, issue_tlog_path, file, dictionary_tlog_to_search, dict_key):
+    def __init__(self, msisdn, input_date, dictionary_of_tlogs, dictionary_of_search_value, worker_log_recod_list, initializedPath_object, tomcat_thread_outfile, prismd_thread_outfile, smsd_thread_outfile, trimmed_tomcat_outfile, trimmed_prism_outfile, issue_tlog_path, dictionary_tlog_to_search, dict_key):
         self.msisdn = msisdn
         self.input_date = input_date
         self.initializedPath_object = initializedPath_object
@@ -35,16 +38,13 @@ class TDLogParser:
         self.trimmed_tomcat_outfile = trimmed_tomcat_outfile
         self.trimmed_prism_outfile = trimmed_prism_outfile
         self.issue_tlog_path = issue_tlog_path
-        self.file = file
+        # self.file = file
         
         self.issue_tlog_data_prism = ""
         self.issue_tlog_data_tomcat = ""
         self.issue_tlog_data_sms = ""
         self.issue_plog_data_prism = ""
         self.issue_plog_data_tomcat = ""
-        
-        #sms issue flags
-        self.is_issue_sms_tlog = False
         
         self.task = ""
         self.acc_log = ""
@@ -97,7 +97,7 @@ class TDLogParser:
                 
                 self.get_trimmed_thread_log(is_error_tlog, is_lowbal_tlog, is_retry_tlog, is_nhf_tlog, is_await_push_tlog, is_timeout_tlog, is_handler_exp)
                 self.dictionary_tlog_to_search = {}
-                logging.info('dictionary to search: %s', self.dictionary_tlog_to_search)
+                
             except ValueError as ex:
                 logging.exception(ex)
         else:
@@ -203,7 +203,7 @@ class TDLogParser:
         else:
             logging.info("worker thread: %s could not be found in tomcat perf log.")
     
-    def parse_sms_td(self, tlogParser_object, msisdn):
+    def parse_sms_td(self, tlogParser_object, msisdn, key, is_issue_sms_tlog):
         """
         Parse dictionary of tlogs to get the search value.
         """
@@ -212,47 +212,75 @@ class TDLogParser:
         log_writer = FileWriter()
         # log_writer = FileWriter()
         
-        self.is_issue_sms_tlog = self.parse_sms_tlog(TlogSmsTag, self.is_issue_sms_tlog)
+        is_issue_sms_tlog = self.parse_sms_tlog(TlogSmsTag, is_issue_sms_tlog, key)
         
-        if tlogParser_object.filtered_sms_tlog and self.is_issue_sms_tlog:
+        logging.info('dictionary to search: %s', self.dictionary_tlog_to_search)
+        if self.dictionary_tlog_to_search and is_issue_sms_tlog and self.dict_key:
             
-            self.issue_tlog_data_sms = tlogParser_object.filtered_sms_tlog[-1]
-            log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_sms)
+            logging.debug('issue tlog found for given msisdn: %s and worker thread: %s', msisdn, self.dictionary_tlog_to_search[self.dict_key]["THREAD"])
+            try:
+                if tlogParser_object.filtered_sms_tlog:
+                    self.process_sms_log(tlogParser_object, log_writer)
+                    
+                logging.info('key to iterate trimmed log: %s', self.dict_key)
+                
+                self.get_trimmed_thread_log_sms(is_issue_sms_tlog)
+                self.dictionary_tlog_to_search = {}
+            
+            except ValueError as ex:
+                logging.exception(ex)
         
         else:
             logging.debug('No sms issue tlog found for given msisdn: %s', msisdn)
             logging.debug('Hence not fetching the sms daemon log.')
+    
+    def process_sms_log(self, tlogParser_object, log_writer):
+        # tlog_index = self.dict_key.split("_")[1]
+        tlog_index = self.dictionary_tlog_to_search[self.dict_key]["THREAD"]
         
-        self.get_trimmed_thread_log("x", "y")
+        for data in tlogParser_object.filtered_sms_tlog:
+            if self.dictionary_tlog_to_search[self.dict_key]["THREAD"] == data.split("|")[1]:
+                self.issue_tlog_data_sms = data
+                log_writer.write_issue_tlog(self.issue_tlog_path, f"\n", tlog_index)
+                log_writer.write_issue_tlog(self.issue_tlog_path, f"SMS_TLOG\n", tlog_index)
+                log_writer.write_issue_tlog(self.issue_tlog_path, f"***************\n", tlog_index)
+                log_writer.write_issue_tlog(self.issue_tlog_path, self.issue_tlog_data_sms, tlog_index)
+                break
     
     def fetch_access_log(self, msisdn, search_string, access_path):
-        config = ConfigParser()
-        config.read(self.file)
+        # config = ConfigParser()
+        # config.read(self.file)
         acc_log = ""
         
         try:
-            access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config['tomcat_access']['PREFIX']}*.{config['tomcat_access']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-            for record in access_log.splitlines():
-                if re.search(msisdn,record, re.DOTALL):
-                    temp_record = f'{record.split("- -")[1]}'
-                    data = [data.split("refid=")[1].split("&")[0] for data in temp_record.split(",") if data.split("refid=")]
-                    
-                    for refid in str(self.dictionary_tlog_to_search[self.dict_key]).split(","):
-                        if f'refId={data[0]}' == refid.split("]")[0] and data[0] != "1":
-                            acc_log = f'{record.split("- -")[1].strip()}{self.new_line}'
+            hostname = socket.gethostname()
+            data = Path("common.json").read_text()
+            config = json.loads(data)
+            if config[hostname]['PRISM']['PRISM_TOMCAT']['PREFIX'] != "" and config[hostname]['PRISM']['PRISM_TOMCAT']['SUFFIX'] != "":
+                access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config[hostname]['PRISM']['PRISM_TOMCAT']['PREFIX']}*.{config[hostname]['PRISM']['PRISM_TOMCAT']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                for record in access_log.splitlines():
+                    if re.search(msisdn,record, re.DOTALL):
+                        temp_record = f'{record.split("- -")[1]}'
+                        data = [data.split("refid=")[1].split("&")[0] for data in temp_record.split(",") if data.split("refid=")]
                         
-                        elif data[0] == "1":
-                            a_date = [temp.split("]")[0].split("[")[1].split(" ")[0].split(":") for temp in temp_record.split(",")]
-                            acc_date = f'{a_date[0][0]}{a_date[0][1]}:{a_date[0][2]}'
-                            acc_log_date = datetime.strptime(acc_date, "%d/%b/%Y%H:%M")
-
-                            r_date = str(self.dictionary_tlog_to_search[self.dict_key]["TIMESTAMP"].split(",")[0]).split(":")
-                            req_date = f'{r_date[0]}:{r_date[1]}'
-                            tlog_req_date = datetime.strptime(req_date, "%Y-%m-%d %H:%M")
-                            
-                            if acc_log_date == tlog_req_date:
+                        for refid in str(self.dictionary_tlog_to_search[self.dict_key]).split(","):
+                            if f'refId={data[0]}' == refid.split("]")[0] and data[0] != "1":
                                 acc_log = f'{record.split("- -")[1].strip()}{self.new_line}'
-            return acc_log
+                            
+                            elif data[0] == "1":
+                                a_date = [temp.split("]")[0].split("[")[1].split(" ")[0].split(":") for temp in temp_record.split(",")]
+                                acc_date = f'{a_date[0][0]}{a_date[0][1]}:{a_date[0][2]}'
+                                acc_log_date = datetime.strptime(acc_date, "%d/%b/%Y%H:%M")
+
+                                r_date = str(self.dictionary_tlog_to_search[self.dict_key]["TIMESTAMP"].split(",")[0]).split(":")
+                                req_date = f'{r_date[0]}:{r_date[1]}'
+                                tlog_req_date = datetime.strptime(req_date, "%Y-%m-%d %H:%M")
+                                
+                                if acc_log_date == tlog_req_date:
+                                    acc_log = f'{record.split("- -")[1].strip()}{self.new_line}'
+                return acc_log
+            else:
+                logging.error('tomcat access log path, PREFIX or SUFFIX not present, hence access log could not be fetched.')
                  
         except subprocess.CalledProcessError as ex:            
             logging.info('No access log found')
@@ -268,13 +296,13 @@ class TDLogParser:
                     logging.info('dict of search value: %s', self.dictionary_tlog_to_search[key])
         return is_tlog
     
-    def parse_sms_tlog(self, tlogSmsTags, is_tlog):
+    def parse_sms_tlog(self, tlogSmsTags, is_tlog, key):
         for status in tlogSmsTags:
-            if status.value == self.dictionary_of_tlogs["STATUS"]:
-                for search_key, search_value in self.dictionary_of_search_value.items():
-                    self.dictionary_of_search_value[search_key] = self.dictionary_of_tlogs[search_key]
-                    is_tlog = True
-                break
+            if status.value == self.dictionary_of_tlogs[key]["STATUS"]:
+                self.dictionary_tlog_to_search[key] = self.dictionary_of_tlogs[key]
+                is_tlog = True
+                self.dict_key = key
+                logging.info('dict of search value: %s', self.dictionary_tlog_to_search[key])
         return is_tlog
             
     def get_trimmed_thread_log(self, is_error_tlog, is_lowbal_tlog, is_retry_tlog, is_nhf_tlog, is_await_push_tlog, is_timeout_tlog, is_handler_exp):
@@ -345,7 +373,7 @@ class TDLogParser:
                     logging.debug("Tomcat daemon log doesn't exist for the issue thread %s : ", self.dictionary_tlog_to_search[self.dict_key]["THREAD"])
             else:
                 logging.debug('Transaction is awaiting notification callback. Hence not processing further.Ignore below logs.')
-                
+          
         if len(self.issue_tlog_data_prism) != 0:
                 
             if not is_timeout_tlog:
@@ -405,13 +433,25 @@ class TDLogParser:
                 logging.info('Since issue thread : %s is in timed out state, not going to fetch log', self.dictionary_tlog_to_search[self.dict_key]["THREAD"])
                 logging.debug('Check for notification callback eigther not received before timed out or failed to process.')
         else:
-            logging.debug("Prism daemon log doesn't exist for the issue thread %s : ", self.dictionary_tlog_to_search[self.dict_key]["THREAD"])
+            logging.debug("daemon log doesn't exist for the issue thread %s : ", self.dictionary_tlog_to_search[self.dict_key]["THREAD"])
         
-        if len(self.issue_tlog_data_sms) != 0 and self.is_issue_sms_tlog:
-                
-            logging.info('Going to fetch daemon log for the issue thread : %s', self.dictionary_of_search_value["THREAD"])
-            daemonLog_object = DaemonLog(self.msisdn, self.input_date, self.worker_log_recod_list, self.dictionary_of_search_value["THREAD"], self.initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile)
+    
+    def get_trimmed_thread_log_sms(self, is_issue_sms_tlog):
+        """
+        Get sms daemon log for the given thread
+        """
+        log_writer = FileWriter()
+        # tlog_index = self.dict_key.split("_")[1]
+        tlog_index = self.dictionary_tlog_to_search[self.dict_key]["THREAD"]    
+        self.smsd_thread_outfile = f'{self.smsd_thread_outfile.split(".log")[0]}_{tlog_index}.log'
+        
+        if len(self.issue_tlog_data_sms) != 0 and is_issue_sms_tlog:        
+            logging.info('Going to fetch sms daemon log for the issue thread : %s', self.dictionary_tlog_to_search[self.dict_key]["THREAD"])
+    
+            daemonLog_object = DaemonLog(self.msisdn, self.input_date, self.worker_log_recod_list, self.dictionary_tlog_to_search[self.dict_key]["THREAD"], self.initializedPath_object, self.tomcat_thread_outfile, self.prismd_thread_outfile, self.smsd_thread_outfile)
             daemonLog_object.get_sms_log()
+        else:
+            logging.debug("Sms daemon log doesn't exist for the issue thread %s : ", self.dictionary_tlog_to_search[self.dict_key]["THREAD"])
     
     def find_issue_daemon_log(self, outfile, tlogTags):
         try:

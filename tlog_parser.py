@@ -20,13 +20,14 @@ class TlogParser:
         self.initializedPath_object = initializedPath_object
         self.filtered_prism_tlog = []
         self.filtered_tomcat_tlog = []
-        self.filtered_sms_tlog = ""
+        self.filtered_sms_tlog = []
         self.filtered_tomcat_plog = []
         self.filtered_prism_plog = []
         self.sbn_prism_tlog_list = {}
         self.sbn_prism_perf_log_list = {}
         self.sbn_tomcat_tlog_list = {}
         self.sbn_tomcat_perf_log_list = {}
+        self.srno_sms_tlog_list = {}
         
 
     def parse_prism_automation(self, validation_object, data_automation_outfile, keyword):
@@ -76,7 +77,8 @@ class TlogParser:
             
             for record in tlog_object.tlog_record_list_prism:
                 prism_tlog.append(record)
-                
+            
+            logging.info('tlog list: %s', prism_tlog)
             for record in prism_tlog:
                 self.sbn_prism_tlog_list[record.split("|")[5]] = record
             
@@ -219,20 +221,44 @@ class TlogParser:
         tlog_object = Tlog(self.msisdn, self.input_date, self.tlog_record_list_prism, self.tlog_record_list_tomcat, self.tlog_record_list_sms, None, None, self.initializedPath_object)
     
         if tlog_object.get_sms_tlog(validation_object):
-            self.filtered_sms_tlog = tlog_object.tlog_record_list_sms
+            sms_tlog = []
+            
+            for record in tlog_object.tlog_record_list_sms:
+                sms_tlog.append(record)
+            
+            logging.info('sms tlog list: %s', sms_tlog)
+            for record in sms_tlog:
+                self.srno_sms_tlog_list[record.split("|")[4]] = record
+            
+            for key, record in self.srno_sms_tlog_list.items():
+                self.filtered_sms_tlog.append(record)
+                
+            logging.info('dictionary of srno sms tlogs: %s', self.srno_sms_tlog_list)
                 
             if self.filtered_sms_tlog:    
-                tlog_data = self.filtered_sms_tlog[-1].split("|")
-                logging.info('tlog data : %s', tlog_data)
-                tlog_key_value = ["TIMESTAMP","THREAD","SITE_ID","MSISDN","SRNO","SRVCODE","MSG","HANDLER","STATUS","REMARKS","TIME TAKEN","SMS_INFO"]
+                # tlog_data = self.filtered_sms_tlog[-1].split("|")
+                # logging.info('tlog data : %s', tlog_data)
+                # tlog_key_value = ["TIMESTAMP","THREAD","SITE_ID","MSISDN","SRNO","SRVCODE","MSG","HANDLER","STATUS","REMARKS","TIME TAKEN","SMS_INFO"]
                         
-                for counter, tlog_header in enumerate(tlog_key_value):
-                    try:
-                        self.dictionary_of_tlogs[tlog_header] = self.data_in_tlog(tlog_data, counter)
-                    except IndexError as ex:
-                        logging.info('Header data did not match')
+                # for counter, tlog_header in enumerate(tlog_key_value):
+                #     try:
+                #         self.dictionary_of_tlogs[tlog_header] = self.data_in_tlog(tlog_data, counter)
+                #     except IndexError as ex:
+                #         logging.info('Header data did not match')
                 
-                is_parsed = True
+                # is_parsed = True
+                for ntlog, data in enumerate(self.filtered_sms_tlog):
+                    tlog_data = data.split("|")
+                    tlog_key_value = ["TIMESTAMP","THREAD","SITE_ID","MSISDN","SRNO","SRVCODE","MSG","HANDLER","STATUS","REMARKS","TIME TAKEN","SMS_INFO"]
+                            
+                    ntlog_dict = f'dict_{ntlog}'
+                    self.dictionary_of_tlogs[f'{ntlog_dict}'] = {}
+                    for counter, tlog_header in enumerate(tlog_key_value):
+                        try:
+                            self.dictionary_of_tlogs[ntlog_dict][tlog_header] = self.data_in_tlog(tlog_data, counter)
+                        except IndexError as ex:
+                            logging.info('Header data did not match')
+                    is_parsed = True
             else:
                 logging.error('No sms tlog found for given msisdn: %s', self.msisdn)
         else:
