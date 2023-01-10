@@ -5,8 +5,6 @@ import logging
 import re
 from log_files import LogFileFinder
 from automation import Automation
-from input_validation import InputValidation
-
 
 class Tlog:
     """
@@ -267,12 +265,13 @@ class Tlog:
                         record = [data for data in read_file.readlines() if re.search(self.msisdn,data, re.DOTALL)]
                         if record:
                             for data in record:
-                                tlog_record.append(data)
+                                self.tlog_record_list_sms.append(data)
                 
-                if tlog_record:
-                    for data in tlog_record:
-                        if validation_object.service_keyword == str(data).split("|")[6]:
-                            self.tlog_record_list_sms.append(data)
+                # logging.info('sms tlog record: %s', tlog_record)
+                # if tlog_record:
+                #     for data in tlog_record:
+                #         if validation_object.service_keyword == str(data).split("|")[5]:
+                #             self.tlog_record_list_sms.append(data)
                         
                 return True
             else:

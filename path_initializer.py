@@ -12,8 +12,9 @@ class LogPathFinder():
     """
     Path finder class
     """
-    def __init__(self, config):
+    def __init__(self, hostname, config):
         
+        self.hostname = hostname
         self.config = config
         self.is_tomcat = False
         self.is_prsim = False
@@ -45,17 +46,17 @@ class LogPathFinder():
         self.prism_snmp_log_path = "prism_snmp_log_path"
         self.prism_snmp_log_backup_path = "prism_snmp_log_backup_path"
         
-        self.sms_base_log_path = "prism_base_log_path"
-        self.sms_tlog_log_path = "prism_tlog_log_path"
-        self.sms_daemon_log_path = "prism_daemon_log_path"
-        self.sms_daemon_log_backup_path = "prism_daemon_log_backup_path"
-        self.sms_queue_id_processor_99_log_path = "prism_queue_id_processor_99_log_path"
-        self.sms_DynamicExecutorLogger_log_path = "prism_DynamicExecutorLogger_log_path"
-        self.sms_DynamicExecutorLogger_log_backup_path = "prism_DynamicExecutorLogger_log_backup_path"
-        self.sms_root_log_path = "prism_root_log_path"
-        self.sms_root_log_backup_path = "prism_root_log_backup_path"
-        self.sms_snmp_log_path = "prism_snmp_log_path"
-        self.sms_snmp_log_backup_path = "prism_snmp_log_backup_path"
+        self.sms_base_log_path = "sms_base_log_path"
+        self.sms_tlog_log_path = "sms_tlog_log_path"
+        self.sms_daemon_log_path = "sms_daemon_log_path"
+        self.sms_daemon_log_backup_path = "sms_daemon_log_backup_path"
+        self.sms_queue_id_processor_99_log_path = "sms_queue_id_processor_99_log_path"
+        self.sms_DynamicExecutorLogger_log_path = "sms_DynamicExecutorLogger_log_path"
+        self.sms_DynamicExecutorLogger_log_backup_path = "sms_DynamicExecutorLogger_log_backup_path"
+        self.sms_root_log_path = "sms_root_log_path"
+        self.sms_root_log_backup_path = "sms_root_log_backup_path"
+        self.sms_snmp_log_path = "sms_snmp_log_path"
+        self.sms_snmp_log_backup_path = "sms_snmp_log_backup_path"
 
         # self.tomcat_conf_path = "tomcat_conf_path"
         self.tomcat_access_path = "tomcat_access_path"
@@ -84,45 +85,71 @@ class LogPathFinder():
         """
         # config = ConfigParser()
         config = self.config
+        hostname = self.hostname
         
-        if config.has_option('tomcat_access', 'ACCESS_LOG'):
-            self.tomcat_log_path_dict[self.tomcat_access_path] = config['tomcat_access']['ACCESS_LOG']
-            self.is_access_path = True
-        else:
-            logging.info('access log path not configured in config.properties. Hence will not be fetched')
+        try:
+            if config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG'] != "":
+                self.tomcat_log_path_dict[self.tomcat_access_path] = config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG']
+                self.is_access_path = True
+            else:
+                logging.info('access log path not available in common.json file. Hence access log will not be fetched.')
+        except KeyError as ex:
+            logging.error('Eigther %s/PRISM/PRISM_TOMCAT/ACCESS_LOG key not present in common.json file\
+                Please check with OARM team', hostname)
+            logging.error('Hence access log will not be fetched.')
+            
+        logging.info('\n')
             
         if pname == 'tomcat':
-            self.tomcat_log_path_dict[self.tomcat_base_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/"
-            self.tomcat_log_path_dict[self.tomcat_tlog_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/TLOG/"
-            self.is_tomcat_tlog_path = True
-                
-            if config.has_option('tomcat', 'LOG4J2_XML'):
-                self.parse_logger(config[pname]['LOG4J2_XML'], pname)
-                self.is_tomcat_daemon_path = True
-            else:
-                logging.error('tomcat LOG4J2_XML not configured in config.properties')
+            try:
+                if config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR'] != "":
+                    self.tomcat_log_path_dict[self.tomcat_base_log_path] = f"{config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR']}/"
+                    self.tomcat_log_path_dict[self.tomcat_tlog_log_path] = f"{config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR']}/TLOG/"
+                    self.is_tomcat_tlog_path = True
+                else:
+                    logging.error('tomcat TRANS_BASE_DIR path not available common.json file, hence tomcat tlog will not be fetched.') 
+            
+                if config[hostname]['PRISM']['PRISM_TOMCAT']['LOG4J2_XML'] != "":
+                    self.parse_logger(config[hostname]['PRISM']['PRISM_TOMCAT']['LOG4J2_XML'], pname)
+                    self.is_tomcat_daemon_path = True
+                else:
+                    logging.error('tomcat LOG4J2_XML not configured in common.json file')
+            except KeyError as ex:
+                logging.error('TRANS_BASE_DIR key not present in common.json file')
 
         elif pname == 'prismd':
-            self.prism_log_path_dict[self.prism_base_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/"
-            self.prism_log_path_dict[self.prism_tlog_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/TLOG/"
-            self.is_prism_tlog_path = True
+            try:
+                if config[hostname]['PRISM']['PRISM_DEAMON']['TRANS_BASE_DIR'] != "":
+                    self.prism_log_path_dict[self.prism_base_log_path] = f"{config[hostname]['PRISM']['PRISM_DEAMON']['TRANS_BASE_DIR']}/"
+                    self.prism_log_path_dict[self.prism_tlog_log_path] = f"{config[hostname]['PRISM']['PRISM_DEAMON']['TRANS_BASE_DIR']}/TLOG/"
+                    self.is_prism_tlog_path = True
+                else:
+                    logging.error('prismd TRANS_BASE_DIR path not present common.json file, hence prismd tlog will not be fetched.') 
                 
-            if config.has_option('prismd', 'LOG4J2_XML'):
-                self.parse_logger(config[pname]['LOG4J2_XML'], pname)
-                self.is_prismd_daemon_path = True
-            else:
-                logging.error('prismd LOG4J2_XML not configured in config.properties')
+                if config[hostname]['PRISM']['PRISM_DEAMON']['LOG4J2_XML'] != "":
+                    self.parse_logger(config[hostname]['PRISM']['PRISM_DEAMON']['LOG4J2_XML'], pname)
+                    self.is_prismd_daemon_path = True
+                else:
+                    logging.error('prismd LOG4J2_XML not configured in common.json file')
+            except KeyError as ex:
+                logging.error('TRANS_BASE_DIR key not present in common.json file')
                             
         elif pname == 'smsd':
-            self.sms_log_path_dict[self.sms_base_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/"
-            self.sms_log_path_dict[self.sms_tlog_log_path] = f"{config[pname]['TRANS_BASE_DIR']}/TLOG/"
-            self.is_sms_tlog_path = True
+            try:
+                if config[hostname]['PRISM']['PRISM_SMSD']['TRANS_BASE_DIR'] != "":
+                    self.sms_log_path_dict[self.sms_base_log_path] = f"{config[hostname]['PRISM']['PRISM_SMSD']['TRANS_BASE_DIR']}/"
+                    self.sms_log_path_dict[self.sms_tlog_log_path] = f"{config[hostname]['PRISM']['PRISM_SMSD']['TRANS_BASE_DIR']}/TLOG/"
+                    self.is_sms_tlog_path = True
+                else:
+                    logging.error('smsd TRANS_BASE_DIR path not present common.json file, hence smsd tlog will not be fetched.') 
                 
-            if config.has_option('smsd', 'LOG4J2_XML'):
-                self.parse_logger(config[pname]['LOG4J2_XML'], pname)
-                self.is_smsd_daemon_path = True
-            else:
-                logging.error('smsd LOG4J2_XML not configured in config.properties')
+                if config[hostname]['PRISM']['PRISM_SMSD']['LOG4J2_XML'] != "":
+                    self.parse_logger(config[hostname]['PRISM']['PRISM_SMSD']['LOG4J2_XML'], pname)
+                    self.is_smsd_daemon_path = True
+                else:
+                    logging.error('smsd LOG4J2_XML not configured in config.properties')
+            except KeyError as ex:
+                logging.error('TRANS_BASE_DIR key not present in common.json file')
                     
 
     def parse_logger(self, log4j, pname):

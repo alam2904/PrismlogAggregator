@@ -12,8 +12,9 @@ import zipfile
 from input_validation import InputValidation
 from path_initializer import LogPathFinder
 from log_processor import PROCESSOR
-from configparser import ConfigParser
 from zipfile import ZipFile
+import json
+import socket
 
 class Main:
 
@@ -33,22 +34,17 @@ class Main:
                 logging.debug('Arguments passed are : msisdn=%s and search_date=%s', sys.argv[1], sys.argv[2])
             
             #default retention period.
-            r_period = 3
-            file = Path('config.properties')
-            if file.exists():
-                config = ConfigParser()
-                config.read(file)
-                if config.has_option('outdata_retention_period', 'retention'):
-                    r_period = int(config['outdata_retention_period']['retention'])
-                    logging.info('out file retention period: %s', r_period)
-                    bdt = datetime.today() - timedelta(days=r_period)
-                    back_date = str(datetime.strftime(bdt, "%Y-%m-%d")).replace("-", "")
-                    logging.info('back date: %s', back_date)
-                else:
-                    logging.info('data rentention in config.properties not defined. Default is 3 days.')
-                    bdt = datetime.today() - timedelta(days=r_period)
-                    back_date = datetime.strftime(bdt, "%Y-%m-%d")
-                    logging.info('back date: %s', back_date)
+            r_period = 1
+            
+            hostname = socket.gethostname()
+            data = Path("common.json").read_text()
+            config = json.loads(data)
+    
+            if config:
+                logging.info('data rentention is by default defined for 1 day.')
+                bdt = datetime.today() - timedelta(days=r_period)
+                back_date = datetime.strftime(bdt, "%Y%m%d")
+                logging.info('back date: %s', back_date)
                 
                 if num_argv == 4:
                     outputDirectory_object = Path('out')
@@ -98,10 +94,9 @@ class Main:
                 logging.info('\n')
                 
                 if validation_object.is_input_valid:
-                    initializedPath_object = LogPathFinder(config)
-                    
-                    if config.has_option('tomcat', 'TRANS_BASE_DIR'):
-                        if config['tomcat']['TRANS_BASE_DIR']:
+                    initializedPath_object = LogPathFinder(hostname, config)
+                    try:
+                        if config[hostname]["PRISM"]["PRISM_TOMCAT"] != "":
                             try:
                                 initializedPath_object.initialize_tomcat_path('tomcat')
                                 logging.info('TOMCAT PATH INITIALIZED')
@@ -114,14 +109,17 @@ class Main:
                             except Exception as error:
                                 logging.warning(error)
                         else:
-                            logging.error('tomcat TRANS_BASE_DIR path not present in config.properties')
-                    else:
-                        logging.error('tomcat TRANS_BASE_DIR path not present in config.properties')
+                            logging.error('PRISM_TOMCAT data not present in common.json file')
+                            logging.error('Hence PRISM_TOMCAT logs will not be initialized and fetched')
+                    except KeyError as ex:
+                        logging.error('Eigther %s/PRISM/PRISM_TOMCAT key not present in common.json file or miss match. '\
+                                        'Please check with OARM team.', hostname)
+                        logging.error('Hence PRISM_TOMCAT logs will not be initialized and fetched')
                             
                     logging.info('\n')
                             
-                    if config.has_option('prismd', 'TRANS_BASE_DIR'):
-                        if config['prismd']['TRANS_BASE_DIR']:
+                    try:
+                        if config[hostname]["PRISM"]["PRISM_DEAMON"] != "":
                             try:
                                 initializedPath_object.initialize_prism_path('prismd')
                                 logging.info('PRISM PATH INITIALIZED')
@@ -134,14 +132,17 @@ class Main:
                             except Exception as error:
                                 logging.warning(error)
                         else:
-                            logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
-                    else:
-                        logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
-                                
+                            logging.error('PRISM_DEAMON data not present in common.json file')
+                            logging.error('Hence PRISM_DEAMON logs will not be initialized and fetched')
+                    except KeyError as ex:
+                        logging.error('Eigther %s/PRISM/PRISM_DEAMON key not present in common.json file or miss match. '\
+                                        'Please check with OARM team.', hostname)
+                        logging.error('Hence PRISM_DEAMON logs will not be initialized and fetched')
+                        
                     logging.info('\n')
                     if not num_argv == 4:
-                        if config.has_option('smsd', 'TRANS_BASE_DIR'):
-                            if config['smsd']['TRANS_BASE_DIR']:
+                        try:
+                            if config[hostname]["PRISM"]["PRISM_SMSD"] != "":
                                 try:
                                     initializedPath_object.initialize_sms_path('smsd')
                                     logging.info('SMS PATH INITIALIZED')
@@ -154,9 +155,12 @@ class Main:
                                 except Exception as error:
                                     logging.warning(error)
                             else:
-                                logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
-                        else:
-                            logging.error('prismd TRANS_BASE_DIR path not present in config.properties')
+                                logging.error('PRISM_SMSD data not present in common.json file')
+                                logging.error('Hence PRISM_SMSD logs will not be initialized and fetched')
+                        except KeyError as ex:
+                            logging.error('Eigther %s/PRISM/PRISM_SMSD key not present in common.json file or miss match. '\
+                                            'Please check with OARM team.', hostname)
+                            logging.error('Hence PRISM_SMSD logs will not be initialized and fetched')
                                 
                     logging.info('\n')
 
@@ -166,10 +170,10 @@ class Main:
                         is_sms_tlog_path = initializedPath_object.is_sms_tlog_path
                     
                         if num_argv == 4:          
-                            processor_object = PROCESSOR(msisdn, fmsisdn, None, outputDirectory_object, file, validation_object, sys.argv[3])
+                            processor_object = PROCESSOR(msisdn, fmsisdn, None, outputDirectory_object, validation_object, sys.argv[3])
                             processor_object.process_automation(is_tomcat_tlog_path, is_prism_tlog_path, initializedPath_object)
                         else:
-                            processor_object = PROCESSOR(msisdn, fmsisdn, input_date, outputDirectory_object, file, validation_object, sys.argv[4])
+                            processor_object = PROCESSOR(msisdn, fmsisdn, input_date, outputDirectory_object, validation_object, sys.argv[4])
                             processor_object.process(is_tomcat_tlog_path, is_prism_tlog_path, is_sms_tlog_path, initializedPath_object)
                     else:
                         logging.error('Transaction log path initialization failed.')
@@ -180,7 +184,7 @@ class Main:
                     logging.error('Invalid input. Log aggregation failed to process.')
                     logging.info("****************************************************")
             else:
-                logging.error('config.properties file does not exists. Hence process failed')
+                logging.error('data in common.json file does not exists. Hence processing failed.')
         else:
             logging.error('Invalid number of arguments passed.')
             logging.debug('Log aggregation failed to process.')
@@ -229,7 +233,7 @@ class Main:
         
         
     def remove_backdated_files(self, outputDirectory_object, back_date):
-        outfiles = [p for p in outputDirectory_object.glob(f"*_{back_date}_*.*")]
+        outfiles = [p for p in outputDirectory_object.glob(f"*_{back_date}__*.*")]
         if bool(outfiles):
             for file in outfiles:
                 if os.path.isfile(file):

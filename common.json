@@ -1,0 +1,66 @@
+{
+    "pss108.server.lab.omin": {
+        "PRISM": {
+            "PRISM_SMSD": {
+                "STATUS": "running", 
+                "WAR_PATH": "", 
+                "CONFIG_FILE": "/etc/smsD.cnf", 
+                "ACCESS_LOG_SUFFIX": "", 
+                "PACKAGE": "prism.jar", 
+                "DB_PORT": "3306", 
+                "APPLICATION": "jar", 
+                "ACCESS_LOG_PREFIX": "", 
+                "DB_NAME": "prism", 
+                "DB_IP": "10.66.5.118", 
+                "CURRENT_VERSION": "SM_7.41.SP2.0", 
+                "TRANS_BASE_DIR": "/PRISM/smsD/SMSD_LOGS", 
+                "LOG4J2_XML": "/PRISM/smsD/SMSD_RELEASE/conf/log4j2.xml", 
+                "PROCESS_HOME_DIR": "/PRISM/smsD", 
+                "SERVICE_NAME": "smsD", 
+                "JAR_PATH": "/PRISM/SMSProcess/lib/", 
+                "ACCESS_LOG": "", 
+                "CONF_PATH": "/PRISM/SMSProcess/conf/"
+            }, 
+            "PRISM_DEAMON": {
+                "STATUS": "running", 
+                "WAR_PATH": "", 
+                "CONFIG_FILE": "/etc/prismD.cnf", 
+                "ACCESS_LOG_SUFFIX": "", 
+                "PACKAGE": "prism.jar", 
+                "DB_PORT": "3306", 
+                "APPLICATION": "jar", 
+                "ACCESS_LOG_PREFIX": "", 
+                "DB_NAME": "prism", 
+                "DB_IP": "10.66.5.118", 
+                "CURRENT_VERSION": "SM_7.41.SP2.0", 
+                "TRANS_BASE_DIR": "/PRISM/PRISMD/PRISMD_LOGS", 
+                "LOG4J2_XML": "/PRISM/PRISMD/PRISMD_RELEASE/conf/log4j2.xml", 
+                "PROCESS_HOME_DIR": "/PRISM/PRISMD", 
+                "SERVICE_NAME": "prismD", 
+                "JAR_PATH": "/PRISM/Prism/lib/", 
+                "ACCESS_LOG": "", 
+                "CONF_PATH": "/PRISM/Prism/conf/"
+            }, 
+            "PRISM_TOMCA": {
+                "STATUS": "running", 
+                "WAR_PATH": "/PRISM/Tomcat/apache-tomcat-8.5.55/webapps", 
+                "CONFIG_FILE": "/etc/tomcat.cnf", 
+                "ACCESS_LOG_SUFFIX": ".txt", 
+                "PACKAGE": "subscription.war", 
+                "DB_PORT": "3306", 
+                "APPLICATION": "war", 
+                "ACCESS_LOG_PREFIX": "localhost_access_log", 
+                "DB_NAME": "prism", 
+                "DB_IP": "10.66.5.118", 
+                "CURRENT_VERSION": "SM_7.41.SP2.0", 
+                "TRANS_BASE_DIR": "/PRISM/TOMCAT/apache-tomcat-8.0.48/TOMCAT_LOGS", 
+                "LOG4J2_XML": "/PRISM/TOMCAT/apache-tomcat-8.0.48/TOMCAT_RELEASE/conf/log4j2.xml", 
+                "PROCESS_HOME_DIR": "/PRISM/TOMCAT/apache-tomcat-8.0.48", 
+                "SERVICE_NAME": "tomcat", 
+                "JAR_PATH": "/PRISM/Tomcat/apache-tomcat-8.5.55/TOMCAT_RELEASE/lib/", 
+                "ACCESS_LOG": "/PRISM/TOMCAT/apache-tomcat-8.0.48/TOMCAT_LOGS/accessLog", 
+                "CONF_PATH": "/PRISM/Tomcat/apache-tomcat-8.5.55/TOMCAT_RELEASE/conf"
+            }
+        }
+    }
+}

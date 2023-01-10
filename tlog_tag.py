@@ -89,7 +89,7 @@ class TlogAwaitPushTimeOutTag(Enum):
     SUB_TYPE_CHECK = "#TIMEOUT"
     CHECK_BALANCE = "#TIMEOUT"
     RESERVE = "#TIMEOUT"
-    CHARGING = "#TIMEOUT"
+    CHARGING = "CHG=96,30.0,,-,,,-,-#TIMEOUT"
     REMOTE_ACT = "#TIMEOUT"
     REMOTE_DCT = "#TIMEOUT"
     DECTIVATION = "#TIMEOUT"

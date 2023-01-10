@@ -4,8 +4,8 @@ import sys
 
 class FileWriter:
         
-    def write_access_log(self, issue_tlog_path, acc_log):
-        logging.info('Access log found. Writing to a file : %s', issue_tlog_path)
+    def write_access_log(self, issue_tlog_path, acc_log, tlog_index):
+        issue_tlog_path = f'{issue_tlog_path.split(".txt")[0]}_{tlog_index}.txt'
         try:
             with open(issue_tlog_path, "r") as write_file:
                 for line in write_file:
@@ -14,7 +14,6 @@ class FileWriter:
                         break
                 else:
                     with open(issue_tlog_path, "a") as write_file:
-                        logging.info('appending')
                         write_file.writelines(acc_log)
                     
         except FileNotFoundError as ex:
@@ -22,24 +21,39 @@ class FileWriter:
                 write_file.writelines(acc_log)
         
             
-    def write_issue_tlog(self, issue_tlog_path, issue_tlog_data):
-        logging.info('Writing issue tlog to a file: %s', issue_tlog_path)
+    def write_issue_tlog(self, issue_tlog_path, issue_tlog_data, tlog_index):
+        issue_tlog_path = f'{issue_tlog_path.split(".txt")[0]}_{tlog_index}.txt'
         try:   
             with open(issue_tlog_path, "r") as write_file:
                 for line in write_file:
                     if issue_tlog_data == line:
-                        logging.info('tlog exists in tlog out file.')
                         break
                 else:
                     with open(issue_tlog_path, "a") as write_file:
-                        logging.info('appending')
                         write_file.writelines(issue_tlog_data)
             
         except FileNotFoundError as ex:
             try:
                 with open(issue_tlog_path, "a") as write_file:
-                    logging.info('file not found. appending')
                     write_file.writelines(issue_tlog_data)
+            except FileNotFoundError as error:
+                logging.info('file not found to write.')
+    
+    def write_issue_plog(self, issue_tlog_path, issue_plog_data, tlog_index):
+        issue_tlog_path = f'{issue_tlog_path.split(".txt")[0]}_{tlog_index}.txt'
+        try:   
+            with open(issue_tlog_path, "r") as write_file:
+                for line in write_file:
+                    if issue_plog_data == line:
+                        break
+                else:
+                    with open(issue_tlog_path, "a") as write_file:
+                        write_file.writelines(issue_plog_data)
+            
+        except FileNotFoundError as ex:
+            try:
+                with open(issue_tlog_path, "a") as write_file:
+                    write_file.writelines(issue_plog_data)
             except FileNotFoundError as error:
                 logging.info('file not found to write.')
             
@@ -55,6 +69,7 @@ class FileWriter:
             logging.info('file not found to write.')
             
     def write_trimmed_thread_log(self, thread_outfile, trimmed_thread_outfile, initial_index, final_index):
+        
         logging.info('thread file-%s, trimmed thread file-%s, initial index-%s, final index-%s', thread_outfile,trimmed_thread_outfile,initial_index,final_index)
         
         if os.path.isfile(trimmed_thread_outfile) and os.path.getsize(trimmed_thread_outfile) != 0:
