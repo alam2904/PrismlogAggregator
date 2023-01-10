@@ -256,8 +256,8 @@ class TDLogParser:
             hostname = socket.gethostname()
             data = Path("common.json").read_text()
             config = json.loads(data)
-            if config[hostname]['PRISM']['PRISM_TOMCAT']['PREFIX'] != "" and config[hostname]['PRISM']['PRISM_TOMCAT']['SUFFIX'] != "":
-                access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config[hostname]['PRISM']['PRISM_TOMCAT']['PREFIX']}*.{config[hostname]['PRISM']['PRISM_TOMCAT']['SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            if config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PREFIX'] != "" and config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_SUFFIX'] != "":
+                access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PREFIX']}*{config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 for record in access_log.splitlines():
                     if re.search(msisdn,record, re.DOTALL):
                         temp_record = f'{record.split("- -")[1]}'
@@ -284,6 +284,8 @@ class TDLogParser:
                  
         except subprocess.CalledProcessError as ex:            
             logging.info('No access log found')
+        except KeyError as ex:            
+            logging.info('Eigther prefix/suffix key not present in common.json file or miss match.')
 
     def parse_tlog(self, tlogTags, is_tlog, key, value):
         for keyy, valuee in value.items():

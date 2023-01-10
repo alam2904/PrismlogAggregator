@@ -110,8 +110,11 @@ class Main:
                                 logging.warning(error)
                         else:
                             logging.error('PRISM_TOMCAT data not present in common.json file')
+                            logging.error('Hence PRISM_TOMCAT logs will not be initialized and fetched')
                     except KeyError as ex:
-                        logging.error('key not present in common.json file')
+                        logging.error('Eigther %s/PRISM/PRISM_TOMCAT key not present in common.json file or miss match. '\
+                                        'Please check with OARM team.', hostname)
+                        logging.error('Hence PRISM_TOMCAT logs will not be initialized and fetched')
                             
                     logging.info('\n')
                             
@@ -130,9 +133,12 @@ class Main:
                                 logging.warning(error)
                         else:
                             logging.error('PRISM_DEAMON data not present in common.json file')
+                            logging.error('Hence PRISM_DEAMON logs will not be initialized and fetched')
                     except KeyError as ex:
-                        logging.error('key not present in common.json file')
-                                
+                        logging.error('Eigther %s/PRISM/PRISM_DEAMON key not present in common.json file or miss match. '\
+                                        'Please check with OARM team.', hostname)
+                        logging.error('Hence PRISM_DEAMON logs will not be initialized and fetched')
+                        
                     logging.info('\n')
                     if not num_argv == 4:
                         try:
@@ -150,8 +156,11 @@ class Main:
                                     logging.warning(error)
                             else:
                                 logging.error('PRISM_SMSD data not present in common.json file')
+                                logging.error('Hence PRISM_SMSD logs will not be initialized and fetched')
                         except KeyError as ex:
-                            logging.error('key not present in common.json file')
+                            logging.error('Eigther %s/PRISM/PRISM_SMSD key not present in common.json file or miss match. '\
+                                            'Please check with OARM team.', hostname)
+                            logging.error('Hence PRISM_SMSD logs will not be initialized and fetched')
                                 
                     logging.info('\n')
 

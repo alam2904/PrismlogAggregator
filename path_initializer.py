@@ -92,9 +92,13 @@ class LogPathFinder():
                 self.tomcat_log_path_dict[self.tomcat_access_path] = config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG']
                 self.is_access_path = True
             else:
-                logging.info('access log path not configured in common.json file. Hence will not be fetched')
+                logging.info('access log path not available in common.json file. Hence access log will not be fetched.')
         except KeyError as ex:
-            logging.error('key not present in common.json file')
+            logging.error('Eigther %s/PRISM/PRISM_TOMCAT/ACCESS_LOG key not present in common.json file\
+                Please check with OARM team', hostname)
+            logging.error('Hence access log will not be fetched.')
+            
+        logging.info('\n')
             
         if pname == 'tomcat':
             try:
@@ -103,7 +107,7 @@ class LogPathFinder():
                     self.tomcat_log_path_dict[self.tomcat_tlog_log_path] = f"{config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR']}/TLOG/"
                     self.is_tomcat_tlog_path = True
                 else:
-                    logging.error('tomcat TRANS_BASE_DIR path not present common.json file, hence tomcat tlog will not be fetched.') 
+                    logging.error('tomcat TRANS_BASE_DIR path not available common.json file, hence tomcat tlog will not be fetched.') 
             
                 if config[hostname]['PRISM']['PRISM_TOMCAT']['LOG4J2_XML'] != "":
                     self.parse_logger(config[hostname]['PRISM']['PRISM_TOMCAT']['LOG4J2_XML'], pname)
@@ -111,7 +115,7 @@ class LogPathFinder():
                 else:
                     logging.error('tomcat LOG4J2_XML not configured in common.json file')
             except KeyError as ex:
-                logging.error('key not present in common.json file')
+                logging.error('TRANS_BASE_DIR key not present in common.json file')
 
         elif pname == 'prismd':
             try:
@@ -128,7 +132,7 @@ class LogPathFinder():
                 else:
                     logging.error('prismd LOG4J2_XML not configured in common.json file')
             except KeyError as ex:
-                logging.error('key not present in common.json file')
+                logging.error('TRANS_BASE_DIR key not present in common.json file')
                             
         elif pname == 'smsd':
             try:
@@ -145,7 +149,7 @@ class LogPathFinder():
                 else:
                     logging.error('smsd LOG4J2_XML not configured in config.properties')
             except KeyError as ex:
-                logging.error('key not present in common.json file')
+                logging.error('TRANS_BASE_DIR key not present in common.json file')
                     
 
     def parse_logger(self, log4j, pname):
