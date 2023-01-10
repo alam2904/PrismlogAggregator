@@ -41,7 +41,7 @@
                 "ACCESS_LOG": "", 
                 "CONF_PATH": "/PRISM/Prism/conf/"
             }, 
-            "PRISM_TOMCA": {
+            "PRISM_TOMCAT": {
                 "STATUS": "running", 
                 "WAR_PATH": "/PRISM/Tomcat/apache-tomcat-8.5.55/webapps", 
                 "CONFIG_FILE": "/etc/tomcat.cnf", 
