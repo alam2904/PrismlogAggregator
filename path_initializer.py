@@ -88,7 +88,7 @@ class LogPathFinder:
         hostname = self.hostname
         
         try:
-            if config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG'] != "":
+            if config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PATH'] != "":
                 self.tomcat_log_path_dict[self.tomcat_access_path] = config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG']
                 self.is_access_path = True
             else:
