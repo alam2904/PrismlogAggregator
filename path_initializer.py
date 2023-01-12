@@ -89,7 +89,7 @@ class LogPathFinder:
         
         try:
             if config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PATH'] != "":
-                self.tomcat_log_path_dict[self.tomcat_access_path] = config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG']
+                self.tomcat_log_path_dict[self.tomcat_access_path] = config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PATH']
                 self.is_access_path = True
             else:
                 logging.info('access log path not available in common.json file. Hence access log will not be fetched.')
