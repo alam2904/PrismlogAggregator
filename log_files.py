@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 
-class LogFileFinder():
+class LogFileFinder:
     """
     transaction and daemon log path finder class
     """

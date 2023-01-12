@@ -8,7 +8,7 @@ from subprocess import PIPE
 import xml.etree.ElementTree as ET
 from configparser import ConfigParser
 
-class LogPathFinder():
+class LogPathFinder:
     """
     Path finder class
     """
