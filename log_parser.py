@@ -264,10 +264,8 @@ class TDLogParser:
                         data = [data.split("refid=")[1].split("&")[0] for data in temp_record.split(",") if data.split("refid=")]
                         
                         for refid in str(self.dictionary_tlog_to_search[self.dict_key]).split(","):
-                            if f'refId={data[0]}' == refid.split("]")[0] and data[0] != "1":
-                                acc_log = f'{record.split("- -")[1].strip()}{self.new_line}'
-                            
-                            elif data[0] == "1":
+                            # logging.info('%s:%s', refid.split("]")[0], f"refId={data[0]}")
+                            if f'refId={data[0]}' == refid.split("]")[0]:
                                 a_date = [temp.split("]")[0].split("[")[1].split(" ")[0].split(":") for temp in temp_record.split(",")]
                                 acc_date = f'{a_date[0][0]}{a_date[0][1]}:{a_date[0][2]}'
                                 acc_log_date = datetime.strptime(acc_date, "%d/%b/%Y%H:%M")
