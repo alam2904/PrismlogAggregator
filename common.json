@@ -18,7 +18,7 @@
                 "PROCESS_HOME_DIR": "/PRISM/smsD", 
                 "SERVICE_NAME": "smsD", 
                 "JAR_PATH": "/PRISM/SMSProcess/lib/", 
-                "ACCESS_LOG": "", 
+                "ACCESS_LOG_PATH": "", 
                 "CONF_PATH": "/PRISM/SMSProcess/conf/"
             }, 
             "PRISM_DEAMON": {
@@ -38,7 +38,7 @@
                 "PROCESS_HOME_DIR": "/PRISM/PRISMD", 
                 "SERVICE_NAME": "prismD", 
                 "JAR_PATH": "/PRISM/Prism/lib/", 
-                "ACCESS_LOG": "", 
+                "ACCESS_LOG_PATH": "", 
                 "CONF_PATH": "/PRISM/Prism/conf/"
             }, 
             "PRISM_TOMCAT": {
@@ -58,7 +58,7 @@
                 "PROCESS_HOME_DIR": "/PRISM/TOMCAT/apache-tomcat-8.0.48", 
                 "SERVICE_NAME": "tomcat", 
                 "JAR_PATH": "/PRISM/Tomcat/apache-tomcat-8.5.55/TOMCAT_RELEASE/lib/", 
-                "ACCESS_LOG": "/PRISM/TOMCAT/apache-tomcat-8.0.48/TOMCAT_LOGS/accessLog", 
+                "ACCESS_LOG_PATH": "/PRISM/TOMCAT/apache-tomcat-8.0.48/TOMCAT_LOGS/accessLog", 
                 "CONF_PATH": "/PRISM/Tomcat/apache-tomcat-8.5.55/TOMCAT_RELEASE/conf"
             }
         }
