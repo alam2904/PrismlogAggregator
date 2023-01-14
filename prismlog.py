@@ -37,7 +37,7 @@ class Main:
             r_period = 1
             
             hostname = socket.gethostname()
-            data = Path("common.json").read_text()
+            data = Path(f"{hostname}.json").read_text()
             config = json.loads(data)
     
             if config:
@@ -218,14 +218,14 @@ class Main:
         logging.debug('Total time taken %s', duration)
         
         if num_argv == 5:
-            out_zipFile = f"{sys.argv[4]}_{Path('outfile.zip')}"
+            out_zipFile = f"{sys.argv[4]}_{hostname}_{Path('outfile.zip')}"
             with ZipFile(out_zipFile, "a", compression= zipfile.ZIP_DEFLATED) as zip:
                 for path in Path(outputDirectory_object).rglob(f"{sys.argv[4]}_*.*"):
                     zip.write(path)
             print(f"OARM_OUTPUT_FILENAME|{Path(out_zipFile).absolute()}")
                 
         elif num_argv == 4:
-            out_zipFile = f"{sys.argv[3]}_{Path('outfile.zip')}"
+            out_zipFile = f"{sys.argv[3]}_{hostname}_{Path('outfile.zip')}"
             with ZipFile(out_zipFile, "a", compression= zipfile.ZIP_DEFLATED) as zip:
                 for path in Path(outputDirectory_object).rglob(f"{sys.argv[3]}_*.*"):
                     zip.write(path)

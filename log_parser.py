@@ -254,7 +254,7 @@ class TDLogParser:
         
         try:
             hostname = socket.gethostname()
-            data = Path("common.json").read_text()
+            data = Path(f"{hostname}.json").read_text()
             config = json.loads(data)
             if config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PREFIX'] != "" and config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_SUFFIX'] != "":
                 access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PREFIX']}*{config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
