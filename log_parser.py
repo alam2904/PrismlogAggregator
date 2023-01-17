@@ -256,6 +256,7 @@ class TDLogParser:
             hostname = socket.gethostname()
             data = Path(f"{hostname}.json").read_text()
             config = json.loads(data)
+            
             if config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PREFIX'] != "" and config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_SUFFIX'] != "":
                 access_log = subprocess.check_output(f"grep {search_string} {access_path}/{config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PREFIX']}*{config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_SUFFIX']}", universal_newlines=True, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 for record in access_log.splitlines():
@@ -264,17 +265,22 @@ class TDLogParser:
                         data = [data.split("refid=")[1].split("&")[0] for data in temp_record.split(",") if data.split("refid=")]
                         
                         for refid in str(self.dictionary_tlog_to_search[self.dict_key]).split(","):
-                            # logging.info('%s:%s', refid.split("]")[0], f"refId={data[0]}")
+                            
                             if f'refId={data[0]}' == refid.split("]")[0]:
+                                logging.info('%s:%s', refid.split("]")[0], f"refId={data[0]}")
                                 a_date = [temp.split("]")[0].split("[")[1].split(" ")[0].split(":") for temp in temp_record.split(",")]
                                 acc_date = f'{a_date[0][0]}{a_date[0][1]}:{a_date[0][2]}'
                                 acc_log_date = datetime.strptime(acc_date, "%d/%b/%Y%H:%M")
-
-                                r_date = str(self.dictionary_tlog_to_search[self.dict_key]["TIMESTAMP"].split(",")[0]).split(":")
-                                req_date = f'{r_date[0]}:{r_date[1]}'
+                                # logging.info('request date: %s', self.dictionary_tlog_to_search[self.dict_key]["REQUEST_DATE"])
+                                # 2023-01-17 18:47:45.0
+                                r_date = str(self.dictionary_tlog_to_search[self.dict_key]["REQUEST_DATE"])
+                                splitted_req_date = r_date.split(':')
+                                req_date = f"{splitted_req_date[0]}:{splitted_req_date[1]}"
                                 tlog_req_date = datetime.strptime(req_date, "%Y-%m-%d %H:%M")
                                 
+                                # logging.info('%s:%s', acc_log_date, tlog_req_date)
                                 if acc_log_date == tlog_req_date:
+                                    logging.info('access log: %s', f'{record.split("- -")[1].strip()}{self.new_line}')
                                     acc_log = f'{record.split("- -")[1].strip()}{self.new_line}'
                 return acc_log
             else:
