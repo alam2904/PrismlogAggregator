@@ -269,7 +269,7 @@ class TDLogParser:
                             # logging.info('reco data: %s', reco_data.split("refId=")[1].split(",")[0])
                             tlog_refId = f'refId={reco_data.split("refId=")[1].split(",")[0]}'
                         except IndexError as ex:
-                            tlog_refId = reco_data.split("refId=")[1].split(",")[0]
+                            tlog_refId = reco_data
                             
                         if f'refId={data[0]}' == tlog_refId:
                             a_date = [temp.split("]")[0].split("[")[1].split(" ")[0].split(":") for temp in temp_record.split(",")]
