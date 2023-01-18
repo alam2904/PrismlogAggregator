@@ -265,9 +265,13 @@ class TDLogParser:
                         data = [data.split("refid=")[1].split("&")[0] for data in temp_record.split(",") if data.split("refid=")]
                         
                         reco_data = str(self.dictionary_tlog_to_search[self.dict_key]).split("RECO:")[1].split("]")[0]
-                        logging.info('reco data: %s', reco_data.split("refId=")[1].split(",")[0])
-                        
-                        if f'refId={data[0]}' == f'refId={reco_data.split("refId=")[1].split(",")[0]}':
+                        try:
+                            # logging.info('reco data: %s', reco_data.split("refId=")[1].split(",")[0])
+                            tlog_refId = f'refId={reco_data.split("refId=")[1].split(",")[0]}'
+                        except IndexError as ex:
+                            tlog_refId = reco_data.split("refId=")[1].split(",")[0]
+                            
+                        if f'refId={data[0]}' == tlog_refId:
                             a_date = [temp.split("]")[0].split("[")[1].split(" ")[0].split(":") for temp in temp_record.split(",")]
                             acc_date = f'{a_date[0][0]}{a_date[0][1]}:{a_date[0][2]}'
                             acc_log_date = datetime.strptime(acc_date, "%d/%b/%Y%H:%M")
