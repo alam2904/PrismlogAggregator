@@ -36,6 +36,8 @@ class Main:
             #default retention period.
             r_period = 1
             
+            #existing
+            
             hostname = socket.gethostname()
             data = Path(f"{hostname}.json").read_text()
             config = json.loads(data)
