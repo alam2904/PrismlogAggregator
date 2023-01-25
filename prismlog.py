@@ -33,7 +33,7 @@ class Main:
             else:
                 logging.debug('Arguments passed are : msisdn=%s and search_date=%s', sys.argv[1], sys.argv[2])
             
-            #default retention period.
+            #default retention period defined.
             r_period = 1
             
             #existing
