@@ -262,7 +262,7 @@ class TDLogParser:
                         temp_record = f'{record.split("- -")[1]}'
                         data = [data.split("refid=")[1].split("&")[0] for data in temp_record.split(",") if data.split("refid=")]
                         
-                        reco_data = str(self.dictionary_tlog_to_search[self.dict_key]).split("RECO:")[1].split("]")[0]
+                        # reco_data = str(self.dictionary_tlog_to_search[self.dict_key]).split("RECO:")[1].split("]")[0]
                         for key, value in self.dictionary_tlog_to_search.items():
                             for keyy, valuee in dict(value).items():
                                 if re.search(r"\b{}\b".format(str(f'refId={data[0]}')), valuee):
