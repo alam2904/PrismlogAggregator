@@ -87,7 +87,7 @@ class LogPathFinder():
 
                         # self.is_tomcat_tlog_path = True
                     else:
-                        logging.error('%s TRANS_BASE_DIR path not available in %s.json file, hence tomcat tlog path will not be processed', webService, hostname) 
+                        logging.error('%s TRANS_BASE_DIR path not available in %s.json file, hence tomcat tlog path will not be processed', webService, self.hostname) 
                     
                     if self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['LOGS_PATH']['LOG4J2_XML'] != "":
                         log4j2_path = self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['LOGS_PATH']['LOG4J2_XML']
