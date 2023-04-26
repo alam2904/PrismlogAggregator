@@ -111,7 +111,7 @@ class LogPathFinder():
                     self.prism_daemon_log_path_dict[self.prism_daemon_req_resp_path] = "{}/TLOG/REQUEST_LOG".format(transBaseDirectory)
                     self.prism_daemon_log_path_dict[self.prism_daemon_perf_log_path] = "{}/TLOG/PERF".format(transBaseDirectory)
 
-                    self.is_tomcat_tlog_path = True
+                    # self.is_tomcat_tlog_path = True
                 else:
                     logging.error('%s TRANS_BASE_DIR path not available in %s.json file, hence prismd tlog will not be fetched', pname, self.hostname) 
                 
