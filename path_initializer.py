@@ -17,6 +17,7 @@ class LogPathFinder():
         self.end_date = validation_object.end_date
         self.hostname = hostname
         self.debugMsisdn = ""
+        self.web_services = []
         
         #prism dictionary objects
         self.prism_tomcat_log_path_dict = {}
@@ -24,7 +25,9 @@ class LogPathFinder():
         self.prism_smsd_log_path_dict = {}
         
         #prism catalina home and access path paramter, tlog , req-resp path parameters
-        self.prism_process_home_directory = "prism_process_home_directory"
+        self.prism_tomcat_process_home_directory = "prism_tomcat_process_home_directory"
+        self.prism_deamon_process_home_directory = "prism_deamon_process_home_directory"
+        self.prism_smsd_process_home_directory = "prism_smsd_process_home_directory"
         self.prism_tomcat_access_path = "prism_tomcat_access_path"
         self.prism_tomcat_tlog_path = "prism_tomcat_tlog_path"
         self.prism_daemon_tlog_path = "prism_daemon_tlog_path"
@@ -54,73 +57,89 @@ class LogPathFinder():
         pname = process_name
         log4j2_path = ""
         
-        if pname == "PRISM":
-            hostname = socket.gethostname()
+        if pname == "PRISM_TOMCAT":
             try:
-                if self.config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PATH'] != "":
-                    self.prism_tomcat_log_path_dict[self.prism_tomcat_access_path] = self.config[hostname]['PRISM']['PRISM_TOMCAT']['ACCESS_LOG_PATH']
-                    self.is_prism_access_path = True
-                else:
-                    logging.info('%s access log path not available in common.json file.'\
-                                    'Hence access log will not be fetched.', pname)
+                for webService in self.config[self.hostname]["PRISM"]["PRISM_TOMCAT"]:
+                    self.web_services.append(webService)
+                    logging.info('tomcat web services: %s', self.web_services)
+            
+                    try:
+                        if self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['LOGS_PATH']['ACCESS_LOG_PATH'] != "":
+                            access_log_path = self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['LOGS_PATH']['ACCESS_LOG_PATH']
+                            self.prism_tomcat_log_path_dict[self.prism_tomcat_access_path] = access_log_path
+                            self.is_prism_access_path = True
+                        else:
+                            logging.info('%s access log path not available in %s.json file.'\
+                                            'Hence access log will not be fetched.', webService, self.hostname)
+                    except KeyError as error:
+                        logging.exception(error)
+                        logging.error('Hence %s access log will not be fetched.', webService) 
+                
+                    if self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['LOGS_PATH']['TRANS_BASE_DIR'] != "":
+                        transBaseDirectory = self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['LOGS_PATH']['TRANS_BASE_DIR']
+                        
+                        self.prism_tomcat_log_path_dict[self.prism_tomcat_tlog_path] = "{}/TLOG/BILLING_REALTIME".format(transBaseDirectory)
+                        self.prism_tomcat_log_path_dict[self.prism_tomcat_generic_http_handler_req_resp_path] = "{}/TLOG/REQUEST_RESPONSE_GENERIC_HTTP".format(transBaseDirectory)
+                        self.prism_tomcat_log_path_dict[self.prism_tomcat_generic_soap_handler_req_resp_path] = "{}/TLOG/REQUEST_RESPONSE".format(transBaseDirectory)
+                        self.prism_tomcat_log_path_dict[self.prism_tomcat_callbackV2_req_resp_path] = "{}/TLOG/CBCK-V2-REQ-RESPONSE".format(transBaseDirectory)
+                        self.prism_tomcat_log_path_dict[self.prism_tomcat_req_resp_path] = "{}/TLOG/REQUEST_LOG".format(transBaseDirectory)
+                        self.prism_tomcat_log_path_dict[self.prism_tomcat_perf_log_path] = "{}/TLOG/PERF".format(transBaseDirectory)
+
+                        # self.is_tomcat_tlog_path = True
+                    else:
+                        logging.error('%s TRANS_BASE_DIR path not available in %s.json file, hence tomcat tlog path will not be processed', webService, self.hostname) 
+                    
+                    if self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['LOGS_PATH']['LOG4J2_XML'] != "":
+                        log4j2_path = self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['LOGS_PATH']['LOG4J2_XML']
+                        self.parse_logger(log4j2_path, pname)
+                    else:
+                        logging.error('%s LOG4J2_XML path not present in %s.json file', webService, self.hostname)
+                        logging.error('Hence %s LOG4J2_XML log will not be fetched for parsing and initializing logs path.', webService)
             except KeyError as error:
-                # logging.error('Eigther %s/GRIFF_TOMCAT/ACCESS_LOG key not present in common.json file.'\
-                #                 'Please check with OARM team', pname)
                 logging.exception(error)
-                logging.error('Hence %s access log will not be fetched.', pname) 
-            
+                # logging.error('Hence LOG4J2_XML log will not be fetched for parsing and initializing logs path.')
+        
+        if pname == "PRISM_DEAMON":
+            try:    
+                if self.config[self.hostname]['PRISM']['PRISM_DEAMON']['PRISM_DEAMON']['LOGS_PATH']['TRANS_BASE_DIR'] != "":
+                    transBaseDirectory = self.config[self.hostname]['PRISM']['PRISM_DEAMON']['PRISM_DEAMON']['LOGS_PATH']['TRANS_BASE_DIR']
+                    
+                    self.prism_daemon_log_path_dict[self.prism_daemon_tlog_path] = "{}/TLOG/BILLING".format(transBaseDirectory)
+                    self.prism_daemon_log_path_dict[self.prism_daemon_generic_http_handler_req_resp_path] = "{}/TLOG/REQUEST_RESPONSE_GENERIC_HTTP".format(transBaseDirectory)
+                    self.prism_daemon_log_path_dict[self.prism_daemon_generic_soap_handler_req_resp_path] = "{}/TLOG/REQUEST_RESPONSE".format(transBaseDirectory)
+                    self.prism_daemon_log_path_dict[self.prism_daemon_callbackV2_req_resp_path] = "{}/TLOG/CBCK-V2-REQ-RESPONSE".format(transBaseDirectory)
+                    self.prism_daemon_log_path_dict[self.prism_daemon_req_resp_path] = "{}/TLOG/REQUEST_LOG".format(transBaseDirectory)
+                    self.prism_daemon_log_path_dict[self.prism_daemon_perf_log_path] = "{}/TLOG/PERF".format(transBaseDirectory)
+
+                    self.is_tomcat_tlog_path = True
+                else:
+                    logging.error('%s TRANS_BASE_DIR path not available in %s.json file, hence prismd tlog will not be fetched', pname, self.hostname) 
+                
+                if self.config[self.hostname]['PRISM']['PRISM_DEAMON']['PRISM_DEAMON']['LOGS_PATH']['LOG4J2_XML'] != "":
+                    log4j2_path = self.config[self.hostname]['PRISM']['PRISM_DEAMON']['PRISM_DEAMON']['LOGS_PATH']['LOG4J2_XML']
+                    self.parse_logger(log4j2_path, pname)
+                else:
+                    logging.error('%s LOG4J2_XML path not present in %s.json file', pname, self.hostname)
+                    logging.error('Hence %s LOG4J2_XML log will not be fetched for parsing and initializing logs path.', pname)
+            except KeyError as error:
+                logging.exception(error)
+                # logging.error('Hence LOG4J2_XML log will not be fetched for parsing and initializing logs path.')
+        
+        if pname == "PRISM_SMSD":
             try:
-                if self.config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR'] != "":
-                    self.prism_tomcat_log_path_dict[self.prism_tomcat_tlog_path] = "{}/TLOG/BILLING_REALTIME".format(self.config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR'])
-
-                    self.prism_tomcat_log_path_dict[self.prism_tomcat_generic_http_handler_req_resp_path] = "{}/TLOG/REQUEST_RESPONSE_GENERIC_HTTP".format(self.config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR'])
-                    self.prism_tomcat_log_path_dict[self.prism_tomcat_generic_soap_handler_req_resp_path] = "{}/TLOG/REQUEST_RESPONSE".format(self.config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR'])
-                    self.prism_tomcat_log_path_dict[self.prism_tomcat_callbackV2_req_resp_path] = "{}/TLOG/CBCK-V2-REQ-RESPONSE".format(self.config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR'])
-                    self.prism_tomcat_log_path_dict[self.prism_tomcat_req_resp_path] = "{}/TLOG/REQUEST_LOG".format(self.config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR'])
-                    self.prism_tomcat_log_path_dict[self.prism_tomcat_perf_log_path] = "{}/TLOG/PERF".format(self.config[hostname]['PRISM']['PRISM_TOMCAT']['TRANS_BASE_DIR'])
+                if self.config[self.hostname]['PRISM']['PRISM_SMSD']['PRISM_SMSD']['LOGS_PATH']['TRANS_BASE_DIR'] != "":
+                    transBaseDirectory = self.config[self.hostname]['PRISM']['PRISM_SMSD']['PRISM_SMSD']['LOGS_PATH']['TRANS_BASE_DIR']
+                    self.prism_smsd_log_path_dict[self.prism_smsd_tlog_path] = "{}/TLOG/SMS".format(transBaseDirectory)
 
                     # self.is_tomcat_tlog_path = True
                 else:
-                    logging.error('%s tomcat TRANS_BASE_DIR path not available in %s file, hence tomcat tlog path will not be processed', pname, hostname) 
+                    logging.error('%s TRANS_BASE_DIR path not available in %s.json file, hence smsd tlog will not be fetched', pname, self.hostname) 
                 
-                if self.config[hostname]['PRISM']['PRISM_TOMCAT']['LOG4J2_XML'] != "":
-                    log4j2_path = self.config[hostname]['PRISM']['PRISM_TOMCAT']['LOG4J2_XML']
-                    self.parse_logger(pname, log4j2_path, "PRISM_TOMCAT")
+                if self.config[self.hostname]['PRISM']['PRISM_SMSD']['PRISM_SMSD']['LOGS_PATH']['LOG4J2_XML'] != "":
+                    log4j2_path = self.config[self.hostname]['PRISM']['PRISM_SMSD']['PRISM_SMSD']['LOGS_PATH']['LOG4J2_XML']
+                    self.parse_logger(log4j2_path, pname)
                 else:
-                    logging.error('%s tomcat LOG4J2_XML path not present in common.json file', pname)
-                    logging.error('Hence %s LOG4J2_XML log will not be fetched for parsing and initializing logs path.', pname)
-            
-                if self.config[hostname]['PRISM']['PRISM_DEAMON']['TRANS_BASE_DIR'] != "":
-                    self.prism_daemon_log_path_dict[self.prism_daemon_tlog_path] = "{}/TLOG/BILLING".format(self.config[hostname]['PRISM']['PRISM_DEAMON']['TRANS_BASE_DIR'])
-                    self.prism_daemon_log_path_dict[self.prism_daemon_generic_http_handler_req_resp_path] = "{}/TLOG/REQUEST_RESPONSE_GENERIC_HTTP".format(self.config[hostname]['PRISM']['PRISM_DEAMON']['TRANS_BASE_DIR'])
-                    self.prism_daemon_log_path_dict[self.prism_daemon_generic_soap_handler_req_resp_path] = "{}/TLOG/REQUEST_RESPONSE".format(self.config[hostname]['PRISM']['PRISM_DEAMON']['TRANS_BASE_DIR'])
-                    self.prism_daemon_log_path_dict[self.prism_daemon_callbackV2_req_resp_path] = "{}/TLOG/CBCK-V2-REQ-RESPONSE".format(self.config[hostname]['PRISM']['PRISM_DEAMON']['TRANS_BASE_DIR'])
-                    self.prism_daemon_log_path_dict[self.prism_daemon_req_resp_path] = "{}/TLOG/REQUEST_LOG".format(self.config[hostname]['PRISM']['PRISM_DEAMON']['TRANS_BASE_DIR'])
-                    self.prism_daemon_log_path_dict[self.prism_daemon_perf_log_path] = "{}/TLOG/PERF".format(self.config[hostname]['PRISM']['PRISM_DEAMON']['TRANS_BASE_DIR'])
-
-                    # self.is_tomcat_tlog_path = True
-                else:
-                    logging.error('%s daemon TRANS_BASE_DIR path not available in %s file, hence tomcat tlog will not be fetched', pname, hostname) 
-                
-                if self.config[hostname]['PRISM']['PRISM_DEAMON']['LOG4J2_XML'] != "":
-                    log4j2_path = self.config[hostname]['PRISM']['PRISM_DEAMON']['LOG4J2_XML']
-                    self.parse_logger(pname, log4j2_path, "PRISM_DEAMON")
-                else:
-                    logging.error('%s prismD LOG4J2_XML path not present in common.json file', pname)
-                    logging.error('Hence %s LOG4J2_XML log will not be fetched for parsing and initializing logs path.', pname)
-                
-                if self.config[hostname]['PRISM']['PRISM_SMSD']['TRANS_BASE_DIR'] != "":
-                    self.prism_smsd_log_path_dict[self.prism_smsd_tlog_path] = "{}/TLOG/SMS".format(self.config[hostname]['PRISM']['PRISM_SMSD']['TRANS_BASE_DIR'])
-
-                    # self.is_tomcat_tlog_path = True
-                else:
-                    logging.error('%s smsd TRANS_BASE_DIR path not available in %s file, hence tomcat tlog will not be fetched', pname, hostname) 
-                
-                if self.config[hostname]['PRISM']['PRISM_SMSD']['LOG4J2_XML'] != "":
-                    log4j2_path = self.config[hostname]['PRISM']['PRISM_SMSD']['LOG4J2_XML']
-                    self.parse_logger(pname, log4j2_path, "PRISM_SMSD")
-                else:
-                    logging.error('%s prismD LOG4J2_XML path not present in common.json file', pname)
+                    logging.error('%s LOG4J2_XML path not present in %s.json file', pname, self.hostname)
                     logging.error('Hence %s LOG4J2_XML log will not be fetched for parsing and initializing logs path.', pname)
                     
             except KeyError as error:
@@ -128,71 +147,66 @@ class LogPathFinder():
                 # logging.error('Hence LOG4J2_XML log will not be fetched for parsing and initializing logs path.')
             
     
-    def parse_logger(self, pname, log4j2_path, sub_process=None):
+    def parse_logger(self, log4j2_path, pname):
         """
         Logger reference call to appender
         """
         try:
-            if pname == 'PRISM' and sub_process != None:
-                tree = ET.parse(log4j2_path)
-                for data in tree.findall('./Loggers/Logger'):
-                    self.parse_appender(data, tree, pname, sub_process)
-                
-                for data in tree.findall('./Loggers/Root'):
-                    self.parse_appender(data, tree, pname, sub_process)
+            tree = ET.parse(log4j2_path)
+            for data in tree.findall('./Loggers/Logger'):
+                self.parse_appender(data, tree, pname)
             
+            for data in tree.findall('./Loggers/Root'):
+                self.parse_appender(data, tree, pname)
         except ET.ParseError as ex:
             logging.debug(ex)
                   
-    def parse_appender(self, data, tree, pname, sub_process=None):
+    def parse_appender(self, data, tree, pname):
         """
         Parse appender for loggers reference
         """
         logger_ref = ""
         try:            
             for logger in data.findall('AppenderRef'):                        
-                
-                if pname == 'PRISM' and sub_process != None:
-                    logger_ref = str(logger.attrib.get('ref'))
+                logger_ref = str(logger.attrib.get('ref'))
                 
                 for routing in tree.findall('./Appenders/Routing'):
                     if logger_ref == str(routing.attrib.get('name')):
                         for routes in tree.findall('./Appenders/Routing/Routes'):
                             #call to routing for re-routing the references
-                            self.parse_routing_appender(routes, tree, pname, logger_ref, routing, sub_process)
+                            self.parse_routing_appender(routes, pname, logger_ref, routing)
                             
                         if self.is_routing_success:
                             break  
                 else:
                     for appender in tree.findall('./Appenders/RollingFile'):
                         if logger_ref == str(appender.attrib.get('name')):
-                                if pname == 'PRISM' and sub_process != None:
-                                    yearAndmonth = datetime.strftime(self.start_date, 'yyyy-MM')
-                                    search_date = datetime.strftime(self.start_date, "yyyy-MM-dd")
+                            yearAndmonth = datetime.strftime(self.start_date, 'yyyy-MM')
+                            search_date = datetime.strftime(self.start_date, "yyyy-MM-dd")
+                            
+                            replacedValue = str(appender.attrib.get('filePattern'))\
+                                                .replace("$${date:yyyy-MM}", '{}'.format(yearAndmonth))\
+                                                .replace("%d{yyyy-MM-dd.HH}-%i", '{}*'.format(search_date))
                                     
-                                    replacedValue = str(appender.attrib.get('filePattern'))\
-                                                        .replace("$${date:yyyy-MM}", '{}'.format(yearAndmonth))\
-                                                        .replace("%d{yyyy-MM-dd.HH}-%i", '{}*'.format(search_date))
+                            if pname == 'PRISM_TOMCAT':
+                                self.prism_tomcat_log_path_dict["prism_tomcat_{0}_log".format(logger_ref)] = appender.attrib.get('fileName')
+                                self.prism_tomcat_log_path_dict["prism_tomcat_{0}_backup_log".format(logger_ref)] = replacedValue
+                            
+                            elif pname == 'PRISM_DEAMON':
+                                self.prism_daemon_log_path_dict["prism_daemon_{0}_log".format(logger_ref)] = appender.attrib.get('fileName')
+                                self.prism_daemon_log_path_dict["prism_daemon_{0}_backup_log".format(logger_ref)] = replacedValue
+                            
+                            elif pname == 'PRISM_SMSD':
+                                self.prism_smsd_log_path_dict["prism_smsd_{0}_log".format(logger_ref)] = appender.attrib.get('fileName')
+                                self.prism_smsd_log_path_dict["prism_smsd_{0}_backup_log".format(logger_ref)] = replacedValue
                                     
-                                    if sub_process == 'PRISM_TOMCAT':
-                                        self.prism_tomcat_log_path_dict["prism_tomcat_{0}_log".format(logger_ref)] = appender.attrib.get('fileName')
-                                        self.prism_tomcat_log_path_dict["prism_tomcat_{0}_backup_log".format(logger_ref)] = replacedValue
-                                    
-                                    elif sub_process == 'PRISM_DEAMON':
-                                        self.prism_daemon_log_path_dict["prism_daemon_{0}_log".format(logger_ref)] = appender.attrib.get('fileName')
-                                        self.prism_daemon_log_path_dict["prism_daemon_{0}_backup_log".format(logger_ref)] = replacedValue
-                                    
-                                    elif sub_process == 'PRISM_SMSD':
-                                        self.prism_smsd_log_path_dict["prism_smsd_{0}_log".format(logger_ref)] = appender.attrib.get('fileName')
-                                        self.prism_smsd_log_path_dict["prism_smsd_{0}_backup_log".format(logger_ref)] = replacedValue
-                                    
-                    else:
-                        logging.info('No Appender defined for the logger: %s', logger_ref)
+                    # else:
+                    #     logging.info('No Appender defined for the logger: %s', logger_ref)
             
         except ET.ParseError as ex:
             logging.debug(ex)
         
-    def parse_routing_appender(self, data, tree, pname, logger_ref, routing, sub_process=None):
+    def parse_routing_appender(self, data, pname, logger_ref, routing):
         """
         Re-route for logger reference and parse appender
         """
@@ -206,11 +220,11 @@ class LogPathFinder():
                         replacedValue = str(file.attrib.get('fileName'))\
                                             .replace("${ctx:SUB_ID}", "{}".format(route.attrib.get('key')))
                                                     
-                    if sub_process == "PRISM_TOMCAT":
+                    if pname == "PRISM_TOMCAT":
                         self.prism_tomcat_log_path_dict["prism_tomcat_{0}_log".format(route.attrib.get('key'))] = replacedValue
                         break
                     
-                    elif sub_process == "PRISM_DEAMON":
+                    elif pname == "PRISM_DEAMON":
                         self.prism_daemon_log_path_dict["prism_daemon_{0}_log".format(route.attrib.get('key'))] = replacedValue
                         break
                     self.is_debug_msisdn = True
@@ -220,13 +234,13 @@ class LogPathFinder():
                         replacedValue = str(file.attrib.get('fileName'))\
                                             .replace("${ctx:QUEUE_ID}", "{}".format(route.attrib.get('key')))
                                                     
-                    if sub_process == "PRISM_TOMCAT":
+                    if pname == "PRISM_TOMCAT":
                         self.prism_tomcat_log_path_dict["prism_tomcat_{0}_log".format(route.attrib.get('key'))] = replacedValue
                         break
-                    elif sub_process == "PRISM_DEAMON":
+                    elif pname == "PRISM_DEAMON":
                         self.prism_daemon_log_path_dict["prism_daemon_{}_log".format(route.attrib.get('key'))] = replacedValue
                         break
-                    elif sub_process == "PRISM_SMSD":
+                    elif pname == "PRISM_SMSD":
                         self.prism_smsd_log_path_dict["prism_smsd_{}_log".format(route.attrib.get('key'))] = replacedValue
                         break
                 self.is_routing_success = True
@@ -238,12 +252,12 @@ class LogPathFinder():
     def reinitialize_is_debug_msisdn(self):
         self.is_debug_msisdn = False
         
-    def initialize_path(self, section):
+    def initialize_path(self, pname):
             """
             Initialize tomcat path.
             """
             try:
-                self.parse_transaction_logging(section)
+                self.parse_transaction_logging(pname)
             except ValueError as error:
                 raise ValueError(error)
             except Exception as error:
