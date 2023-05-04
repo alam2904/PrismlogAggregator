@@ -127,34 +127,41 @@ class LogFileFinder:
                 #input dated file in the tlog directory
                 dated_tlog_files = ""
                 
-                if pname == "PRISM_TOMCAT":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_BILLING_REALTIME_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                    logging.info('tomcat soap path: %s', dated_tlog_files)
-                elif pname == "PRISM_TOMCAT_REQ_RESP":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_LOG_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_CBCK-V2-REQ-RESPONSE_{}_" .format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_TOMCAT_PERF_LOG":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_PERF_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_DEAMON":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_BILLING_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_DAEMON_REQ_RESP":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_LOG_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_CBCK-V2-REQ-RESPONSE_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_DAEMON_PERF_LOG":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_PERF_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                elif pname == "PRISM_SMSD":
-                    dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_SMS_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                    
+                try:
+                    if pname == "PRISM_TOMCAT":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_BILLING_REALTIME_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                    elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                    elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                        logging.info('tomcat soap path: %s', dated_tlog_files)
+                    elif pname == "PRISM_TOMCAT_REQ_RESP":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_LOG_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                    elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_CBCK-V2-REQ-RESPONSE_{}_" .format(input_date_formatted)) and p.endswith(".log")]
+                    elif pname == "PRISM_TOMCAT_PERF_LOG":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_PERF_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                except OSError as error:
+                    logging.warning(error)
+                
+                try:
+                    if pname == "PRISM_DEAMON":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_BILLING_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                    elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                    elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                    elif pname == "PRISM_DAEMON_REQ_RESP":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_LOG_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                    elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_CBCK-V2-REQ-RESPONSE_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                    elif pname == "PRISM_DAEMON_PERF_LOG":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_PERF_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                    elif pname == "PRISM_SMSD":
+                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_SMS_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                except OSError as error:
+                    logging.warning(error)
+                
                 if bool(dated_tlog_files):
                     if pname == "PRISM_TOMCAT":
                         logging.info("TLOG_BILLING_REALTIME_{}_*..log file present".format(input_date_formatted))
