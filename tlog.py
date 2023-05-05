@@ -44,7 +44,7 @@ class Tlog:
         #tlog header mapping parameters
         self.tlog_dict = defaultdict(list)
         self.ctid_data_dict = defaultdict(list)
-        self.msisdn_data_dict = {}
+        self.msisdn_data_dict = OrderedDict()
         self.msisdn_access_data_dict = defaultdict(list)
         # self.msisdn_sms_data_dict = defaultdict(list)
         self.msisdn_sms_data_list = []
@@ -142,6 +142,7 @@ class Tlog:
                 for record in str(data).splitlines():
                     if record not in data_list:
                         data_list.append(record)
+            # logging.info('data list: %s', data_list)
             
             if pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP" or pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP"\
                     or pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP" or pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP"\
@@ -273,6 +274,7 @@ class Tlog:
                 
                 # if ctid in data_dict["CTID"]: //support not available for now
                 self.msisdn_data_dict[data_dict["THREAD"]] = data_dict
+            # logging.info('msisdn_data_dict: %s', self.msisdn_data_dict)
         
         
         if pname == "PRISM_TOMCAT":
@@ -295,7 +297,8 @@ class Tlog:
             logging.info('prism realtime billing tlogs: %s', str(self.prism_tomcat_tlog_dict).replace("'", '"'))
         
         elif pname == "PRISM_DEAMON":
-            self.prism_daemon_tlog_dict = {"PRISM_DAEMON_TLOG": dict(self.msisdn_data_dict)}
+            # logging.info('prism tlogs dict: %s', OrderedDict(self.msisdn_data_dict))
+            self.prism_daemon_tlog_dict = {"PRISM_DAEMON_TLOG": self.msisdn_data_dict}
             self.prism_data_dict_list.append(self.prism_daemon_tlog_dict)
             logging.info('prism billing tlogs: %s', str(self.prism_daemon_tlog_dict).replace("'", '"'))
         
