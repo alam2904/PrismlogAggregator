@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import logging
 import signal
 import subprocess
@@ -25,6 +26,13 @@ class Tlog:
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
         self.validation_object = validation_object
+        
+        self.start_date = validation_object.start_date
+        self.end_date = validation_object.end_date
+        
+        self.s_date = datetime.strptime(datetime.strftime(self.start_date, "%Y%m%d"), "%Y%m%d")
+        self.e_date = datetime.strptime(datetime.strftime(self.end_date, "%Y%m%d"), "%Y%m%d")
+
         self.log_mode = log_mode
         self.tlog_files = []
         self.backup_tlog_files = []
@@ -171,14 +179,6 @@ class Tlog:
                 # temp_map = self.prism_ctid  //support not available for now
                 msisdn = self.validation_object.fmsisdn
 
-                # if is_backup_files:
-                #     for file in files:
-                #         try:
-                #             data = subprocess.check_output("zcat {0} | grep -a {1}".format(file, msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                #             self.tlog_record.append(data)
-                #         except Exception as ex:
-                #             logging.info(ex)
-                # else:
                 for file in files:
                     try:
                         data = subprocess.check_output("cat {0} | grep -a {1}".format(file, msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
@@ -247,33 +247,42 @@ class Tlog:
                 data_dict = OrderedDict()
                 flow_tasks_element = []
                 index_count = 28
-                # logging.info('splitted data length: %s', len(splitted_data))
-                for index, element in enumerate(splitted_data):
-                    if index <= 27:
-                        data_dict[header[index]] = element.replace('"', '').replace("'", '"').strip().rstrip(":")
-                    elif index <= len(splitted_data) - 6:
-                        flow_tasks_element.append(element.replace('"', '').replace("'", '"').strip())
-                        data_dict[header[index_count]] = flow_tasks_element
+            
+                #method call to date range list
+                self.input_date = self.date_range_list(self.s_date, self.e_date)
+        
+                for date in self.input_date:
+                    input_date_formatted = datetime.strftime(date, "%Y%m%d")
                         
-                    elif index <= len(splitted_data) - 2:
-                        index_count += 1
-                        data_dict[header[index_count]] = element.replace('"', '').replace("'", '"').strip()
-                    
-                    elif index == len(splitted_data) - 1:
-                        # logging.info('index: %s', index)
-                        try:
-                            for i, td in enumerate(element.split("=")[1].split("]")[0].split(",")):
-                                index_count += 1
-                                data_dict[header[index_count]] = td.replace('"', '').replace("'", '"').strip()
-                            # data_dict[header[len(header) - 1]] = f"{ctid}"
-                        except IndexError as error:
-                            logging.exception(error)
-                    
-                    # logging.info('index_: %s', index)
-                    # elif index == len(splitted_data):
+                    if input_date_formatted == datetime.strftime(datetime.strptime(splitted_data[0].split(" ")[0], "%Y-%m-%d"), "%Y%m%d"):
                 
-                # if ctid in data_dict["CTID"]: //support not available for now
-                self.msisdn_data_dict[data_dict["THREAD"]] = data_dict
+                        for index, element in enumerate(splitted_data):
+                                
+                            if index <= 27:
+                                data_dict[header[index]] = element.replace('"', '').replace("'", '"').strip().rstrip(":")
+                            
+                            elif index <= len(splitted_data) - 6:
+                                flow_tasks_element.append(element.replace('"', '').replace("'", '"').strip())
+                                data_dict[header[index_count]] = flow_tasks_element
+                                
+                            elif index <= len(splitted_data) - 2:
+                                index_count += 1
+                                data_dict[header[index_count]] = element.replace('"', '').replace("'", '"').strip()
+                            
+                            elif index == len(splitted_data) - 1:
+                                # logging.info('index: %s', index)
+                                try:
+                                    for i, td in enumerate(element.split("=")[1].split("]")[0].split(",")):
+                                        index_count += 1
+                                        data_dict[header[index_count]] = td.replace('"', '').replace("'", '"').strip()
+                                    # data_dict[header[len(header) - 1]] = f"{ctid}"
+                                except IndexError as error:
+                                    logging.exception(error)
+                
+                        # if ctid in data_dict["CTID"]: //support not available for now
+                        self.msisdn_data_dict[data_dict["THREAD"]] = data_dict
+                    else:
+                        logging.info("tlog timestamp: %s did not match with input date: %s", datetime.strftime(datetime.strptime(splitted_data[0].split(" ")[0], "%Y-%m-%d"), "%Y%m%d"), input_date_formatted)
             # logging.info('msisdn_data_dict: %s', self.msisdn_data_dict)
         
         
@@ -303,9 +312,10 @@ class Tlog:
             logging.info('prism billing tlogs: %s', str(self.prism_daemon_tlog_dict).replace("'", '"'))
         
         # parse tlog for error
-        if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-            if self.msisdn_data_dict:
-                tlogParser_object.parse_tlog(pname, self.msisdn_data_dict)
+        if self.log_mode == "error":
+            if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
+                if self.msisdn_data_dict:
+                    tlogParser_object.parse_tlog(pname, self.msisdn_data_dict)
         
     def prism_handler_req_resp_header_map(self, pname, data_list):
         # prism tomcat and daemon handler request response mapping
@@ -538,6 +548,16 @@ class Tlog:
         # self.tlog_dict = defaultdict()
         self.ctid_data_dict = defaultdict(list)
         
+        
+    def date_range_list(self, start_date, end_date):
+        # Return list of datetime.date objects between start_date and end_date (inclusive).
+        date_list = []
+        curr_date = start_date
+        while curr_date <= end_date:
+            date_list.append(curr_date)
+            curr_date += timedelta(days=1)
+        return date_list
+    
     def constructor_ctid_msisdn_paramter_reinitialization(self):
         self.ctid_msisdn_map_dict = {}
         

@@ -101,7 +101,7 @@ class PROCESSOR:
             
             self.prism_data_dict["PRISM_TRANSACTION_DATA"]["{}".format(self.validation_object.fmsisdn)] = self.prism_data_dict_list
             
-            if self.log_mode == "txn" or self.log_mode == "error" or self.log_mode == "all":
+            if self.log_mode == "txn" or self.log_mode == "error":
                 fileWriter_object.write_json_tlog_data(self.prism_data_dict)
                 
     def remove_old_process_folder(self, pname, folder):

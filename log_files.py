@@ -34,68 +34,42 @@ class LogFileFinder:
         splitted_tlog_path = ""
         
         if pname == "PRISM_TOMCAT":
-            #current tlog file
-            self.tlog_files.append('{}/TLOG_BILLING_REALTIME_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"]))
             self.tlog_dir = self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"]
         
         elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
-            #current generic http req-resp tlog files
-            self.tlog_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_http_handler_req_resp_path"] + "/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_*.tmp")
-
             self.tlog_dir = self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_http_handler_req_resp_path"]
         
         elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
-            #current generic soap req-resp tlog files
-            self.tlog_files.append('{}/TLOG_REQUEST_RESPONSE_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_soap_handler_req_resp_path"]))
             self.tlog_dir = self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_soap_handler_req_resp_path"]
+        
         elif pname == "PRISM_TOMCAT_REQ_RESP":
-            #current req-resp log files
-            self.tlog_files.append('{}/TLOG_REQUEST_LOG_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_req_resp_path"]))
             self.tlog_dir = self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_req_resp_path"]
         
         elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
-            #current callback v2 req-resp log files
-            self.tlog_files.append('{}/TLOG_CBCK-V2-REQ-RESPONSE_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_callbackV2_req_resp_path"]))
             self.tlog_dir = self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_callbackV2_req_resp_path"]
         
         elif pname == "PRISM_TOMCAT_PERF_LOG":
-            #current perf log files
-            self.tlog_files.append('{}/TLOG_PERF_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_perf_log_path"]))
             self.tlog_dir = self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_perf_log_path"]
             
         elif pname == "PRISM_DEAMON":
-            #current tlog file
-            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"] + "/TLOG_BILLING_*.tmp")
             self.tlog_dir = self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"]
         
         elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
-            #current generic http req-resp tlog files
-            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_http_handler_req_resp_path"] + "/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_*.tmp")
             self.tlog_dir = self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_http_handler_req_resp_path"]
         
         elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
-            #current generic soap req-resp tlog files
-            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_soap_handler_req_resp_path"] + "/TLOG_REQUEST_RESPONSE_*.tmp")
             self.tlog_dir = self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_soap_handler_req_resp_path"]
         
         elif pname == "PRISM_DAEMON_REQ_RESP":
-            #current generic soap req-resp tlog files
-            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_req_resp_path"] + "/TLOG_REQUEST_LOG_*.tmp")
             self.tlog_dir = self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_req_resp_path"]
         
         elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
-            #current generic soap req-resp tlog files
-            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_callbackV2_req_resp_path"] + '/TLOG_CBCK-V2-REQ-RESPONSE_*.tmp')
             self.tlog_dir = self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_callbackV2_req_resp_path"]
         
         elif pname == "PRISM_DAEMON_PERF_LOG":
-            #current generic soap req-resp tlog files
-            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_perf_log_path"] + "/TLOG_PERF_*.tmp")
             self.tlog_dir = self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_perf_log_path"]
         
         elif pname == "PRISM_SMSD":
-            #current tlog file
-            self.tlog_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_tlog_path"] + '/TLOG_SMS_*.tmp')
             self.tlog_dir = self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_tlog_path"]
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON"\
@@ -114,15 +88,8 @@ class LogFileFinder:
             for date in self.input_date:
                 # logging.info('search date is: %s', datetime.strftime(date, "%Y-%m-%d"))
                 input_date_formatted = ""
-                
-                if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON" or pname == "PRISM_SMSD"\
-                    or pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP" or pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP"\
-                    or pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP" or pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP"\
-                    or pname == "PRISM_TOMCAT_REQ_RESP" or pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP"\
-                    or pname == "PRISM_DAEMON_REQ_RESP" or pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP"\
-                    or pname == "PRISM_TOMCAT_PERF_LOG" or pname == "PRISM_DAEMON_PERF_LOG":           
-                    
-                    input_date_formatted = datetime.strftime(date, "%Y%m%d")
+                         
+                input_date_formatted = datetime.strftime(date, "%Y%m%d")
                 
                 #input dated file in the tlog directory
                 dated_tlog_files = ""
@@ -193,7 +160,7 @@ class LogFileFinder:
                         
                     for files in dated_tlog_files:
                         self.tlog_files.append(str(files))
-                    logging.info('tlog files ex: %s', self.tlog_files)
+                        
                 else:
                     if pname == "PRISM_TOMCAT":
                         logging.info("TLOG_BILLING_REALTIME_{}_*..log file not present".format(input_date_formatted))
@@ -223,6 +190,38 @@ class LogFileFinder:
                     
                     elif pname == "PRISM_SMSD":
                         logging.info("TLOG_SMS_{}_*..log file not present".format(input_date_formatted))
+        
+        #current tlog file
+        if pname == "PRISM_TOMCAT":
+            self.tlog_files.append('{}/TLOG_BILLING_REALTIME_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"]))
+        elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
+            self.tlog_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_http_handler_req_resp_path"] + "/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_*.tmp")
+        elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
+            self.tlog_files.append('{}/TLOG_REQUEST_RESPONSE_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_soap_handler_req_resp_path"]))
+        elif pname == "PRISM_TOMCAT_REQ_RESP":
+            self.tlog_files.append('{}/TLOG_REQUEST_LOG_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_req_resp_path"]))
+        elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
+            self.tlog_files.append('{}/TLOG_CBCK-V2-REQ-RESPONSE_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_callbackV2_req_resp_path"]))                        
+        elif pname == "PRISM_TOMCAT_PERF_LOG":
+            self.tlog_files.append('{}/TLOG_PERF_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_perf_log_path"]))
+            
+        elif pname == "PRISM_DEAMON":
+            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"] + "/TLOG_BILLING_*.tmp")                
+        elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
+            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_http_handler_req_resp_path"] + "/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_*.tmp")        
+        elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
+            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_soap_handler_req_resp_path"] + "/TLOG_REQUEST_RESPONSE_*.tmp")
+        elif pname == "PRISM_DAEMON_REQ_RESP":
+            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_req_resp_path"] + "/TLOG_REQUEST_LOG_*.tmp")    
+        elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
+            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_callbackV2_req_resp_path"] + '/TLOG_CBCK-V2-REQ-RESPONSE_*.tmp')
+        elif pname == "PRISM_DAEMON_PERF_LOG":
+            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_perf_log_path"] + "/TLOG_PERF_*.tmp")
+        
+        elif pname == "PRISM_SMSD":
+            self.tlog_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_tlog_path"] + '/TLOG_SMS_*.tmp')
+            
+        logging.info('tlog files ex: %s', self.tlog_files)
         
         return self.tlog_files
     
