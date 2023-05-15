@@ -33,6 +33,8 @@ class LogFileFinder:
         self.constructor_paramter_reinitialize()
         splitted_tlog_path = ""
         
+        logging.info("first dated file would be appended")
+        
         if pname == "PRISM_TOMCAT":
             self.tlog_dir = self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"]
         
