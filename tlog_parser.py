@@ -61,6 +61,8 @@ class TlogParser:
                 elif pname == "PRISM_DEAMON":
                     thread_list = self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"]
                 for thread in thread_list:
+                    #re-initializing self.task_types for each thread
+                    self.reinitialize_constructor_parameters()
                     for key, value in dict(tlog_header_data_dict).items():       
                         # logging.info('tlog key: %s value: %s', key, value['THREAD'])
         
