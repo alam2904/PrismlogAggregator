@@ -31,7 +31,7 @@ class TlogParser:
         self.prism_tomcat_access_out_folder = False
         
         #prism required parameters
-        self.task_type = ""
+        self.task_types = []
         self.stck_sub_type = ""
         self.input_tag = ""
     
@@ -73,10 +73,10 @@ class TlogParser:
                                                                     PrismTlogAwaitPushTag, PrismTlogAwaitPushTimeOutTag
                                                                 ):
                                 if self.stck_sub_type:
-                                    daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_type, self.stck_sub_type, self.input_tag)
+                                    daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, self.stck_sub_type, self.input_tag)
                                 else:
                                     logging.info('reached thread: %s', thread)
-                                    daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_type, tlog_header_data_dict[thread]["SUB_TYPE"], self.input_tag)
+                                    daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, tlog_header_data_dict[thread]["SUB_TYPE"], self.input_tag)
             
             elif pname == "PRISM_SMSD":
                 if self.log_mode == "error":
@@ -104,6 +104,8 @@ class TlogParser:
             # for status in prism_input_tags:
                     for task in tlog_dict["FLOW_TASKS"]:
                         if var_value in task:
+                            if "#PUSH" in task:
+                                logging.info('prism flow task: %s', task)
                             #issue thread found hence going to create prism process folder for the 1st time
                             if pname == "PRISM_TOMCAT":
                                 if not self.prism_tomcat_out_folder:
@@ -120,8 +122,12 @@ class TlogParser:
                                     if ptask_name == var_name:
                                         if var_name == "SUB_TYPE_CHECK":
                                             self.stck_sub_type = 'A'
-                                        self.task_type = ptask_value
-                                        return True
+                                        # self.task_type = ptask_value
+                                        self.task_types.append(ptask_value)
+        if self.task_types:
+            logging.info('task types: %s', self.task_types)
+            return True
+        
         return False
                                
     def create_process_folder(self, pname, folder):
@@ -151,4 +157,4 @@ class TlogParser:
             self.prism_smsd_out_folder = is_true
             
     def reinitialize_constructor_parameters(self):
-        self.task_type = ""
+        self.task_types = []

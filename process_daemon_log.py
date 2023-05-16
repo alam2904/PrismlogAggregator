@@ -37,111 +37,112 @@ class DaemonLogProcessor:
         self.hostname = socket.gethostname()
         self.onmopay_out_folder = False
         
-    def process_daemon_log(self, pname, tlog_thread, ctid, task_type, sub_type, input_tag):
+    def process_daemon_log(self, pname, tlog_thread, ctid, task_types, sub_type, input_tag):
         #creating out file writter object for writting log to out file
         fileWriter_object = FileWriter(self.outputDirectory_object, self.oarm_uid)
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON" or pname == "PRISM_SMSD":
             #msisdn log processing
-            try:
-                self.reinitialize_constructor_parameter()
-                
-                if pname == "PRISM_TOMCAT":
-                    self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_TEST_{}_log".format(self.validation_object.fmsisdn)])
-                elif pname == "PRISM_DEAMON":
-                    self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_TEST_{}_log".format(self.validation_object.fmsisdn)])
-                
-                self.fetch_daemon_log(tlog_thread, self.log_files) 
-                    
-                if self.issue_record:
-                    fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
-            except KeyError as error:
-                logging.error(error)
-            
-            #queue id 99 processing
-            try:
-                if not self.issue_record:
+            for task_type in task_types:
+                try:
                     self.reinitialize_constructor_parameter()
+                    
+                    if pname == "PRISM_TOMCAT":
+                        self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_TEST_{}_log".format(self.validation_object.fmsisdn)])
+                    elif pname == "PRISM_DEAMON":
+                        self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_TEST_{}_log".format(self.validation_object.fmsisdn)])
+                    
+                    self.fetch_daemon_log(tlog_thread, self.log_files) 
                         
-                    if pname == "PRISM_TOMCAT":
-                        self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PROCESSOR_99_log"])
-                    elif pname == "PRISM_DEAMON":
-                        self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_PROCESSOR_99_log"])
-                    elif pname == "PRISM_SMSD":
-                        self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_PROCESSOR_99_log"])
+                    if self.issue_record:
+                        fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                except KeyError as error:
+                    logging.error(error)
+                
+                #queue id 99 processing
+                try:
+                    if not self.issue_record:
+                        self.reinitialize_constructor_parameter()
+                            
+                        if pname == "PRISM_TOMCAT":
+                            self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PROCESSOR_99_log"])
+                        elif pname == "PRISM_DEAMON":
+                            self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_PROCESSOR_99_log"])
+                        elif pname == "PRISM_SMSD":
+                            self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_PROCESSOR_99_log"])
+                            
+                        self.fetch_daemon_log(tlog_thread, self.log_files) 
                         
-                    self.fetch_daemon_log(tlog_thread, self.log_files) 
-                    
-                    if self.issue_record:
-                        fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
-            except KeyError as error:
-                logging.info(error)
-            
-            #prism/tomcat log processing
-            try:
-                if not self.issue_record:
-                    self.reinitialize_constructor_parameter()
-                    
-                    if pname == "PRISM_TOMCAT":
-                        self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_log"])
-                    elif pname == "PRISM_DEAMON":
-                        self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_PRISM_log"])
-                    elif pname == "PRISM_SMSD":
-                        self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_PRISM_log"])
-                    
-                    self.fetch_daemon_log(tlog_thread, self.log_files) 
-                    
-                    if self.issue_record:
-                        fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
-            except KeyError as error:
-                logging.info(error)
-            
-            #prism/tomcat root log processing
-            try:
-                if not self.issue_record:
-                    self.reinitialize_constructor_parameter()
-                    
-                    if pname == "PRISM_TOMCAT":
-                        self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_ROOT_log"])
-                    elif pname == "PRISM_DEAMON":
-                        self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_ROOT_log"])
-                    elif pname == "PRISM_SMSD":
-                        self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_ROOT_log"])
-                    
-                    self.fetch_daemon_log(tlog_thread, self.log_files) 
-                    
-                    if self.issue_record:
-                        fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
-            except KeyError as error:
-                logging.info(error)
-            
-            #prism/tomcat log backup dated file processing
-            try:
-                if not self.issue_record:
-                    
-                    self.reinitialize_constructor_parameter()
-                    self.is_backup_file = True
-                    self.dated_log_files(pname)
-                    self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
-                    
-                    if self.issue_record:
-                        fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
-            except KeyError as error:
-                logging.info(error)
-            
-            #prism/tomcat root log backup dated file processing
-            try:
-                if not self.issue_record:
-                    
-                    self.reinitialize_constructor_parameter()
-                    self.is_backup_root_file = True
-                    self.dated_log_files(pname)
-                    self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
-                    
-                    if self.issue_record:
-                        fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
-            except KeyError as error:
-                logging.info(error)
+                        if self.issue_record:
+                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                except KeyError as error:
+                    logging.info(error)
+                
+                #prism/tomcat log processing
+                try:
+                    if not self.issue_record:
+                        self.reinitialize_constructor_parameter()
+                        
+                        if pname == "PRISM_TOMCAT":
+                            self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_log"])
+                        elif pname == "PRISM_DEAMON":
+                            self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_PRISM_log"])
+                        elif pname == "PRISM_SMSD":
+                            self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_PRISM_log"])
+                        
+                        self.fetch_daemon_log(tlog_thread, self.log_files) 
+                        
+                        if self.issue_record:
+                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                except KeyError as error:
+                    logging.info(error)
+                
+                #prism/tomcat root log processing
+                try:
+                    if not self.issue_record:
+                        self.reinitialize_constructor_parameter()
+                        
+                        if pname == "PRISM_TOMCAT":
+                            self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_ROOT_log"])
+                        elif pname == "PRISM_DEAMON":
+                            self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_ROOT_log"])
+                        elif pname == "PRISM_SMSD":
+                            self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_ROOT_log"])
+                        
+                        self.fetch_daemon_log(tlog_thread, self.log_files) 
+                        
+                        if self.issue_record:
+                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                except KeyError as error:
+                    logging.info(error)
+                
+                #prism/tomcat log backup dated file processing
+                try:
+                    if not self.issue_record:
+                        
+                        self.reinitialize_constructor_parameter()
+                        self.is_backup_file = True
+                        self.dated_log_files(pname)
+                        self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
+                        
+                        if self.issue_record:
+                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                except KeyError as error:
+                    logging.info(error)
+                
+                #prism/tomcat root log backup dated file processing
+                try:
+                    if not self.issue_record:
+                        
+                        self.reinitialize_constructor_parameter()
+                        self.is_backup_root_file = True
+                        self.dated_log_files(pname)
+                        self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
+                        
+                        if self.issue_record:
+                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                except KeyError as error:
+                    logging.info(error)
     
     def dated_log_files(self, pname):
         try:            
