@@ -107,7 +107,7 @@ class TlogParser:
                     for task in tlog_dict["FLOW_TASKS"]:
                         if var_value in task:
                             if "#PUSH" in task:
-                                logging.info('prism flow task: %s', task)
+                                logging.info('prism flow tasks: %s', task)
                             #issue thread found hence going to create prism process folder for the 1st time
                             if pname == "PRISM_TOMCAT":
                                 if not self.prism_tomcat_out_folder:
