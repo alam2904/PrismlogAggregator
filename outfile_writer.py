@@ -71,7 +71,6 @@ class FileWriter:
                 #set initial index based on start of search string
                 for sm_start_serach_string_name, sm_start_serach_string_value in Prism_St_SString.__dict__.items():
                     if not sm_start_serach_string_name.startswith("__"):
-                        # logging.info('st search: %s', str(sm_start_serach_string_value).format(task_type, sub_type))
                         sm_start_serach_string = str(sm_start_serach_string_value).format(task_type, sub_type)
                         with open(thread_outfile, "r") as outFile:
                             for i, line in enumerate(outFile):
@@ -83,7 +82,6 @@ class FileWriter:
                 for sm_end_serach_string_name, sm_end_serach_string_value in Prism_En_SString.__dict__.items():
                     if not sm_end_serach_string_name.startswith("__"):
                         sm_end_serach_string = str(sm_end_serach_string_value).format(input_tag)
-                        # logging.info('en search: %s', sm_end_serach_string)
                         with open(thread_outfile, "r") as outFile:
                             for i, line in enumerate(outFile):
                                 if re.search(sm_end_serach_string, line, re.DOTALL):
