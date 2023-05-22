@@ -4,9 +4,9 @@ import socket
 from process_daemon_log import DaemonLogProcessor
 from input_tags import PrismTlogErrorTag, PrismTlogLowBalTag, PrismTlogRetryTag,\
     PrismTlogHandlerExp, PrismTlogNHFTag, PrismTlogAwaitPushTag, PrismTlogAwaitPushTimeOutTag,\
-    PrismTlogSmsTag, PrismTasks
+    HttpErrorCodes, PrismTlogSmsTag, PrismTasks
 
-class TlogParser:
+class TlogAccessLogParser:
     """
         Tlog parser class
         for parsing tlog for any issue
@@ -34,6 +34,7 @@ class TlogParser:
         self.task_types = []
         self.stck_sub_type = ""
         self.input_tags = []
+        self.issue_access_threads = []
     
     def parse_tlog(self, pname, tlog_header_data_dict, ctid_map=None):
         """
@@ -97,6 +98,28 @@ class TlogParser:
         except KeyError as error:
             logging.exception(error)
     
+    def parse_accessLog(self, pname, accesslog_header_data_dict):
+        folder = os.path.join(self.outputDirectory_object, "{}_issue_tomcat_access".format(self.hostname))
+        for key, value in dict(accesslog_header_data_dict).items():
+            logging.info('access value is: %s', value["HTTP_STATUS_CODE"])
+            self.check_for_issue_in_accesslog(pname, folder, value, HttpErrorCodes)       
+            
+    def check_for_issue_in_accesslog(self, pname, folder, access_dict, error_code):
+        #issue validation against http error codes
+        for error_msg, err_code in error_code.__dict__.items():
+            if not error_msg.startswith("__"):
+                if err_code == access_dict["HTTP_STATUS_CODE"]:
+                    # logging.info("http_code: %s", access_dict["HTTP_STATUS_CODE"])
+                    self.issue_access_threads.append(access_dict["THREAD"])
+        
+        if self.issue_access_threads:
+            #issue thread found hence going to create tomcat access folder
+            if not self.prism_tomcat_access_out_folder:
+                self.create_process_folder(pname, folder)
+            return True
+        return False
+        
+    
     def check_for_issue_in_prism_tlog(self, pname, folder, tlog_dict, prism_tasks, *args):
         #issue validation against input_tags
         
@@ -108,13 +131,6 @@ class TlogParser:
                         if var_value in task:
                             if "#PUSH" in task:
                                 logging.info('prism flow tasks: %s', task)
-                            #issue thread found hence going to create prism process folder for the 1st time
-                            if pname == "PRISM_TOMCAT":
-                                if not self.prism_tomcat_out_folder:
-                                    self.create_process_folder(pname, folder)
-                            elif pname == "PRISM_DEAMON":
-                                if not self.prism_daemon_out_folder:
-                                    self.create_process_folder(pname, folder)
                             
                             #substitution parameters
                             self.input_tags.append(var_value)
@@ -128,6 +144,13 @@ class TlogParser:
                                         # self.task_type = ptask_value
                                         self.task_types.append(ptask_value)
         if self.task_types:
+            #issue thread found hence going to create prism process folder for the 1st time
+            if pname == "PRISM_TOMCAT":
+                if not self.prism_tomcat_out_folder:
+                    self.create_process_folder(pname, folder)
+            elif pname == "PRISM_DEAMON":
+                if not self.prism_daemon_out_folder:
+                    self.create_process_folder(pname, folder)
             logging.info('task types: %s', self.task_types)
             return True
         

@@ -4,7 +4,7 @@ import signal
 import subprocess
 from log_files import LogFileFinder
 from collections import defaultdict
-from tlog_parser import TlogParser
+from tlog_accesslog_parser import TlogAccessLogParser
 from collections import OrderedDict
 
 
@@ -53,7 +53,7 @@ class Tlog:
         self.tlog_dict = defaultdict(list)
         self.ctid_data_dict = defaultdict(list)
         self.msisdn_data_dict = OrderedDict()
-        self.msisdn_access_data_dict = defaultdict(list)
+        self.msisdn_access_data_dict = OrderedDict()
         # self.msisdn_sms_data_dict = defaultdict(list)
         self.msisdn_sms_data_list = []
         
@@ -93,6 +93,10 @@ class Tlog:
         """
         
         logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
+        
+        tlogAccessLogParser_object = TlogAccessLogParser(self.initializedPath_object, self.outputDirectory_object,\
+                                        self.validation_object, self.log_mode, self.oarm_uid,\
+                                        self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict)
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             self.constructor_parameter_reinitialize()
@@ -140,7 +144,7 @@ class Tlog:
                 self.access_files = logfile_object.get_tomcat_access_files(pname)
             
             if self.access_files:
-                self.msisdn_based_accesslog_fetch(pname, self.access_files)
+                self.msisdn_based_accesslog_fetch(tlogAccessLogParser_object, pname, self.access_files)
         
         logging.info('tlog record: %s', self.tlog_record)
         if self.tlog_record:
@@ -162,9 +166,9 @@ class Tlog:
             elif pname == "PRISM_TOMCAT_PERF_LOG" or pname == "PRISM_DAEMON_PERF_LOG":
                 self.perf_data_mapping(pname, data_list)
             elif pname == "PRISM_SMSD":
-                self.sms_data_header_mapping(pname, data_list)
+                self.sms_data_header_mapping(tlogAccessLogParser_object, pname, data_list)
             else:
-                self.tlog_record_header_mapping(pname, data_list)
+                self.tlog_record_header_mapping(tlogAccessLogParser_object, pname, data_list)
         
         if pname == "PRISM_TOMCAT":
             return self.prism_tomcat_tlog_dict
@@ -214,11 +218,8 @@ class Tlog:
             except Exception as ex:
                 logging.info(ex)
           
-    def tlog_record_header_mapping(self, pname, data_list):
+    def tlog_record_header_mapping(self, tlogAccessLogParser_object, pname, data_list):
         #GRIFF tlog header mapping and call to tlog parser class
-        tlogParser_object = TlogParser(self.initializedPath_object, self.outputDirectory_object,\
-                                        self.validation_object, self.log_mode, self.oarm_uid,\
-                                        self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict)
         header = []
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
@@ -315,7 +316,7 @@ class Tlog:
         if self.log_mode == "error":
             if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
                 if self.msisdn_data_dict:
-                    tlogParser_object.parse_tlog(pname, self.msisdn_data_dict)
+                    tlogAccessLogParser_object.parse_tlog(pname, self.msisdn_data_dict)
         
     def prism_handler_req_resp_header_map(self, pname, data_list):
         # prism tomcat and daemon handler request response mapping
@@ -424,11 +425,11 @@ class Tlog:
             logging.info('prism daemon generic soap req-resp: %s', str(self.prism_daemon_callbackV2_log_dict).replace("'", '"'))
    
    
-    def sms_data_header_mapping(self, pname, data_list):
+    def sms_data_header_mapping(self, tlogAccessLogParser_object, pname, data_list):
         #sms tlog header map
-        tlogParser_object = TlogParser(self.initializedPath_object, self.outputDirectory_object,\
-                                        self.validation_object, self.log_mode, self.oarm_uid,\
-                                        self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict)
+        # tlogParser_object = TlogAccessLogParser(self.initializedPath_object, self.outputDirectory_object,\
+                                        # self.validation_object, self.log_mode, self.oarm_uid,\
+                                        # self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict)
         if pname == "PRISM_SMSD":
             
             header = [
@@ -462,9 +463,9 @@ class Tlog:
         
         # parse tlog for error
         if self.prism_smsd_tlog_dict:
-            tlogParser_object.parse_tlog(pname, self.prism_smsd_tlog_dict)
+            tlogAccessLogParser_object.parse_tlog(pname, self.prism_smsd_tlog_dict)
             
-    def msisdn_based_accesslog_fetch(self, pname, files):
+    def msisdn_based_accesslog_fetch(self, tlogAccessLogParser_object, pname, files):
         #keeping prism out of ctid flow
         mdn = ""
         
@@ -499,15 +500,15 @@ class Tlog:
                                         element = element.split("]")[0]
             
                                     data_dict[header[index]] = element
-                                self.msisdn_access_data_dict["{0}".format(mdn)].append(data_dict)
+                                self.msisdn_access_data_dict[data_dict["THREAD"]] = data_dict
             except Exception as ex:
                 logging.info(ex)
                         
         
         if self.msisdn_access_data_dict:
-            self.access_data_mapping(pname)
+            self.access_data_mapping(tlogAccessLogParser_object, pname)
 
-    def access_data_mapping(self, pname):
+    def access_data_mapping(self, tlogAccessLogParser_object, pname):
         
         logging.info('msisdn based access data dict: %s', self.msisdn_access_data_dict)
         
@@ -515,6 +516,10 @@ class Tlog:
             self.prism_access_log_dict = {"PRISM_ACCESS_LOG": dict(self.msisdn_access_data_dict)}
             self.prism_data_dict_list.append(self.prism_access_log_dict)
             logging.info('prism access logs: %s', self.prism_access_log_dict)
+        
+        if self.log_mode == "error":
+            if self.msisdn_access_data_dict:
+                tlogAccessLogParser_object.parse_accessLog(pname, self.msisdn_access_data_dict)
     
     def perf_data_mapping(self, pname, data_list):
         #perf log mapping
