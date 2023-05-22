@@ -43,7 +43,10 @@ class DaemonLogProcessor:
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON" or pname == "PRISM_SMSD":
             #msisdn log processing
+            logging.info("input tag: %s", input_tag)
+            index = 0
             for task_type in task_types:
+                # input_tag = input_tag[index]
                 try:
                     self.reinitialize_constructor_parameter()
                     
@@ -55,7 +58,7 @@ class DaemonLogProcessor:
                     self.fetch_daemon_log(tlog_thread, self.log_files) 
                         
                     if self.issue_record:
-                        fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                        fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.error(error)
                 
@@ -74,7 +77,7 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(tlog_thread, self.log_files) 
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.info(error)
                 
@@ -93,7 +96,7 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(tlog_thread, self.log_files) 
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.info(error)
                 
@@ -112,7 +115,7 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(tlog_thread, self.log_files) 
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.info(error)
                 
@@ -126,7 +129,7 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.info(error)
                 
@@ -140,9 +143,11 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag)
+                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.info(error)
+                    
+                index += 1
     
     def dated_log_files(self, pname):
         try:            

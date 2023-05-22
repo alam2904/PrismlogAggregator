@@ -468,25 +468,38 @@ class Tlog:
         #keeping prism out of ctid flow
         mdn = ""
         
+        header = [
+                    "REMOTE_HOST", "TIMESTAMP", "TIME_ZONE", "THREAD", "SIGNATURE", "METHOD",\
+                    "URL", "PROTOCOL", "HTTP_STATUS_CODE", "TIMETAKEN_MILLIS"
+                ]
+        
         if pname == "PRISM_TOMCAT":
             mdn = self.validation_object.fmsisdn
 
-        self.constructor_access_paramter_reinitialize()
         for file in files:
+            self.constructor_access_paramter_reinitialize()
             try:
+                
                 data = subprocess.check_output("cat {0} | grep -a {1}".format(file, mdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 self.access_record.append(data)
                 
-                data_list = []
                 if self.access_record:
-                    logging.info('%s access record: %s', pname, self.access_record)
+                    logging.info('%s, %s, access record: %s', pname, file, self.access_record)
                     for data in self.access_record:
-                        logging.info('data in access log: %s', data)
                         for record in str(data).splitlines():
                             if record:
-                                logging.info('access rec: %s', record)
-                                data_list.append(record)
-                self.msisdn_access_data_dict["{0}".format(mdn)].append(data_list)
+                                data_dict = OrderedDict()
+                                access_data_split = record.split(' ')
+                    
+                                for index, element in enumerate(access_data_split):
+                                    # logging.info("index: %s and element: %s", index, element)
+                                    if index == 1:
+                                        element = element.split("[")[1]
+                                    elif index == 2:
+                                        element = element.split("]")[0]
+            
+                                    data_dict[header[index]] = element
+                                self.msisdn_access_data_dict["{0}".format(mdn)].append(data_dict)
             except Exception as ex:
                 logging.info(ex)
                         

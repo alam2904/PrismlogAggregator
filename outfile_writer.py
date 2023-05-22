@@ -54,6 +54,8 @@ class FileWriter:
             logging.info(error)
                 
     def write_trimmed_thread_log(self, pname, process_folder, tlog_thread, thread_outfile, ctid, task_type, sub_type, input_tag):
+        self.reinitialize_index()
+        
         error_code = tlog_thread
         RequestOrigin = task_type
         trimmed_thread_outfile = ""
@@ -80,8 +82,8 @@ class FileWriter:
                 #set final index based on end of search string
                 for sm_end_serach_string_name, sm_end_serach_string_value in Prism_En_SString.__dict__.items():
                     if not sm_end_serach_string_name.startswith("__"):
-                        # logging.info('en search: %s', str(sm_end_serach_string_value).format(input_tag))
                         sm_end_serach_string = str(sm_end_serach_string_value).format(input_tag)
+                        # logging.info('en search: %s', sm_end_serach_string)
                         with open(thread_outfile, "r") as outFile:
                             for i, line in enumerate(outFile):
                                 if re.search(sm_end_serach_string, line, re.DOTALL):
@@ -136,6 +138,9 @@ class FileWriter:
                     zip.write(os.path.join(root, file))
         print("OARM_OUTPUT_FILENAME|{}".format(os.path.abspath(out_zipFile)))
         
+    def reinitialize_index(self):
+        self.__initial_index = 0
+        self.__final_index = 0
         
     def log_mover(self):
         #move log_aggregator.log from current directory to respective directory.

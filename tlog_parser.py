@@ -33,7 +33,7 @@ class TlogParser:
         #prism required parameters
         self.task_types = []
         self.stck_sub_type = ""
-        self.input_tag = ""
+        self.input_tags = []
     
     def parse_tlog(self, pname, tlog_header_data_dict, ctid_map=None):
         """
@@ -75,10 +75,10 @@ class TlogParser:
                                                                     PrismTlogAwaitPushTag, PrismTlogAwaitPushTimeOutTag
                                                                 ):
                                 if self.stck_sub_type:
-                                    daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, self.stck_sub_type, self.input_tag)
+                                    daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, self.stck_sub_type, self.input_tags)
                                 else:
                                     logging.info('reached thread: %s', thread)
-                                    daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, tlog_header_data_dict[thread]["SUB_TYPE"], self.input_tag)
+                                    daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, tlog_header_data_dict[thread]["SUB_TYPE"], self.input_tags)
             
             elif pname == "PRISM_SMSD":
                 if self.log_mode == "error":
@@ -117,7 +117,8 @@ class TlogParser:
                                     self.create_process_folder(pname, folder)
                             
                             #substitution parameters
-                            self.input_tag = var_value
+                            self.input_tags.append(var_value)
+                            logging.info("input tags: %s", self.input_tags)
                             for ptask_name, ptask_value in prism_tasks.__dict__.items():
                                 if not ptask_name.startswith("__"):
                             # for ptask in prism_tasks:
@@ -160,3 +161,4 @@ class TlogParser:
             
     def reinitialize_constructor_parameters(self):
         self.task_types = []
+        self.input_tags = []
