@@ -52,6 +52,23 @@ class FileWriter:
                     
         except FileNotFoundError as error:
             logging.info(error)
+    
+    def write_complete_access_thread_log(self, pname, folder, thread, record, http_error_code):
+        #write complete thread log
+        thread_outfile = ""
+        
+        if pname == "PRISM_TOMCAT":               
+            thread_outfile = "{0}/{1}_{2}_prism_access_tomcat.log".format(folder, http_error_code, thread)
+            
+        try:
+            with open(thread_outfile, "w") as write_file:
+                write_file.writelines(record)
+                if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
+                    # self.write_trimmed_thread_log(pname, process_folder, tlog_thread, thread_outfile, ctid, task_type, sub_type, input_tag)
+                    pass
+        except FileNotFoundError as error:
+            logging.info(error)
+        
                 
     def write_trimmed_thread_log(self, pname, process_folder, tlog_thread, thread_outfile, ctid, task_type, sub_type, input_tag):
         self.reinitialize_index()

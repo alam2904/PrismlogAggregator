@@ -200,6 +200,93 @@ class DaemonLogProcessor:
                 logging.info('eigther %s does not exists or %s could not be found', file, tlog_thread)
                 logging.info(error)
     
+    def process_tomcat_http_log(self, pname, folder, access_dict, issue_access_thread):
+        #creating out file writter object for writting log to out file
+        fileWriter_object = FileWriter(self.outputDirectory_object, self.oarm_uid)
+        
+        for thread in issue_access_thread:
+            if thread == access_dict["THREAD"]:
+                date_formatted = self.thread_timestamp_formatting(access_dict["TIMESTAMP"])
+                logging.info('thread: %s and formatted thread timestamp: %s', thread, date_formatted)
+                try:
+                    if not self.issue_record:
+                        self.reinitialize_constructor_parameter()
+                        if pname == "PRISM_TOMCAT":
+                            self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_log"])                        
+                            self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.log_files)
+                                
+                    if self.issue_record:
+                        fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
+                        
+                except KeyError as error:
+                    logging.info(error)
+                
+                #prism tomcat root log processing
+                try:
+                    if not self.issue_record:
+                        self.reinitialize_constructor_parameter()
+                        if pname == "PRISM_TOMCAT":
+                            self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_ROOT_log"])                        
+                            self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.log_files)
+                                
+                    if self.issue_record:
+                        fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
+                        
+                except KeyError as error:
+                    logging.info(error)
+                    
+                #prism/tomcat log backup dated file processing
+                try:
+                    if not self.issue_record:
+                        self.reinitialize_constructor_parameter()
+                        self.is_backup_file = True
+                        self.dated_log_files(pname)
+                        self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.backup_log_files)
+                        
+                        if self.issue_record:
+                            fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
+                        
+                except KeyError as error:
+                    logging.info(error)
+                
+                #prism/tomcat root log backup dated file processing
+                try:
+                    if not self.issue_record:
+                        
+                        self.reinitialize_constructor_parameter()
+                        self.is_backup_root_file = True
+                        self.dated_log_files(pname)
+                        self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.backup_log_files) 
+                        
+                        if self.issue_record:
+                            fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
+                            
+                except KeyError as error:
+                    logging.info(error)
+    
+    def fetch_tomcat_access_daemon_log(self, thread, date_formatted, log_files):
+        #check file for the recod for the given thread and timestamp
+        for file in log_files:
+            try:
+                # logging.info('tlog thread is: %s and log_file is: %s', tlog_thread, file)
+                if self.is_backup_file or self.is_backup_root_file:
+                    thread_log = subprocess.check_output("zcat {0} | grep -a {1} | grep '{2},'".format(file, date_formatted, thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                else:
+                    thread_log = subprocess.check_output("grep -a {0} {1} | grep '{2},'".format(thread, file, date_formatted), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                
+                logging.info("access tomcat log: %s", thread_log)
+                if thread_log:
+                    self.issue_record = thread_log
+            except subprocess.CalledProcessError as error:
+                logging.info('eigther %s does not exists or %s could not be found', file, thread)
+                logging.info(error)
+    
+    def thread_timestamp_formatting(self, thread_timestamp):
+        #date formatter
+        date_format = "%d/%b/%Y:%H:%M:%S"
+        date_formatted = datetime.strftime(datetime.strptime(thread_timestamp, date_format), "%Y-%m-%d %H:%M:%S")
+        return date_formatted
+    
     def date_range_list(self, start_date, end_date):
         # Return list of datetime.date objects between start_date and end_date (inclusive).
         date_list = []

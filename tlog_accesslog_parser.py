@@ -1,6 +1,8 @@
 import logging
 import os
 import socket
+import time
+from datetime import datetime
 from process_daemon_log import DaemonLogProcessor
 from input_tags import PrismTlogErrorTag, PrismTlogLowBalTag, PrismTlogRetryTag,\
     PrismTlogHandlerExp, PrismTlogNHFTag, PrismTlogAwaitPushTag, PrismTlogAwaitPushTimeOutTag,\
@@ -102,14 +104,20 @@ class TlogAccessLogParser:
         folder = os.path.join(self.outputDirectory_object, "{}_issue_tomcat_access".format(self.hostname))
         for key, value in dict(accesslog_header_data_dict).items():
             logging.info('access value is: %s', value["HTTP_STATUS_CODE"])
-            self.check_for_issue_in_accesslog(pname, folder, value, HttpErrorCodes)       
+            self.check_for_issue_in_accesslog(pname, folder, value, HttpErrorCodes)
             
+            if self.issue_access_threads:
+                #Daemon log processor object
+                daemonLogProcessor_object = DaemonLogProcessor(self.initializedPath_object, self.outputDirectory_object,\
+                                                                self.validation_object, self.oarm_uid)
+                 
+                daemonLogProcessor_object.process_tomcat_http_log(pname, folder, value, self.issue_access_threads)
+                
     def check_for_issue_in_accesslog(self, pname, folder, access_dict, error_code):
         #issue validation against http error codes
         for error_msg, err_code in error_code.__dict__.items():
             if not error_msg.startswith("__"):
                 if err_code == access_dict["HTTP_STATUS_CODE"]:
-                    # logging.info("http_code: %s", access_dict["HTTP_STATUS_CODE"])
                     self.issue_access_threads.append(access_dict["THREAD"])
         
         if self.issue_access_threads:
@@ -181,6 +189,7 @@ class TlogAccessLogParser:
             self.prism_daemon_out_folder = is_true
         elif pname == "PRISM_SMSD":
             self.prism_smsd_out_folder = is_true
+
             
     def reinitialize_constructor_parameters(self):
         self.task_types = []
