@@ -5,6 +5,7 @@ from process_daemon_log import DaemonLogProcessor
 from input_tags import PrismTlogErrorTag, PrismTlogLowBalTag, PrismTlogRetryTag,\
     PrismTlogHandlerExp, PrismTlogNHFTag, PrismTlogAwaitPushTag, PrismTlogAwaitPushTimeOutTag,\
     HttpErrorCodes, PrismTlogSmsTag, PrismTasks
+from db_query_processor import DB_QUERY_PROCESSOR
 
 class TlogAccessLogParser:
     """
@@ -90,10 +91,9 @@ class TlogAccessLogParser:
                                     self.is_query_reprocessing_required(self.is_daemon_log, value)
                 
                 if self.sbn_thread_dict:
-                    logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
-            
-                    for key, value in self.sbn_thread_dict.items():
-                        logging.info("reprocessing tlog map: %s", tlog_header_data_dict[value])
+                    # logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
+                    dbQueryProcessor_object = DB_QUERY_PROCESSOR(self.sbn_thread_dict, tlog_header_data_dict)
+                    dbQueryProcessor_object.query_formatter()
                         
                 
             elif pname == "PRISM_SMSD":
