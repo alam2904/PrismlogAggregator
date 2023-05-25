@@ -48,7 +48,7 @@ class FileWriter:
             with open(thread_outfile, "w") as write_file:
                 write_file.writelines(record)
                 if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-                    self.write_trimmed_thread_log(pname, process_folder, tlog_thread, thread_outfile, ctid, task_type, sub_type, input_tag)
+                    return self.write_trimmed_thread_log(pname, process_folder, tlog_thread, thread_outfile, ctid, task_type, sub_type, input_tag)
                     
         except FileNotFoundError as error:
             logging.info(error)
@@ -104,8 +104,7 @@ class FileWriter:
                                 if re.search(sm_end_serach_string, line, re.DOTALL):
                                     self.set_final_index(i)
                                     break
-                
-
+                                
         except FileNotFoundError as error:
             logging.info(error)
             
@@ -117,6 +116,9 @@ class FileWriter:
                     if self.__initial_index <= i < self.__final_index + 1:
                         with open(trimmed_thread_outfile, "a") as write_file:
                             write_file.writelines(line)
+            return True
+        else:
+            return False
 
     
     def set_initial_index(self, initial_index):

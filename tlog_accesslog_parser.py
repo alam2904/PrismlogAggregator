@@ -1,8 +1,6 @@
 import logging
 import os
 import socket
-import time
-from datetime import datetime
 from process_daemon_log import DaemonLogProcessor
 from input_tags import PrismTlogErrorTag, PrismTlogLowBalTag, PrismTlogRetryTag,\
     PrismTlogHandlerExp, PrismTlogNHFTag, PrismTlogAwaitPushTag, PrismTlogAwaitPushTimeOutTag,\
@@ -37,6 +35,8 @@ class TlogAccessLogParser:
         self.stck_sub_type = ""
         self.input_tags = []
         self.issue_access_threads = []
+        self.is_daemon_log = False
+        self.sbn_thread_dict = {}
     
     def parse_tlog(self, pname, tlog_header_data_dict, ctid_map=None):
         """
@@ -55,7 +55,8 @@ class TlogAccessLogParser:
         #Daemon log processor object
         daemonLogProcessor_object = DaemonLogProcessor(self.initializedPath_object, self.outputDirectory_object,\
                                                         self.validation_object, self.oarm_uid)
-        #processing tlog based on different key in the tlog        
+        #processing tlog based on different key in the tlog
+        latest_thread = ""   
         try:
             if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
                 thread_list = []
@@ -78,11 +79,23 @@ class TlogAccessLogParser:
                                                                     PrismTlogAwaitPushTag, PrismTlogAwaitPushTimeOutTag
                                                                 ):
                                 if self.stck_sub_type:
-                                    daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, self.stck_sub_type, self.input_tags)
+                                    latest_thread = thread
+                                    self.is_daemon_log = daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, self.stck_sub_type, self.input_tags)
+
+                                    self.is_query_reprocessing_required(self.is_daemon_log, value)
                                 else:
-                                    logging.info('reached thread: %s', thread)
-                                    daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, tlog_header_data_dict[thread]["SUB_TYPE"], self.input_tags)
+                                    latest_thread = thread
+                                    logging.info('reached thread: %s', latest_thread)
+                                    self.is_daemon_log = daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, tlog_header_data_dict[thread]["SUB_TYPE"], self.input_tags)
+                                    self.is_query_reprocessing_required(self.is_daemon_log, value)
+                
+                if self.sbn_thread_dict:
+                    logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
             
+                    for key, value in self.sbn_thread_dict.items():
+                        logging.info("reprocessing tlog map: %s", tlog_header_data_dict[value])
+                        
+                
             elif pname == "PRISM_SMSD":
                 if self.log_mode == "error":
                     for sms_tlog in tlog_header_data_dict["PRISM_SMSD_TLOG"]:
@@ -163,6 +176,21 @@ class TlogAccessLogParser:
             return True
         
         return False
+    
+    def is_query_reprocessing_required(self, is_daemon_log, tlog_dict):
+        #check if daemon log returned True/False and accordingly maintain the sbn-thread dict
+        if is_daemon_log:
+            try:
+                for key, value in self.sbn_thread_dict.items(): 
+                    logging.info('tlog sbn id: %s and map sbn id: %s', tlog_dict["SBN_OR_EVT_ID"], key)
+                    if tlog_dict["SBN_OR_EVT_ID"] == key:
+                        self.sbn_thread_dict.pop(tlog_dict["SBN_OR_EVT_ID"])
+                else:
+                    logging.info("sbn not present in map")
+            except KeyError as error:
+                logging.info("sbn not present in map")
+        else:
+            self.sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
                                
     def create_process_folder(self, pname, folder):
         """

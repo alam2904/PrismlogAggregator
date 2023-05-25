@@ -33,6 +33,7 @@ class DaemonLogProcessor:
         self.s_date = datetime.strptime(datetime.strftime(self.start_date, "%Y%m%d"), "%Y%m%d")
         self.e_date = datetime.strptime(datetime.strftime(self.end_date, "%Y%m%d"), "%Y%m%d")
         self.issue_record = ""
+        self.is_trimmed_log = False
         
         self.hostname = socket.gethostname()
         self.onmopay_out_folder = False
@@ -58,7 +59,7 @@ class DaemonLogProcessor:
                     self.fetch_daemon_log(tlog_thread, self.log_files) 
                         
                     if self.issue_record:
-                        fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.error(error)
                 
@@ -77,7 +78,7 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(tlog_thread, self.log_files) 
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.info(error)
                 
@@ -96,7 +97,7 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(tlog_thread, self.log_files) 
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.info(error)
                 
@@ -115,7 +116,7 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(tlog_thread, self.log_files) 
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.info(error)
                 
@@ -129,7 +130,7 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.info(error)
                 
@@ -143,11 +144,14 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
                 except KeyError as error:
                     logging.info(error)
                     
                 index += 1
+            if not self.is_trimmed_log:
+                return False
+            return True
     
     def dated_log_files(self, pname):
         try:            
@@ -318,5 +322,6 @@ class DaemonLogProcessor:
         self.is_msisdn_backup_file = False
         self.is_backup_file = False
         self.is_backup_root_file = False
+        self.is_trimmed_log = False
         
         
