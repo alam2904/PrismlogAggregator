@@ -27,7 +27,7 @@ class LogFileFinder:
         self.s_date = datetime.strptime(datetime.strftime(self.start_date, "%Y%m%d"), "%Y%m%d")
         self.e_date = datetime.strptime(datetime.strftime(self.end_date, "%Y%m%d"), "%Y%m%d")
     
-    def get_tlog_files(self, pname):
+    def get_tlog_files(self, pname, last_modified_time=None):
         
         #re-initializing constructor parameters
         self.constructor_paramter_reinitialize()
@@ -84,14 +84,22 @@ class LogFileFinder:
             
             path = os.path.join(self.tlog_dir)
             
-            #method call to date range list
-            self.input_date = self.date_range_list(self.s_date, self.e_date)
+            if last_modified_time:
+                self.input_date.append(last_modified_time)    
+            else:
+                #method call to date range list
+                self.input_date = self.date_range_list(self.s_date, self.e_date)
             
             for date in self.input_date:
                 # logging.info('search date is: %s', datetime.strftime(date, "%Y-%m-%d"))
                 input_date_formatted = ""
-                         
-                input_date_formatted = datetime.strftime(date, "%Y%m%d")
+                
+                if last_modified_time:         
+                    # last_modified_date_formatted = datetime.strftime(last_modified_time, "%Y%m%d")
+                    input_date_formatted = datetime.strftime(datetime.strptime(last_modified_time, "%Y-%m-%d %H:%M:%S"), "%Y%m%d")
+                    logging.info("last modified input date formated: %s", input_date_formatted)
+                else:
+                    input_date_formatted = datetime.strftime(date, "%Y%m%d")
                 
                 #input dated file in the tlog directory
                 dated_tlog_files = ""
@@ -226,6 +234,54 @@ class LogFileFinder:
         logging.info('tlog files ex: %s', self.tlog_files)
         
         return self.tlog_files
+    
+    
+    # def get_tlog_reprosessed_file(self, pname, last_modified_time):
+    #     splitted_tlog_path = ""
+        
+    #     self.constructor_paramter_reinitialize()
+        
+    #     if pname == "PRISM_TOMCAT":
+    #         self.tlog_dir = self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"]
+    #     elif pname == "PRISM_DEAMON":
+    #         self.tlog_dir = self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"]
+        
+    #     logging.info("first dated file would be appended: %s", self.tlog_dir)
+        
+    #     if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
+    #         path = os.path.join(self.tlog_dir)
+            
+    #         # last_modified_date_formatted = datetime.strftime(last_modified_time, "%Y%m%d")
+    #         last_modified_date_formatted = datetime.strftime(datetime.strptime(last_modified_time, "%Y-%m-%d %H:%M:%S"), "%Y%m%d")
+    #         logging.info("last modified date formated: %s", last_modified_date_formatted)
+                
+    #         #input dated file in the tlog directory
+    #         dated_tlog_files = ""
+            
+    #         try:
+    #             if pname == "PRISM_TOMCAT":
+    #                 dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_BILLING_REALTIME_{}_".format(last_modified_date_formatted)) and p.endswith(".log")]
+    #             elif pname == "PRISM_DEAMON":
+    #                 dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_BILLING_{}_".format(last_modified_date_formatted)) and p.endswith(".log")]
+    #         except OSError as error:
+    #                 logging.warning(error)
+    #         logging.info("dated tlog files: %s", dated_tlog_files)
+            
+    #         if bool(dated_tlog_files):
+    #             if pname == "PRISM_TOMCAT":
+    #                 logging.info("TLOG_BILLING_REALTIME_{}_*..log file present".format(last_modified_date_formatted))
+    #             elif pname == "PRISM_DEAMON":
+    #                 logging.info("TLOG_BILLING_{}_*..log file present".format(last_modified_date_formatted))
+            
+    #             for files in dated_tlog_files:
+    #                 self.tlog_files.append(str(files))
+                        
+    #         else:
+    #             if pname == "PRISM_TOMCAT":
+    #                 logging.info("TLOG_BILLING_REALTIME_{}_*..log file not present".format(last_modified_date_formatted))
+    #             elif pname == "PRISM_DEAMON":
+    #                 logging.info("TLOG_BILLING_{}_*..log file not present".format(last_modified_date_formatted))     
+            
     
     def get_tomcat_access_files(self, pname):
         #re-initializing constructor parameters

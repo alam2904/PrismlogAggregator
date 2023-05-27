@@ -5,7 +5,7 @@ from process_daemon_log import DaemonLogProcessor
 from input_tags import PrismTlogErrorTag, PrismTlogLowBalTag, PrismTlogRetryTag,\
     PrismTlogHandlerExp, PrismTlogNHFTag, PrismTlogAwaitPushTag, PrismTlogAwaitPushTimeOutTag,\
     HttpErrorCodes, PrismTlogSmsTag, PrismTasks
-from db_query_processor import DB_QUERY_PROCESSOR
+from subscriptions import SubscriptionController
 
 class TlogAccessLogParser:
     """
@@ -38,6 +38,8 @@ class TlogAccessLogParser:
         self.issue_access_threads = []
         self.is_daemon_log = False
         self.sbn_thread_dict = {}
+        self.process_subs_data = True
+        self.subscriptions_data = None
     
     def parse_tlog(self, pname, tlog_header_data_dict, ctid_map=None):
         """
@@ -91,9 +93,10 @@ class TlogAccessLogParser:
                                     self.is_query_reprocessing_required(self.is_daemon_log, value)
                 
                 if self.sbn_thread_dict:
-                    # logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
-                    dbQueryProcessor_object = DB_QUERY_PROCESSOR(self.sbn_thread_dict, tlog_header_data_dict)
-                    dbQueryProcessor_object.query_formatter()
+                    logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
+                    subscription_object = SubscriptionController(self.sbn_thread_dict, tlog_header_data_dict, self.process_subs_data)
+                    self.subscriptions_data = subscription_object.get_subscription()
+                
                         
                 
             elif pname == "PRISM_SMSD":
@@ -108,8 +111,7 @@ class TlogAccessLogParser:
                                     if not self.prism_smsd_out_folder:
                                         self.create_process_folder(pname, folder)
                                     daemonLogProcessor_object.process_daemon_log(pname, sms_tlog["THREAD"], None, None, None, None)
-                            
-                     
+            return self.subscriptions_data        
         except KeyError as error:
             logging.exception(error)
     
@@ -222,3 +224,4 @@ class TlogAccessLogParser:
     def reinitialize_constructor_parameters(self):
         self.task_types = []
         self.input_tags = []
+        self.process_subs_data = True

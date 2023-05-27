@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import logging
 import signal
 import subprocess
+import time
 from log_files import LogFileFinder
 from collections import defaultdict
 from tlog_accesslog_parser import TlogAccessLogParser
@@ -86,6 +87,9 @@ class Tlog:
         self.prism_smsd_tlog_dict = prism_smsd_tlog_dict
         self.oarm_uid = oarm_uid
         self.is_success_access_hit = True
+        self.is_record_reprocessed = False
+        self.subscriptions_data = None
+        self.reprocessed_tlog_record = []
     
     def get_tlog(self, pname):
         """
@@ -234,11 +238,11 @@ class Tlog:
                         "NEXT_BILL_DATE"
                     ]
         
-        elif pname == "PRISM_SMSD":
-            header = [
-                        "TIMESTAMP","THREAD","SITE_ID","MSISDN","SRNO","SRVCODE","MSG","HANDLER",\
-                        "STATUS","REMARKS","TIME_TAKEN","SMS_INFO"
-                    ]
+        # elif pname == "PRISM_SMSD":
+        #     header = [
+        #                 "TIMESTAMP","THREAD","SITE_ID","MSISDN","SRNO","SRVCODE","MSG","HANDLER",\
+        #                 "STATUS","REMARKS","TIME_TAKEN","SMS_INFO"
+        #             ]
         
         logging.info('process name: %s', pname)
            
@@ -316,7 +320,48 @@ class Tlog:
         if self.log_mode == "error":
             if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
                 if self.msisdn_data_dict:
-                    tlogAccessLogParser_object.parse_tlog(pname, self.msisdn_data_dict)
+                    if not self.is_record_reprocessed:
+                        self.subscriptions_data = tlogAccessLogParser_object.parse_tlog(pname, self.msisdn_data_dict)
+                    
+                    if not tlogAccessLogParser_object.is_daemon_log and self.subscriptions_data:
+                        self.is_record_reprocessed = True
+                        logging.info('daemon log not present')
+                        self.get_reprocessed_tlog(pname)
+        
+    def get_reprocessed_tlog(self, pname):
+        logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
+        
+        if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
+            logging.info('subscriptions data is: %s', self.subscriptions_data)
+            last_modified_time = self.subscriptions_data["last_modified_time"]
+            logging.info('last modified time: %s', last_modified_time)
+            
+            reprocessed_tlog_files = logfile_object.get_tlog_files(pname, last_modified_time)
+            logging.info('reprocessed tlog files: %s', reprocessed_tlog_files)
+            
+            time.sleep(10)
+            self.lastModifiedTime_based_tlog_fetch(pname, reprocessed_tlog_files, last_modified_time)
+    
+    def lastModifiedTime_based_tlog_fetch(self, pname, files, last_modified_time):
+        self.reprocessed_constructor_parameter_reinitialize()
+        try:                    
+            if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
+                # temp_map = self.prism_ctid  //support not available for now
+                msisdn = self.validation_object.fmsisdn
+            
+                temp = []
+                for file in files:
+                    logging.info('file: %s', file)
+                    try:
+                        data = subprocess.check_output("cat {0} | grep -a {1}".format(file, msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                        temp = data.splitlines()  # Split the data into individual lines/records
+                        for record in temp:
+                            logging.info('reprocessed tlog timestamp: %s', str(record).split("|")[0].split(",")[0])
+                            self.reprocessed_tlog_record.append(record)
+                    except Exception as ex:
+                        logging.info(ex)
+        except Exception as ex:
+            logging.info(ex)
         
     def prism_handler_req_resp_header_map(self, pname, data_list):
         # prism tomcat and daemon handler request response mapping
@@ -565,6 +610,13 @@ class Tlog:
         self.tlog_files_with_ctid_msisdn = []
         # self.tlog_dict = defaultdict()
         self.ctid_data_dict = defaultdict(list)
+    
+    def reprocessed_constructor_parameter_reinitialize(self):
+        self.reprocessed_tlog_record = []
+    
+    # def reprocessed_constructor_parameter_reinitialize(self):
+    #     self.tlog_files = []
+    #     self.tlog_record = []
         
         
     def date_range_list(self, start_date, end_date):
