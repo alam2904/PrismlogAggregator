@@ -137,13 +137,6 @@ class Tlog:
                     or pname == "PRISM_TOMCAT_PERF_LOG" or pname == "PRISM_DAEMON_PERF_LOG":
                 # function call
                 self.thread_based_prism_handler_req_resp_fetch(pname, self.tlog_files)
-            
-        # if self.backup_tlog_files:
-        #     self.is_backup_file = True
-            
-        #     for file in self.backup_tlog_files:
-        #         #function call
-        #         self.msisdn_ctid_map(pname, file, self.is_backup_file)
                 
         if pname == "PRISM_TOMCAT":
             if self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_access_path"]:
@@ -344,7 +337,6 @@ class Tlog:
         # if ctid in data_dict["CTID"]: //support not available for now
         self.msisdn_data_dict[data_dict["THREAD"]] = data_dict
         
-        
     def get_reprocessed_tlog(self, pname, tlogAccessLogParser_object):
         logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
         time.sleep(15)
@@ -496,7 +488,6 @@ class Tlog:
             self.prism_data_dict_list.append(self.prism_daemon_callbackV2_log_dict)
             logging.info('prism daemon generic soap req-resp: %s', str(self.prism_daemon_callbackV2_log_dict).replace("'", '"'))
    
-   
     def sms_data_header_mapping(self, tlogAccessLogParser_object, pname, data_list):
         #sms tlog header map
         # tlogParser_object = TlogAccessLogParser(self.initializedPath_object, self.outputDirectory_object,\
@@ -625,8 +616,7 @@ class Tlog:
                 self.tlog_record.append(data)
             except Exception as ex:
                 logging.info(ex)
-
-                            
+ 
     def constructor_parameter_reinitialize(self):
         self.tlog_files = []
         self.backup_tlog_files = []
@@ -643,12 +633,7 @@ class Tlog:
         self.reprocessed_thread = []
         self.is_record_reprocessed = False
         self.subscriptions_data = None
-    
-    # def reprocessed_constructor_parameter_reinitialize(self):
-    #     self.tlog_files = []
-    #     self.tlog_record = []
-        
-        
+            
     def date_range_list(self, start_date, end_date):
         # Return list of datetime.date objects between start_date and end_date (inclusive).
         date_list = []
