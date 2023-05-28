@@ -41,7 +41,7 @@ class TlogAccessLogParser:
         self.process_subs_data = True
         self.subscriptions_data = None
     
-    def parse_tlog(self, pname, tlog_header_data_dict, ctid_map=None):
+    def parse_tlog(self, pname, tlog_header_data_dict, ctid_map=None, reprocessed_thread=None):
         """
             tlog parser method
         """
@@ -59,14 +59,18 @@ class TlogAccessLogParser:
         daemonLogProcessor_object = DaemonLogProcessor(self.initializedPath_object, self.outputDirectory_object,\
                                                         self.validation_object, self.oarm_uid)
         #processing tlog based on different key in the tlog
-        latest_thread = ""   
+        latest_thread = "" 
         try:
             if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-                thread_list = []
-                if pname == "PRISM_TOMCAT":
-                    thread_list = self.prism_tomcat_tlog_thread_dict["PRISM_TOMCAT_THREAD"]
-                elif pname == "PRISM_DEAMON":
-                    thread_list = self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"]
+                if not reprocessed_thread:
+                    thread_list = []
+                    if pname == "PRISM_TOMCAT":
+                        thread_list = self.prism_tomcat_tlog_thread_dict["PRISM_TOMCAT_THREAD"]
+                    elif pname == "PRISM_DEAMON":
+                        thread_list = self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"]
+                else:
+                    thread_list = reprocessed_thread
+                    
                 for thread in thread_list:
                     #re-initializing self.task_types for each threads
                     self.reinitialize_constructor_parameters()
@@ -84,20 +88,21 @@ class TlogAccessLogParser:
                                 if self.stck_sub_type:
                                     latest_thread = thread
                                     self.is_daemon_log = daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, self.stck_sub_type, self.input_tags)
-
-                                    self.is_query_reprocessing_required(self.is_daemon_log, value)
+                                    
+                                    if pname == "PRISM_DEAMON":
+                                        self.is_query_reprocessing_required(self.is_daemon_log, value)
                                 else:
                                     latest_thread = thread
                                     logging.info('reached thread: %s', latest_thread)
                                     self.is_daemon_log = daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, tlog_header_data_dict[thread]["SUB_TYPE"], self.input_tags)
-                                    self.is_query_reprocessing_required(self.is_daemon_log, value)
+                                    
+                                    if pname == "PRISM_DEAMON":
+                                        self.is_query_reprocessing_required(self.is_daemon_log, value)
                 
                 if self.sbn_thread_dict:
                     logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
                     subscription_object = SubscriptionController(self.sbn_thread_dict, tlog_header_data_dict, self.process_subs_data)
                     self.subscriptions_data = subscription_object.get_subscription()
-                
-                        
                 
             elif pname == "PRISM_SMSD":
                 if self.log_mode == "error":

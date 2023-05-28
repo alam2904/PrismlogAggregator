@@ -87,9 +87,12 @@ class Tlog:
         self.prism_smsd_tlog_dict = prism_smsd_tlog_dict
         self.oarm_uid = oarm_uid
         self.is_success_access_hit = True
+        
+        #subscription reprocessing parameters
         self.is_record_reprocessed = False
         self.subscriptions_data = None
         self.reprocessed_tlog_record = []
+        self.reprocessed_thread = []
     
     def get_tlog(self, pname):
         """
@@ -222,7 +225,7 @@ class Tlog:
             except Exception as ex:
                 logging.info(ex)
           
-    def tlog_record_header_mapping(self, tlogAccessLogParser_object, pname, data_list):
+    def tlog_record_header_mapping(self, tlogAccessLogParser_object, pname, data_list, last_modified_time=None):
         #GRIFF tlog header mapping and call to tlog parser class
         header = []
         
@@ -245,6 +248,7 @@ class Tlog:
         #             ]
         
         logging.info('process name: %s', pname)
+        reprocessed_thread = []
            
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             for data in data_list:
@@ -252,68 +256,54 @@ class Tlog:
                 data_dict = OrderedDict()
                 flow_tasks_element = []
                 index_count = 28
+                if last_modified_time:
+                    reprocessed_thread = self.reprocessed_thread
+                    self.reprocessed_constructor_parameter_reinitialize()
+                    input_date_formatted = datetime.strftime(datetime.strptime(last_modified_time, "%Y-%m-%d %H:%M:%S"), "%Y-%m-%d")
+                    logging.info("last modified input date formated: %s", input_date_formatted)
+                    self.tlog_map(header, splitted_data, data_dict, flow_tasks_element, index_count)
+                else:
+                    #method call to date range list
+                    self.input_date = self.date_range_list(self.s_date, self.e_date)
             
-                #method call to date range list
-                self.input_date = self.date_range_list(self.s_date, self.e_date)
-        
-                for date in self.input_date:
-                    input_date_formatted = datetime.strftime(date, "%Y%m%d")
-                        
-                    if input_date_formatted == datetime.strftime(datetime.strptime(splitted_data[0].split(" ")[0], "%Y-%m-%d"), "%Y%m%d"):
-                
-                        for index, element in enumerate(splitted_data):
-                                
-                            if index <= 27:
-                                data_dict[header[index]] = element.replace('"', '').replace("'", '"').strip().rstrip(":")
+                    for date in self.input_date:
+                        input_date_formatted = datetime.strftime(date, "%Y%m%d")
                             
-                            elif index <= len(splitted_data) - 6:
-                                flow_tasks_element.append(element.replace('"', '').replace("'", '"').strip())
-                                data_dict[header[index_count]] = flow_tasks_element
-                                
-                            elif index <= len(splitted_data) - 2:
-                                index_count += 1
-                                data_dict[header[index_count]] = element.replace('"', '').replace("'", '"').strip()
-                            
-                            elif index == len(splitted_data) - 1:
-                                # logging.info('index: %s', index)
-                                try:
-                                    for i, td in enumerate(element.split("=")[1].split("]")[0].split(",")):
-                                        index_count += 1
-                                        data_dict[header[index_count]] = td.replace('"', '').replace("'", '"').strip()
-                                    # data_dict[header[len(header) - 1]] = f"{ctid}"
-                                except IndexError as error:
-                                    logging.exception(error)
-                
-                        # if ctid in data_dict["CTID"]: //support not available for now
-                        self.msisdn_data_dict[data_dict["THREAD"]] = data_dict
-                    else:
-                        logging.info("tlog timestamp: %s did not match with input date: %s", datetime.strftime(datetime.strptime(splitted_data[0].split(" ")[0], "%Y-%m-%d"), "%Y%m%d"), input_date_formatted)
-            # logging.info('msisdn_data_dict: %s', self.msisdn_data_dict)
-        
-        
+                        if input_date_formatted == datetime.strftime(datetime.strptime(splitted_data[0].split(" ")[0], "%Y-%m-%d"), "%Y%m%d"):
+                            self.tlog_map(header, splitted_data, data_dict, flow_tasks_element, index_count)
+                        else:
+                            logging.info("tlog timestamp: %s did not match with input date: %s", datetime.strftime(datetime.strptime(splitted_data[0].split(" ")[0], "%Y-%m-%d"), "%Y%m%d"), input_date_formatted)
+
         if pname == "PRISM_TOMCAT":
             logging.info('msisdn data dict: %s', self.msisdn_data_dict)
             for thread, data in self.msisdn_data_dict.items():
                 self.prism_tomcat_tlog_thread_dict["PRISM_TOMCAT_THREAD"].append(thread)
-                logging.info('prism tomcat thread: %s', self.prism_tomcat_tlog_thread_dict)
+            logging.info('prism tomcat thread: %s', self.prism_tomcat_tlog_thread_dict)
                 
         
         elif pname == "PRISM_DEAMON":
-            for thread, data in self.msisdn_data_dict.items():
-                self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"].append(thread)
-                logging.info('prism daemon thread: %s', self.prism_daemon_tlog_thread_dict)
+            if last_modified_time:
+                for thread in reprocessed_thread:
+                    self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"].append(thread)
+            else:
+                for thread, data in self.msisdn_data_dict.items():
+                    self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"].append(thread)
+            logging.info('prism daemon thread: %s', self.prism_daemon_tlog_thread_dict)
                     
                         
         if pname == "PRISM_TOMCAT":
-            # self.prism_tomcat_tlog_dict = {"PRISM_REALTIME_BILLING_TLOG": {f"{self.validation_object.fmsisdn}": dict(self.ctid_data_dict)}}
-            self.prism_tomcat_tlog_dict = {"PRISM_TOMCAT_BILLING_TLOG": dict(self.msisdn_data_dict)}
+            self.prism_tomcat_tlog_dict = {"PRISM_TOMCAT_BILLING_TLOG": self.msisdn_data_dict}
             self.prism_data_dict_list.append(self.prism_tomcat_tlog_dict)
             logging.info('prism realtime billing tlogs: %s', str(self.prism_tomcat_tlog_dict).replace("'", '"'))
         
         elif pname == "PRISM_DEAMON":
-            # logging.info('prism tlogs dict: %s', OrderedDict(self.msisdn_data_dict))
-            self.prism_daemon_tlog_dict = {"PRISM_DAEMON_TLOG": self.msisdn_data_dict}
-            self.prism_data_dict_list.append(self.prism_daemon_tlog_dict)
+            if last_modified_time:
+                for tlog_dict in self.prism_data_dict_list:
+                    if "PRISM_DAEMON_TLOG" in tlog_dict:
+                        tlog_dict["PRISM_DAEMON_TLOG"] = self.msisdn_data_dict
+            else:
+                self.prism_daemon_tlog_dict = {"PRISM_DAEMON_TLOG": self.msisdn_data_dict}
+                self.prism_data_dict_list.append(self.prism_daemon_tlog_dict)
             logging.info('prism billing tlogs: %s', str(self.prism_daemon_tlog_dict).replace("'", '"'))
         
         # parse tlog for error
@@ -321,15 +311,43 @@ class Tlog:
             if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
                 if self.msisdn_data_dict:
                     if not self.is_record_reprocessed:
-                        self.subscriptions_data = tlogAccessLogParser_object.parse_tlog(pname, self.msisdn_data_dict)
+                        self.subscriptions_data = tlogAccessLogParser_object.parse_tlog(pname, self.msisdn_data_dict, None, reprocessed_thread)
                     
                     if not tlogAccessLogParser_object.is_daemon_log and self.subscriptions_data:
                         self.is_record_reprocessed = True
                         logging.info('daemon log not present')
-                        self.get_reprocessed_tlog(pname)
+                        self.get_reprocessed_tlog(pname, tlogAccessLogParser_object)
+    
+    def tlog_map(self, header, splitted_data, data_dict, flow_tasks_element, index_count):
+        for index, element in enumerate(splitted_data):                  
+            if index <= 27:
+                data_dict[header[index]] = element.replace('"', '').replace("'", '"').strip().rstrip(":")
+            
+            elif index <= len(splitted_data) - 6:
+                flow_tasks_element.append(element.replace('"', '').replace("'", '"').strip())
+                data_dict[header[index_count]] = flow_tasks_element
+                
+            elif index <= len(splitted_data) - 2:
+                index_count += 1
+                data_dict[header[index_count]] = element.replace('"', '').replace("'", '"').strip()
+            
+            elif index == len(splitted_data) - 1:
+                # logging.info('index: %s', index)
+                try:
+                    for i, td in enumerate(element.split("=")[1].split("]")[0].split(",")):
+                        index_count += 1
+                        data_dict[header[index_count]] = td.replace('"', '').replace("'", '"').strip()
+                    # data_dict[header[len(header) - 1]] = f"{ctid}"
+                except IndexError as error:
+                    logging.exception(error)
+
+        # if ctid in data_dict["CTID"]: //support not available for now
+        self.msisdn_data_dict[data_dict["THREAD"]] = data_dict
         
-    def get_reprocessed_tlog(self, pname):
+        
+    def get_reprocessed_tlog(self, pname, tlogAccessLogParser_object):
         logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
+        time.sleep(15)
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             logging.info('subscriptions data is: %s', self.subscriptions_data)
@@ -339,29 +357,38 @@ class Tlog:
             reprocessed_tlog_files = logfile_object.get_tlog_files(pname, last_modified_time)
             logging.info('reprocessed tlog files: %s', reprocessed_tlog_files)
             
-            time.sleep(10)
             self.lastModifiedTime_based_tlog_fetch(pname, reprocessed_tlog_files, last_modified_time)
+            
+            if self.reprocessed_tlog_record:
+                data_list = []
+                for data in self.reprocessed_tlog_record:
+                    logging.info('data in latest tlog: %s', data)
+                    for record in str(data).splitlines():
+                        if record not in data_list:
+                            data_list.append(record)
+                self.tlog_record_header_mapping(tlogAccessLogParser_object, pname, data_list, last_modified_time)
+                # logging.info('msisdn_data_dict: %s', self.msisdn_data_dict)
     
     def lastModifiedTime_based_tlog_fetch(self, pname, files, last_modified_time):
         self.reprocessed_constructor_parameter_reinitialize()
-        try:                    
-            if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-                # temp_map = self.prism_ctid  //support not available for now
-                msisdn = self.validation_object.fmsisdn
-            
-                temp = []
-                for file in files:
-                    logging.info('file: %s', file)
-                    try:
-                        data = subprocess.check_output("cat {0} | grep -a {1}".format(file, msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                        temp = data.splitlines()  # Split the data into individual lines/records
-                        for record in temp:
-                            logging.info('reprocessed tlog timestamp: %s', str(record).split("|")[0].split(",")[0])
+        if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
+            # temp_map = self.prism_ctid  //support not available for now
+            msisdn = self.validation_object.fmsisdn
+        
+            temp = []
+            for file in files:
+                # logging.info('file: %s', file)
+                try:
+                    data = subprocess.check_output("cat {0} | grep -a {1}".format(file, msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                    temp = data.splitlines()  # Split the data into individual lines/records
+                    for record in temp:
+                        if str(record).split("|")[0].split(",")[0] > last_modified_time:
+                            self.reprocessed_thread.append(str(record).split("|")[1])
+                            logging.info('latest tlog timestamp: %s and thread: %s', str(record).split("|")[0].split(",")[0], self.reprocessed_thread)
                             self.reprocessed_tlog_record.append(record)
-                    except Exception as ex:
-                        logging.info(ex)
-        except Exception as ex:
-            logging.info(ex)
+                except Exception as ex:
+                    logging.info(ex)
+            logging.info("latest tlog record: %s", self.reprocessed_tlog_record)
         
     def prism_handler_req_resp_header_map(self, pname, data_list):
         # prism tomcat and daemon handler request response mapping
@@ -613,6 +640,9 @@ class Tlog:
     
     def reprocessed_constructor_parameter_reinitialize(self):
         self.reprocessed_tlog_record = []
+        self.reprocessed_thread = []
+        self.is_record_reprocessed = False
+        self.subscriptions_data = None
     
     # def reprocessed_constructor_parameter_reinitialize(self):
     #     self.tlog_files = []
