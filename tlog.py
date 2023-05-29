@@ -108,6 +108,7 @@ class Tlog:
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             self.constructor_parameter_reinitialize()
             self.constructor_ctid_msisdn_paramter_reinitialization()
+            self.reprocessed_constructor_parameter_reinitialize()
          
         elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP" or pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP"\
             or pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP" or pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP"\
@@ -296,13 +297,16 @@ class Tlog:
         if self.log_mode == "error":
             if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
                 if self.msisdn_data_dict:
+                    logging.info("reached here: %s", self.is_record_reprocessed)
                     if not self.is_record_reprocessed:
                         self.subscriptions_data = tlogAccessLogParser_object.parse_tlog(pname, self.msisdn_data_dict, None, reprocessed_thread)
                     
                     if not tlogAccessLogParser_object.is_daemon_log and self.subscriptions_data:
                         self.is_record_reprocessed = True
                         logging.info('daemon log not present')
-                        self.get_reprocessed_tlog(pname, tlogAccessLogParser_object)
+                        time.sleep(15)
+                        if pname == "PRISM_DEAMON":
+                            self.get_reprocessed_tlog(pname, tlogAccessLogParser_object)
     
     def tlog_map(self, header, splitted_data, data_dict, flow_tasks_element, index_count):
         for index, element in enumerate(splitted_data):                  
@@ -332,7 +336,6 @@ class Tlog:
         
     def get_reprocessed_tlog(self, pname, tlogAccessLogParser_object):
         logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
-        time.sleep(15)
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             logging.info('subscriptions data is: %s', self.subscriptions_data)

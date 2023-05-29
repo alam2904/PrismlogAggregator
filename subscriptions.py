@@ -3,6 +3,7 @@ import logging
 import json
 from database_connection import DatabaseConnection
 from query_executor import QueryExecutor
+from datetime import datetime
 
 
 class SubscriptionController:
@@ -10,11 +11,12 @@ class SubscriptionController:
         This is the class responsible for SELECT and UPDATE db query processing
         based on various subscription condition 
     """
-    def __init__(self, sbn_thread_dict, tlog_data_dict, process_subs_data):
+    def __init__(self, pname, sbn_thread_dict, tlog_data_dict, process_subs_data):
         self.sbn_thread_dict = sbn_thread_dict
         self.tlog_data_dict = tlog_data_dict
         self.process_subs_data = process_subs_data
         self.subscription_data = None
+        self.pname = pname
         
     def get_subscription(self, reprocess_sbnId=None):
         # Create a DatabaseConnection instance
@@ -50,7 +52,12 @@ class SubscriptionController:
                         logging.info("subscription json object before update: %s", subscription_json_object)
                         
                         self.subscription_data = json.loads(subscription_json_object, object_pairs_hook=OrderedDict)
-                        self.process_data(query_executor, sbnId, self.subscription_data)
+                        if self.pname == "PRISM_TOMCAT":
+                            current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                            if self.subscription_data["charge_schedule"] > current_system_datetime:
+                                self.process_data(query_executor, sbnId, self.subscription_data)
+                        else:
+                            self.process_data(query_executor, sbnId, self.subscription_data)
                            
             else:
                 Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id='{}'".format(reprocess_sbnId)
@@ -90,7 +97,7 @@ class SubscriptionController:
             if subs_data["pmt_status"] == 3 and subs_data["task_type"] == 'Q':
                 Query = "UPDATE subscriptions set queue_id = 99, task_status = '0', charge_schedule = now() where sbn_id = '{}'".format(sbnId)
             elif subs_data["pmt_status"] == 3 and subs_data["task_type"] != 'Q':
-                Query = "UPDATE subscriptions set queue_id = 99, task_type = 'B', task_status = 0, charge_schedule = now() where sbn_id = '{}'".format(sbnId)
+                Query = "UPDATE subscriptions set queue_id = 99, task_status = 0, charge_schedule = now() where sbn_id = '{}'".format(sbnId)
         
         logging.info("Update query: %s", Query)
         
