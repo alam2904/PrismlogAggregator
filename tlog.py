@@ -52,10 +52,10 @@ class Tlog:
         
         #tlog header mapping parameters
         self.tlog_dict = defaultdict(list)
-        self.ctid_data_dict = defaultdict(list)
+        # self.thread_data_dict = defaultdict(list)
+        self.thread_data_dict = OrderedDict()
         self.msisdn_data_dict = OrderedDict()
         self.msisdn_access_data_dict = OrderedDict()
-        # self.msisdn_sms_data_dict = defaultdict(list)
         self.msisdn_sms_data_list = []
         
         #header data mapped tlogs
@@ -176,7 +176,6 @@ class Tlog:
         elif pname == "PRISM_DEAMON":
             return self.prism_daemon_tlog_dict
     
-    # def msisdn_based_tlog_fetch(self, pname, files, is_backup_files):
     def msisdn_based_tlog_fetch(self, pname, files):
         try:                    
             if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON" or pname == "PRISM_SMSD":
@@ -233,12 +232,6 @@ class Tlog:
                         "TOTAL_CHG_AMNT","RECO","TASK_TYPE","TASK_STATUS","PAYMENT_STATUS","CHARGE_SCHEDULE",\
                         "NEXT_BILL_DATE"
                     ]
-        
-        # elif pname == "PRISM_SMSD":
-        #     header = [
-        #                 "TIMESTAMP","THREAD","SITE_ID","MSISDN","SRNO","SRVCODE","MSG","HANDLER",\
-        #                 "STATUS","REMARKS","TIME_TAKEN","SMS_INFO"
-        #             ]
         
         logging.info('process name: %s', pname)
         reprocessed_thread = []
@@ -374,7 +367,7 @@ class Tlog:
                     data = subprocess.check_output("cat {0} | grep -a {1}".format(file, msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     temp = data.splitlines()  # Split the data into individual lines/records
                     for record in temp:
-                        if str(record).split("|")[0].split(",")[0] > last_modified_time:
+                        if str(record).split("|")[0].split(",")[0] >= last_modified_time:
                             self.reprocessed_thread.append(str(record).split("|")[1])
                             logging.info('latest tlog timestamp: %s and thread: %s', str(record).split("|")[0].split(",")[0], self.reprocessed_thread)
                             self.reprocessed_tlog_record.append(record)
@@ -422,71 +415,62 @@ class Tlog:
             threads = self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"]
             
         for thread in threads:
+            temp = []
             for data in data_list:
                 splitted_data = str(data).split("|")
-                # splitted_data = re.split(r'\|(?=[^|])(?:[^|]*\([^)]+\))*[^|]*', data)
-                # splitted_data = re.split(r'\|(?=(?:[^<]*<[^>]*>)*[^>]*$)', data)
                 if thread == splitted_data[1].replace('"', '').strip():
                     logging.info('splitted data: %s', splitted_data)
                     
                     data_dict = OrderedDict()
-                    
                     try:
                         for index, element in enumerate(splitted_data):
-                            
                                 data_dict[header[index]] = element.replace('"', '').replace("'", '"').strip().rstrip(":")
-                        self.ctid_data_dict[thread].append(data_dict)
+                        temp.append(data_dict)
                     except IndexError as error:
                         logging.exception(error)
-            logging.info('prism gen req resp data dict: %s', self.ctid_data_dict)
+            
+            self.thread_data_dict[thread] = temp
+            logging.info('thread data dict: %s', self.thread_data_dict)
     
         if pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
-            # self.prism_tomcat_handler_generic_http_req_resp_dict = {"PRISM_TOMCAT_GENERIC_HTTP_HANDLER_REQ_RESP": {f"{self.validation_object.fmsisdn}": dict(self.ctid_data_dict)}}
-            self.prism_tomcat_handler_generic_http_req_resp_dict = {"PRISM_TOMCAT_GENERIC_HTTP_HANDLER_REQ_RESP": dict(self.ctid_data_dict)}
+            self.prism_tomcat_handler_generic_http_req_resp_dict = {"PRISM_TOMCAT_GENERIC_HTTP_HANDLER_REQ_RESP": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_tomcat_handler_generic_http_req_resp_dict)
             logging.info('prism tomcat generic http req-resp: %s', str(self.prism_tomcat_handler_generic_http_req_resp_dict).replace("'", '"'))
         
         elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
-            # self.prism_tomcat_handler_generic_soap_req_resp_dict = {"PRISM_TOMCAT_GENERIC_SOAP_HANDLER_REQ_RESP": {f"{self.validation_object.fmsisdn}": dict(self.ctid_data_dict)}}
-            self.prism_tomcat_handler_generic_soap_req_resp_dict = {"PRISM_TOMCAT_GENERIC_SOAP_HANDLER_REQ_RESP": dict(self.ctid_data_dict)}
+            self.prism_tomcat_handler_generic_soap_req_resp_dict = {"PRISM_TOMCAT_GENERIC_SOAP_HANDLER_REQ_RESP": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_tomcat_handler_generic_soap_req_resp_dict)
             logging.info('prism tomcat generic soap req-resp: %s', str(self.prism_tomcat_handler_generic_soap_req_resp_dict).replace("'", '"'))
         
         elif pname == "PRISM_TOMCAT_REQ_RESP":
-            # self.prism_tomcat_request_log_dict = {"PRISM_TOMCAT_REQUEST_LOG": {f"{self.validation_object.fmsisdn}": dict(self.ctid_data_dict)}}
-            self.prism_tomcat_request_log_dict = {"PRISM_TOMCAT_REQUEST_LOG": dict(self.ctid_data_dict)}
+            self.prism_tomcat_request_log_dict = {"PRISM_TOMCAT_REQUEST_LOG": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_tomcat_request_log_dict)
             logging.info('prism tomcat request log: %s', str(self.prism_tomcat_request_log_dict).replace("'", '"'))
         
         elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
-            # self.prism_tomcat_callbackV2_log_dict = {"PRISM_TOMCAT_CALLBACK_V2_LOG": {f"{self.validation_object.fmsisdn}": dict(self.ctid_data_dict)}}
-            self.prism_tomcat_callbackV2_log_dict = {"PRISM_TOMCAT_CALLBACK_V2_LOG": dict(self.ctid_data_dict)}
+            self.prism_tomcat_callbackV2_log_dict = {"PRISM_TOMCAT_CALLBACK_V2_LOG": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_tomcat_callbackV2_log_dict)
             logging.info('prism tomcat callbackV2 log: %s', str(self.prism_tomcat_callbackV2_log_dict).replace("'", '"'))
         
         elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
-            # self.prism_daemon_handler_generic_http_req_resp_dict = {"PRISM_DAEMON_GENERIC_HTTP_HANDLER_REQ_RESP": {f"{self.validation_object.fmsisdn}": dict(self.ctid_data_dict)}}
-            self.prism_daemon_handler_generic_http_req_resp_dict = {"PRISM_DAEMON_GENERIC_HTTP_HANDLER_REQ_RESP": dict(self.ctid_data_dict)}
+            self.prism_daemon_handler_generic_http_req_resp_dict = {"PRISM_DAEMON_GENERIC_HTTP_HANDLER_REQ_RESP": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_daemon_handler_generic_http_req_resp_dict)
             logging.info('prism daemon generic http req-resp: %s', str(self.prism_daemon_handler_generic_http_req_resp_dict).replace("'", '"'))
         
         elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
-            # self.prism_daemon_handler_generic_soap_req_resp_dict = {"PRISM_DAEMON_GENERIC_SOAP_HANDLER_REQ_RESP": {f"{self.validation_object.fmsisdn}": dict(self.ctid_data_dict)}}
-            self.prism_daemon_handler_generic_soap_req_resp_dict = {"PRISM_DAEMON_GENERIC_SOAP_HANDLER_REQ_RESP": dict(self.ctid_data_dict)}
+            self.prism_daemon_handler_generic_soap_req_resp_dict = {"PRISM_DAEMON_GENERIC_SOAP_HANDLER_REQ_RESP": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_daemon_handler_generic_soap_req_resp_dict)
             logging.info('prism daemon generic soap req-resp: %s', str(self.prism_daemon_handler_generic_soap_req_resp_dict).replace("'", '"'))
         
         elif pname == "PRISM_DAEMON_REQ_RESP":
-            # self.prism_daemon_request_log_dict = {"PRISM_DAEMON_REQUEST_LOG": {f"{self.validation_object.fmsisdn}": dict(self.ctid_data_dict)}}
-            self.prism_daemon_request_log_dict = {"PRISM_DAEMON_REQUEST_LOG": dict(self.ctid_data_dict)}
+            self.prism_daemon_request_log_dict = {"PRISM_DAEMON_REQUEST_LOG": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_daemon_request_log_dict)
             logging.info('prism daemon request log: %s', str(self.prism_daemon_request_log_dict).replace("'", '"'))
         
         elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
-            # self.prism_daemon_callbackV2_log_dict = {"PRISM_DAEMON_CALLBACK_V2_LOG": {f"{self.validation_object.fmsisdn}": dict(self.ctid_data_dict)}}
-            self.prism_daemon_callbackV2_log_dict = {"PRISM_DAEMON_CALLBACK_V2_LOG": dict(self.ctid_data_dict)}
+            self.prism_daemon_callbackV2_log_dict = {"PRISM_DAEMON_CALLBACK_V2_LOG": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_daemon_callbackV2_log_dict)
-            logging.info('prism daemon generic soap req-resp: %s', str(self.prism_daemon_callbackV2_log_dict).replace("'", '"'))
+            logging.info('prism daemon generic callbackV2 req-resp: %s', str(self.prism_daemon_callbackV2_log_dict).replace("'", '"'))
    
     def sms_data_header_mapping(self, tlogAccessLogParser_object, pname, data_list):
         #sms tlog header map
@@ -596,16 +580,15 @@ class Tlog:
         for thread in threads:
             for data in data_list:
                 if thread in data:
-                    self.ctid_data_dict[thread].append(data)
+                    self.thread_data_dict[thread] = data
                 
         if pname == "PRISM_TOMCAT_PERF_LOG":
-            # self.prism_tomcat_perf_log_dict = {"PRISM_TOMCAT_PERF_LOG": {f"{self.validation_object.fmsisdn}": dict(self.ctid_data_dict)}}
-            self.prism_tomcat_perf_log_dict = {"PRISM_TOMCAT_PERF_LOG": dict(self.ctid_data_dict)}
+            self.prism_tomcat_perf_log_dict = {"PRISM_TOMCAT_PERF_LOG": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_tomcat_perf_log_dict)
             logging.info('prism tomcat perf log: %s', self.prism_tomcat_perf_log_dict)
     
         elif pname == "PRISM_DAEMON_PERF_LOG":
-            self.prism_daemon_perf_log_dict = {"PRISM_DAEMON_PERF_LOG": dict(self.ctid_data_dict)}
+            self.prism_daemon_perf_log_dict = {"PRISM_DAEMON_PERF_LOG": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_daemon_perf_log_dict)
             logging.info('prism daemon perf log: %s', self.prism_daemon_perf_log_dict)
     
@@ -626,7 +609,7 @@ class Tlog:
         self.is_backup_file = False
         self.tlog_files_with_ctid_msisdn = []
         # self.tlog_dict = defaultdict()
-        self.ctid_data_dict = defaultdict(list)
+        self.thread_data_dict = OrderedDict()
     
     def reprocessed_constructor_parameter_reinitialize(self):
         self.reprocessed_tlog_record = []

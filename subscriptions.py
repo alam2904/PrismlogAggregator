@@ -88,7 +88,7 @@ class SubscriptionController:
         
         if (subs_data["SUB_STATUS"] not in ('E', 'F') and (subs_data["task_type"] != 'N')):
             if subs_data["pmt_status"] == 3 and subs_data["task_type"] == 'Q':
-                Query = "UPDATE subscriptions set queue_id = 99, task_status = 'Q', charge_schedule = now() where sbn_id = '{}'".format(sbnId)
+                Query = "UPDATE subscriptions set queue_id = 99, task_status = '0', charge_schedule = now() where sbn_id = '{}'".format(sbnId)
             elif subs_data["pmt_status"] == 3 and subs_data["task_type"] != 'Q':
                 Query = "UPDATE subscriptions set queue_id = 99, task_type = 'B', task_status = 0, charge_schedule = now() where sbn_id = '{}'".format(sbnId)
         
