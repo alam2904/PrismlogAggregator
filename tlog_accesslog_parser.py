@@ -13,7 +13,7 @@ class TlogAccessLogParser:
         for parsing tlog for any issue
     """
     def __init__(self, initializedPath_object, outputDirectory_object, validation_object, log_mode, oarm_uid,\
-                    prism_daemon_tlog_thread_dict, prism_tomcat_tlog_thread_dict):
+                    prism_daemon_tlog_thread_dict, prism_tomcat_tlog_thread_dict, issue_task_types):
         
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
@@ -32,6 +32,7 @@ class TlogAccessLogParser:
         self.prism_tomcat_access_out_folder = False
         
         #prism required parameters
+        self.issue_task_types = issue_task_types
         self.task_types = []
         self.stck_sub_type = ""
         self.input_tags = []
@@ -85,6 +86,7 @@ class TlogAccessLogParser:
                                                                     PrismTlogNHFTag, PrismTlogHandlerExp,
                                                                     PrismTlogAwaitPushTag, PrismTlogAwaitPushTimeOutTag
                                                                 ):
+                                
                                 if self.stck_sub_type:
                                     latest_thread = thread
                                     self.is_daemon_log = daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, self.stck_sub_type, self.input_tags)
@@ -149,7 +151,6 @@ class TlogAccessLogParser:
     
     def check_for_issue_in_prism_tlog(self, pname, folder, tlog_dict, prism_tasks, *args):
         #issue validation against input_tags
-        
         for prism_input_tags in args:
             for var_name, var_value in prism_input_tags.__dict__.items():
                 if not var_name.startswith("__"):
@@ -159,9 +160,13 @@ class TlogAccessLogParser:
                             if "#PUSH" in task:
                                 logging.info('prism flow tasks: %s', task)
                             
+                            #list of tasks for which handler details will be fetched later
+                            if var_value not in self.issue_task_types:
+                                self.issue_task_types.append(var_value)
+                                logging.info("input tags: %s", self.issue_task_types)
+                            
                             #substitution parameters
                             self.input_tags.append(var_value)
-                            logging.info("input tags: %s", self.input_tags)
                             for ptask_name, ptask_value in prism_tasks.__dict__.items():
                                 if not ptask_name.startswith("__"):
                             # for ptask in prism_tasks:
@@ -180,7 +185,6 @@ class TlogAccessLogParser:
                     self.create_process_folder(pname, folder)
             logging.info('task types: %s', self.task_types)
             return True
-        
         return False
     
     def is_query_reprocessing_required(self, is_daemon_log, tlog_dict):

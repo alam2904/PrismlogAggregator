@@ -65,6 +65,8 @@ class Tlog:
         self.prism_data_dict_list = prism_data_dict_list
         self.prism_data_dict = prism_data_dict
         self.config = config
+        self.issue_task_types = []
+        self.issue_handler_id = []
         
         self.prism_ctid = prism_ctid
         self.prism_tomcat_tlog_dict = prism_tomcat_tlog_dict
@@ -93,6 +95,7 @@ class Tlog:
         self.subscriptions_data = None
         self.reprocessed_tlog_record = []
         self.reprocessed_thread = []
+        
     
     def get_tlog(self, pname):
         """
@@ -103,7 +106,8 @@ class Tlog:
         
         tlogAccessLogParser_object = TlogAccessLogParser(self.initializedPath_object, self.outputDirectory_object,\
                                         self.validation_object, self.log_mode, self.oarm_uid,\
-                                        self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict)
+                                        self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict,\
+                                        self.issue_task_types)
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             self.constructor_parameter_reinitialize()
@@ -165,7 +169,7 @@ class Tlog:
                     self.prism_handler_req_resp_header_map(pname, data_list)
                     
             elif pname == "PRISM_TOMCAT_PERF_LOG" or pname == "PRISM_DAEMON_PERF_LOG":
-                self.perf_data_mapping(pname, data_list)
+                self.perf_data_mapping(tlogAccessLogParser_object, pname, data_list)
             elif pname == "PRISM_SMSD":
                 self.sms_data_header_mapping(tlogAccessLogParser_object, pname, data_list)
             else:
@@ -571,8 +575,12 @@ class Tlog:
             if self.msisdn_access_data_dict:
                 tlogAccessLogParser_object.parse_accessLog(pname, self.msisdn_access_data_dict)
     
-    def perf_data_mapping(self, pname, data_list):
-        #perf log mapping
+    def perf_data_mapping(self, tlogAccessLogParser_object, pname, data_list):
+        #perf header log mapping
+        header = [
+                    "TIMESTAMP", "THREAD", "SITE_NAME", "SBNID", "MSISDN", "SRVKEY", "QUEUEI_D", "TRANSACTION_TYPE",\
+                    "DELAY", "AMOUNT", "MESSAGE", "PERF_TASK", "TOTAL_TIME"
+                ]
         threads = ""
         
         if pname == "PRISM_TOMCAT_PERF_LOG":
@@ -580,11 +588,21 @@ class Tlog:
         elif pname == "PRISM_DAEMON_PERF_LOG":
             threads = self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"]
         
-        for thread in threads:
-            for data in data_list:
-                if thread in data:
-                    self.thread_data_dict[thread] = data
-                
+        try:
+            for thread in threads:
+                for data in data_list:
+                    splitted_data = str(data).split("|")
+                    data_dict = OrderedDict()
+                    flow_tasks_element = []
+                    index_count = 11
+                # for data in data_list:
+                    if thread in data:
+                        self.perf_map(header, thread, splitted_data, data_dict, flow_tasks_element, index_count)
+                        # self.thread_data_dict[thread] = data
+        except IndexError as e:
+            logging.info('exception occured while perf header data mapping. Hence logging perf data without header')
+            self.thread_data_dict[thread] = data
+        
         if pname == "PRISM_TOMCAT_PERF_LOG":
             self.prism_tomcat_perf_log_dict = {"PRISM_TOMCAT_PERF_LOG": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_tomcat_perf_log_dict)
@@ -594,6 +612,48 @@ class Tlog:
             self.prism_daemon_perf_log_dict = {"PRISM_DAEMON_PERF_LOG": self.thread_data_dict}
             self.prism_data_dict_list.append(self.prism_daemon_perf_log_dict)
             logging.info('prism daemon perf log: %s', self.prism_daemon_perf_log_dict)
+        
+        self.get_issue_handler_details(tlogAccessLogParser_object, pname)
+    
+    def get_issue_handler_details(self, tlogAccessLogParser_object, pname):
+        
+        try:
+            # logging.info('issue tasks are: %s', self.issue_task_types)
+            if self.issue_task_types:
+                for key, value in self.thread_data_dict.items():
+                    for task in self.issue_task_types:
+                        task = str(task).replace("=", ",")
+                        # logging.info('perf task list: %s', value["PERF_TASK"])
+                        for ptask in value["PERF_TASK"]:
+                            if task in ptask:
+                                handler_id = str(ptask).split(task)[1].split(",")[0]
+                                if handler_id not in self.issue_handler_id:
+                                    self.issue_handler_id.append(handler_id)
+            
+            logging.info('issue handler ids are: %s', self.issue_handler_id)
+                            
+        except KeyError as error:
+            logging.info(error)
+    
+    def perf_map(self, header, thread, splitted_data, data_dict, flow_tasks_element, index_count):
+        logging.info('length of perf splitted data: %s', len(splitted_data))
+        try:
+            for index, element in enumerate(splitted_data):                  
+                if index <= 10:
+                    data_dict[header[index]] = element.replace('"', '').replace("'", '"').strip().rstrip(":")
+                
+                elif index <= len(splitted_data) - 2:
+                    flow_tasks_element.append(element.replace('"', '').replace("'", '"').strip())
+                    data_dict[header[index_count]] = flow_tasks_element
+                    
+                elif index == len(splitted_data) - 1:
+                    # logging.info('index: %s', index)
+                    index_count = index_count + 1
+                    data_dict[header[index_count]] = element.replace('"', '').replace("'", '"').strip().rstrip(":")
+            self.thread_data_dict[thread] = data_dict
+        except IndexError as error:
+            raise IndexError(error)
+            
     
     def msisdn_based_sms_tlog_fetch(self, pname, files):
         for file in files:
