@@ -25,7 +25,7 @@ class FileWriter:
         with open("{0}/{1}_prismTransactionData.json".format(self.outputDirectory_object, self.hostname), "w") as outfile:
             json.dump(payment_data_dict, outfile, indent=4)
     
-    def write_complete_thread_log(self, pname, tlog_thread, record, ctid, task_type, sub_type, input_tag):
+    def write_complete_thread_log(self, pname, tlog_thread, record, ctid, task_type, sub_type, input_tag=None):
         #write complete thread log
         thread_outfile = ""
         process_folder = ""

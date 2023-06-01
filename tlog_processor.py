@@ -16,6 +16,7 @@ class TlogProcessor:
                     prism_tomcat_request_log_dict, prism_daemon_request_log_dict,\
                     prism_tomcat_callbackV2_log_dict, prism_daemon_callbackV2_log_dict,\
                     prism_tomcat_perf_log_dict, prism_daemon_perf_log_dict,\
+                    prism_tomcat_handler_info_dict, prism_daemon_handler_info_dict,\
                     prism_smsd_tlog_dict, oarm_uid):
         
         self.initializedPath_object = initializedPath_object
@@ -43,6 +44,8 @@ class TlogProcessor:
         self.prism_daemon_callbackV2_log_dict = prism_daemon_callbackV2_log_dict
         self.prism_tomcat_perf_log_dict = prism_tomcat_perf_log_dict
         self.prism_daemon_perf_log_dict = prism_daemon_perf_log_dict
+        self.prism_tomcat_handler_info_dict = prism_tomcat_handler_info_dict
+        self.prism_daemon_handler_info_dict = prism_daemon_handler_info_dict
         
         self.prism_smsd_tlog_dict = prism_smsd_tlog_dict
         self.oarm_uid = oarm_uid
@@ -61,6 +64,7 @@ class TlogProcessor:
                             self.prism_tomcat_request_log_dict, self.prism_daemon_request_log_dict,\
                             self.prism_tomcat_callbackV2_log_dict, self.prism_daemon_callbackV2_log_dict,\
                             self.prism_tomcat_perf_log_dict, self.prism_daemon_perf_log_dict,\
+                            self.prism_tomcat_handler_info_dict, self.prism_daemon_handler_info_dict,\
                             self.prism_smsd_tlog_dict, self.oarm_uid)
           
         if pname == "PRISM_TOMCAT":

@@ -40,6 +40,8 @@ class PROCESSOR:
         self.prism_daemon_callbackV2_log_dict = {}
         self.prism_tomcat_perf_log_dict = {}
         self.prism_daemon_perf_log_dict = {}
+        self.prism_tomcat_handler_info_dict = {}
+        self.prism_daemon_handler_info_dict = {}
         self.stop_prism_process = False
         self.hostname = socket.gethostname()
     
@@ -56,6 +58,7 @@ class PROCESSOR:
                                         self.prism_tomcat_request_log_dict, self.prism_daemon_request_log_dict,\
                                         self.prism_tomcat_callbackV2_log_dict, self.prism_daemon_callbackV2_log_dict,\
                                         self.prism_tomcat_perf_log_dict, self.prism_daemon_perf_log_dict,\
+                                        self.prism_tomcat_handler_info_dict, self.prism_daemon_handler_info_dict, \
                                         self.prism_smsd_tlog_dict, self.oarm_uid)
         
         

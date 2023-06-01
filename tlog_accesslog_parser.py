@@ -89,14 +89,14 @@ class TlogAccessLogParser:
                                 
                                 if self.stck_sub_type:
                                     latest_thread = thread
-                                    self.is_daemon_log = daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, self.stck_sub_type, self.input_tags)
+                                    self.is_daemon_log = daemonLogProcessor_object.process_daemon_log_init(pname, thread, None, self.task_types, self.stck_sub_type, self.input_tags)
                                     
                                     if pname == "PRISM_DEAMON":
                                         self.is_query_reprocessing_required(self.is_daemon_log, value)
                                 else:
                                     latest_thread = thread
                                     logging.info('reached thread: %s', latest_thread)
-                                    self.is_daemon_log = daemonLogProcessor_object.process_daemon_log(pname, thread, None, self.task_types, tlog_header_data_dict[thread]["SUB_TYPE"], self.input_tags)
+                                    self.is_daemon_log = daemonLogProcessor_object.process_daemon_log_init(pname, thread, None, self.task_types, tlog_header_data_dict[thread]["SUB_TYPE"], self.input_tags)
                                     
                                     self.is_query_reprocessing_required(self.is_daemon_log, value)
                 
@@ -116,7 +116,7 @@ class TlogAccessLogParser:
                             # if status.value == sms_tlog["STATUS"]:
                                     if not self.prism_smsd_out_folder:
                                         self.create_process_folder(pname, folder)
-                                    daemonLogProcessor_object.process_daemon_log(pname, sms_tlog["THREAD"], None, None, None, None)
+                                    daemonLogProcessor_object.process_daemon_log_init(pname, sms_tlog["THREAD"], None, None, None, None)
             return self.subscriptions_data        
         except KeyError as error:
             logging.exception(error)

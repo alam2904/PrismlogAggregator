@@ -37,118 +37,132 @@ class DaemonLogProcessor:
         
         self.hostname = socket.gethostname()
         self.onmopay_out_folder = False
-        
-    def process_daemon_log(self, pname, tlog_thread, ctid, task_types, sub_type, input_tag):
-        #creating out file writter object for writting log to out file
-        fileWriter_object = FileWriter(self.outputDirectory_object, self.oarm_uid)
-        
-        if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON" or pname == "PRISM_SMSD":
+    
+    def process_daemon_log_init(self, pname, tlog_thread, ctid, task_types, sub_type, input_tag):
+        if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             #msisdn log processing
             logging.info("input tag: %s", input_tag)
             index = 0
             for task_type in task_types:
-                # input_tag = input_tag[index]
-                try:
+                self.process_daemon_log(pname, tlog_thread, ctid, task_type, sub_type, input_tag, index)
+                index += 1
+        elif pname == "PRISM_SMSD":
+            self.process_daemon_log(pname, tlog_thread, ctid, task_types, sub_type, input_tag)
+            
+        
+    def process_daemon_log(self, pname, tlog_thread, ctid, task_type, sub_type, input_tag, index=None):
+        #creating out file writter object for writting log to out file
+        fileWriter_object = FileWriter(self.outputDirectory_object, self.oarm_uid)
+        
+        if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON" or pname == "PRISM_SMSD":
+            # #msisdn log processing
+            # logging.info("input tag: %s", input_tag)
+            # index = 0
+            # for task_type in task_types:
+            # input_tag = input_tag[index]
+            try:
+                self.reinitialize_constructor_parameter()
+                
+                if pname == "PRISM_TOMCAT":
+                    self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_TEST_{}_log".format(self.validation_object.fmsisdn)])
+                elif pname == "PRISM_DEAMON":
+                    self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_TEST_{}_log".format(self.validation_object.fmsisdn)])
+                
+                self.fetch_daemon_log(tlog_thread, self.log_files) 
+                    
+                if self.issue_record:
+                    self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+            except KeyError as error:
+                logging.error(error)
+            
+            #queue id 99 processing
+            try:
+                if not self.issue_record:
+                    self.reinitialize_constructor_parameter()
+                        
+                    if pname == "PRISM_TOMCAT":
+                        self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PROCESSOR_99_log"])
+                    elif pname == "PRISM_DEAMON":
+                        self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_PROCESSOR_99_log"])
+                    elif pname == "PRISM_SMSD":
+                        self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_PROCESSOR_99_log"])
+                        
+                    self.fetch_daemon_log(tlog_thread, self.log_files) 
+                    
+                    if self.issue_record:
+                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+            except KeyError as error:
+                logging.info(error)
+            
+            #prism/tomcat log processing
+            try:
+                if not self.issue_record:
                     self.reinitialize_constructor_parameter()
                     
                     if pname == "PRISM_TOMCAT":
-                        self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_TEST_{}_log".format(self.validation_object.fmsisdn)])
+                        self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_log"])
                     elif pname == "PRISM_DEAMON":
-                        self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_TEST_{}_log".format(self.validation_object.fmsisdn)])
+                        self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_PRISM_log"])
+                    elif pname == "PRISM_SMSD":
+                        self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_PRISM_log"])
+                    
+                    self.fetch_daemon_log(tlog_thread, self.log_files)
+                    
+                    if self.issue_record:
+                        if index:
+                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                        else:
+                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type)
+            except KeyError as error:
+                logging.info(error)
+            
+            #prism/tomcat root log processing
+            try:
+                if not self.issue_record:
+                    self.reinitialize_constructor_parameter()
+                    
+                    if pname == "PRISM_TOMCAT":
+                        self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_ROOT_log"])
+                    elif pname == "PRISM_DEAMON":
+                        self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_ROOT_log"])
+                    elif pname == "PRISM_SMSD":
+                        self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_ROOT_log"])
                     
                     self.fetch_daemon_log(tlog_thread, self.log_files) 
-                        
+                    
                     if self.issue_record:
                         self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
-                except KeyError as error:
-                    logging.error(error)
-                
-                #queue id 99 processing
-                try:
-                    if not self.issue_record:
-                        self.reinitialize_constructor_parameter()
-                            
-                        if pname == "PRISM_TOMCAT":
-                            self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PROCESSOR_99_log"])
-                        elif pname == "PRISM_DEAMON":
-                            self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_PROCESSOR_99_log"])
-                        elif pname == "PRISM_SMSD":
-                            self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_PROCESSOR_99_log"])
-                            
-                        self.fetch_daemon_log(tlog_thread, self.log_files) 
-                        
-                        if self.issue_record:
-                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
-                except KeyError as error:
-                    logging.info(error)
-                
-                #prism/tomcat log processing
-                try:
-                    if not self.issue_record:
-                        self.reinitialize_constructor_parameter()
-                        
-                        if pname == "PRISM_TOMCAT":
-                            self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_log"])
-                        elif pname == "PRISM_DEAMON":
-                            self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_PRISM_log"])
-                        elif pname == "PRISM_SMSD":
-                            self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_PRISM_log"])
-                        
-                        self.fetch_daemon_log(tlog_thread, self.log_files) 
-                        
-                        if self.issue_record:
-                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
-                except KeyError as error:
-                    logging.info(error)
-                
-                #prism/tomcat root log processing
-                try:
-                    if not self.issue_record:
-                        self.reinitialize_constructor_parameter()
-                        
-                        if pname == "PRISM_TOMCAT":
-                            self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_ROOT_log"])
-                        elif pname == "PRISM_DEAMON":
-                            self.log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_ROOT_log"])
-                        elif pname == "PRISM_SMSD":
-                            self.log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_ROOT_log"])
-                        
-                        self.fetch_daemon_log(tlog_thread, self.log_files) 
-                        
-                        if self.issue_record:
-                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
-                except KeyError as error:
-                    logging.info(error)
-                
-                #prism/tomcat log backup dated file processing
-                try:
-                    if not self.issue_record:
-                        
-                        self.reinitialize_constructor_parameter()
-                        self.is_backup_file = True
-                        self.dated_log_files(pname)
-                        self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
-                        
-                        if self.issue_record:
-                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
-                except KeyError as error:
-                    logging.info(error)
-                
-                #prism/tomcat root log backup dated file processing
-                try:
-                    if not self.issue_record:
-                        
-                        self.reinitialize_constructor_parameter()
-                        self.is_backup_root_file = True
-                        self.dated_log_files(pname)
-                        self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
-                        
-                        if self.issue_record:
-                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
-                except KeyError as error:
-                    logging.info(error)
+            except KeyError as error:
+                logging.info(error)
+            
+            #prism/tomcat log backup dated file processing
+            try:
+                if not self.issue_record:
                     
-                index += 1
+                    self.reinitialize_constructor_parameter()
+                    self.is_backup_file = True
+                    self.dated_log_files(pname)
+                    self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
+                    
+                    if self.issue_record:
+                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+            except KeyError as error:
+                logging.info(error)
+            
+            #prism/tomcat root log backup dated file processing
+            try:
+                if not self.issue_record:
+                    
+                    self.reinitialize_constructor_parameter()
+                    self.is_backup_root_file = True
+                    self.dated_log_files(pname)
+                    self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
+                    
+                    if self.issue_record:
+                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+            except KeyError as error:
+                logging.info(error)
+                    
             if not self.is_trimmed_log:
                 return False
             return True

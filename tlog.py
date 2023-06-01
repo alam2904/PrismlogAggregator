@@ -7,6 +7,7 @@ from log_files import LogFileFinder
 from collections import defaultdict
 from tlog_accesslog_parser import TlogAccessLogParser
 from collections import OrderedDict
+from configManager import ConfigManager
 
 
 class Tlog:
@@ -22,7 +23,8 @@ class Tlog:
                     prism_daemon_handler_generic_http_req_resp_dict, prism_tomcat_handler_generic_soap_req_resp_dict,\
                     prism_daemon_handler_generic_soap_req_resp_dict, prism_tomcat_request_log_dict,\
                     prism_daemon_request_log_dict, prism_tomcat_callbackV2_log_dict, prism_daemon_callbackV2_log_dict,\
-                    prism_tomcat_perf_log_dict, prism_daemon_perf_log_dict, prism_smsd_tlog_dict, oarm_uid):
+                    prism_tomcat_perf_log_dict, prism_daemon_perf_log_dict, prism_tomcat_handler_info_dict, prism_daemon_handler_info_dict,\
+                    prism_smsd_tlog_dict, oarm_uid):
         
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
@@ -66,7 +68,7 @@ class Tlog:
         self.prism_data_dict = prism_data_dict
         self.config = config
         self.issue_task_types = []
-        self.issue_handler_id = []
+        self.issue_handler_ids = []
         
         self.prism_ctid = prism_ctid
         self.prism_tomcat_tlog_dict = prism_tomcat_tlog_dict
@@ -85,6 +87,8 @@ class Tlog:
         self.prism_daemon_callbackV2_log_dict = prism_daemon_callbackV2_log_dict
         self.prism_tomcat_perf_log_dict = prism_tomcat_perf_log_dict
         self.prism_daemon_perf_log_dict = prism_daemon_perf_log_dict
+        self.prism_tomcat_handler_info_dict = prism_tomcat_handler_info_dict
+        self.prism_daemon_handler_info_dict = prism_daemon_handler_info_dict
         
         self.prism_smsd_tlog_dict = prism_smsd_tlog_dict
         self.oarm_uid = oarm_uid
@@ -627,13 +631,27 @@ class Tlog:
                         for ptask in value["PERF_TASK"]:
                             if task in ptask:
                                 handler_id = str(ptask).split(task)[1].split(",")[0]
-                                if handler_id not in self.issue_handler_id:
-                                    self.issue_handler_id.append(handler_id)
-            
-            logging.info('issue handler ids are: %s', self.issue_handler_id)
-                            
+                                if handler_id not in self.issue_handler_ids:
+                                    self.issue_handler_ids.append(handler_id)
+            logging.info('issue handler ids are: %s', self.issue_handler_ids)
         except KeyError as error:
             logging.info(error)
+        
+        if self.issue_handler_ids:
+            configManager_object = ConfigManager()
+            configManager_object.getHandlerConfig(self.issue_handler_ids)
+            logging.info('pname: %s & handler info: %s', pname, configManager_object.handler_info)
+            
+            # if configManager_object.handler_info:
+            if pname == "PRISM_TOMCAT_PERF_LOG":
+                self.prism_tomcat_handler_info_dict = {"PRISM_TOMCAT_HANDLER_INFO": configManager_object.handler_info}
+                self.prism_data_dict_list.append(self.prism_tomcat_handler_info_dict)
+                
+            elif pname == "PRISM_DAEMON_PERF_LOG":
+                self.prism_daemon_handler_info_dict = {"PRISM_DEAMON_HANDLER_INFO": configManager_object.handler_info}
+                self.prism_data_dict_list.append(self.prism_daemon_handler_info_dict)
+                # logging.info('prism realtime tlogs handler: %s', str(self.prism_tomcat_tlog_dict).replace("'", '"'))
+                
     
     def perf_map(self, header, thread, splitted_data, data_dict, flow_tasks_element, index_count):
         logging.info('length of perf splitted data: %s', len(splitted_data))
