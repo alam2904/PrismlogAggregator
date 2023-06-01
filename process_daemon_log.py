@@ -47,8 +47,7 @@ class DaemonLogProcessor:
                 self.process_daemon_log(pname, tlog_thread, ctid, task_type, sub_type, input_tag, index)
                 index += 1
         elif pname == "PRISM_SMSD":
-            self.process_daemon_log(pname, tlog_thread, ctid, task_types, sub_type, input_tag)
-            
+            self.process_daemon_log(pname, tlog_thread, ctid, task_types, sub_type, input_tag)   
         
     def process_daemon_log(self, pname, tlog_thread, ctid, task_type, sub_type, input_tag, index=None):
         #creating out file writter object for writting log to out file

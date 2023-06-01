@@ -28,22 +28,29 @@ class ConfigManager:
             for id in handler_ids:
                 # Prepare the SQL statement
                 Query = "SELECT * FROM HANDLER_INFO WHERE handler_id ='{}'".format(id)
-                query_type = "SELECT"
-                logging.info('SELECT_QUERY: %s', Query)
+                self.get_handler_info_map(Query, db_connection)
                 
-                # Create a QueryExecutor instance with the connection object
-                query_executor = QueryExecutor(db_connection)
-
-                # Execute the query
-                query_executor.execute(query_type, Query)
+                Query = "SELECT * FROM HANDLER_MAP WHERE handler_id ='{}'".format(id)
+                self.get_handler_info_map(Query, db_connection)
                 
-                if query_executor.formatted_row:
-                    result_set = query_executor.formatted_row
-                    
-                    # Convert result_set(ordered dictionary) to JSON object
-                    h_info = json.dumps(result_set)
-                    
-                    self.handler_info.append(json.loads(h_info, object_pairs_hook=OrderedDict))
-                    logging.info("handler_info ordered dict: %s", self.handler_info)
         except Exception as ex:
             logging.info(ex)
+        
+        logging.info("handler ordered dict: %s", self.handler_info)
+    
+    def get_handler_info_map(self, query, conn):
+        query_type = "SELECT"
+        logging.info('SELECT_QUERY: %s', query)
+        # Create a QueryExecutor instance with the connection object
+        query_executor = QueryExecutor(conn)
+
+        # Execute the query
+        query_executor.execute(query_type, query)
+        
+        if query_executor.formatted_row:
+            result_set = query_executor.formatted_row
+            
+            # Convert result_set(ordered dictionary) to JSON object
+            h_info = json.dumps(result_set)
+            
+            self.handler_info.append(json.loads(h_info, object_pairs_hook=OrderedDict))

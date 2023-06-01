@@ -16,7 +16,7 @@ class TlogProcessor:
                     prism_tomcat_request_log_dict, prism_daemon_request_log_dict,\
                     prism_tomcat_callbackV2_log_dict, prism_daemon_callbackV2_log_dict,\
                     prism_tomcat_perf_log_dict, prism_daemon_perf_log_dict,\
-                    prism_tomcat_handler_info_dict, prism_daemon_handler_info_dict,\
+                    prism_handler_info_dict, issue_task_types, issue_handler_ids,\
                     prism_smsd_tlog_dict, oarm_uid):
         
         self.initializedPath_object = initializedPath_object
@@ -44,11 +44,14 @@ class TlogProcessor:
         self.prism_daemon_callbackV2_log_dict = prism_daemon_callbackV2_log_dict
         self.prism_tomcat_perf_log_dict = prism_tomcat_perf_log_dict
         self.prism_daemon_perf_log_dict = prism_daemon_perf_log_dict
-        self.prism_tomcat_handler_info_dict = prism_tomcat_handler_info_dict
-        self.prism_daemon_handler_info_dict = prism_daemon_handler_info_dict
+        self.prism_handler_info_dict = prism_handler_info_dict
+        self.issue_task_types = issue_task_types
+        self.issue_handler_ids = issue_handler_ids
         
         self.prism_smsd_tlog_dict = prism_smsd_tlog_dict
         self.oarm_uid = oarm_uid
+        
+        self.combined_perf_data = []
         
     def process_tlog(self, pname):
         
@@ -63,8 +66,8 @@ class TlogProcessor:
                             self.prism_daemon_handler_generic_soap_req_resp_dict,\
                             self.prism_tomcat_request_log_dict, self.prism_daemon_request_log_dict,\
                             self.prism_tomcat_callbackV2_log_dict, self.prism_daemon_callbackV2_log_dict,\
-                            self.prism_tomcat_perf_log_dict, self.prism_daemon_perf_log_dict,\
-                            self.prism_tomcat_handler_info_dict, self.prism_daemon_handler_info_dict,\
+                            self.prism_tomcat_perf_log_dict, self.prism_daemon_perf_log_dict, self.combined_perf_data,\
+                            self.prism_handler_info_dict, self.issue_task_types, self.issue_handler_ids,\
                             self.prism_smsd_tlog_dict, self.oarm_uid)
           
         if pname == "PRISM_TOMCAT":
@@ -114,6 +117,10 @@ class TlogProcessor:
             #fetching prism daemon perf log
             if self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_perf_log_path"]:
                 tlog_object.get_tlog("PRISM_DAEMON_PERF_LOG")
+            
+            logging.info('issue tasks are: %s', self.issue_task_types)
+            if self.issue_task_types:
+                tlog_object.get_issue_handler_details()
         
         elif pname == "PRISM_SMSD":
             tlog_object.get_tlog(pname)
