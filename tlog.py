@@ -8,6 +8,7 @@ from collections import defaultdict
 from tlog_accesslog_parser import TlogAccessLogParser
 from collections import OrderedDict
 from configManager import ConfigManager
+from input_tags import PrismTasks, PrismFlowId
 
 
 class Tlog:
@@ -24,7 +25,7 @@ class Tlog:
                     prism_daemon_handler_generic_soap_req_resp_dict, prism_tomcat_request_log_dict,\
                     prism_daemon_request_log_dict, prism_tomcat_callbackV2_log_dict, prism_daemon_callbackV2_log_dict,\
                     prism_tomcat_perf_log_dict, prism_daemon_perf_log_dict, combined_perf_data, prism_handler_info_dict,\
-                    issue_task_types, issue_handler_ids, prism_smsd_tlog_dict, oarm_uid):
+                    issue_task_types, issue_handler_task_type_map, prism_smsd_tlog_dict, oarm_uid):
         
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
@@ -68,7 +69,7 @@ class Tlog:
         self.prism_data_dict = prism_data_dict
         self.config = config
         self.issue_task_types = issue_task_types
-        self.issue_handler_ids = issue_handler_ids
+        self.issue_handler_task_type_map = issue_handler_task_type_map
         
         self.prism_ctid = prism_ctid
         self.prism_tomcat_tlog_dict = prism_tomcat_tlog_dict
@@ -623,28 +624,55 @@ class Tlog:
     def get_issue_handler_details(self):
         try:
             logging.info('combined perf data: %s', self.combined_perf_data)
+            
             if self.issue_task_types:
                 for perf_data in self.combined_perf_data: 
                     for key, value in perf_data.items():
-                        for task in self.issue_task_types:
-                            task = str(task).replace("=", ",")
+                        for item in self.issue_task_types:
+                            task_name, task_value, sub_type, charge_type = item
+                            task = str(task_value).replace("=", ",")
                             # logging.info('perf task list: %s', value["PERF_TASK"])
                             for ptask in value["PERF_TASK"]:
                                 if task in ptask:
                                     handler_id = str(ptask).split(task)[1].split(",")[0]
-                                    if handler_id not in self.issue_handler_ids:
-                                        self.issue_handler_ids.append(handler_id)
-            logging.info('issue handler ids are: %s', self.issue_handler_ids)
+                                    
+                                    task_type = ""
+                                    for ptask_name, ptask_value in PrismTasks.__dict__.items():
+                                        if not ptask_name.startswith("__"):
+                                            if ptask_name == task_name:
+                                                task_type = ptask_value
+                                    
+                                    flow_id = ""
+                                    for ch_type, f_id in PrismFlowId.__dict__.items():
+                                        if charge_type == str(ch_type):
+                                            flow_id = f_id 
+                                    
+                                    #task type and handler id mapping
+                                    task_handler_map = [task_type, handler_id, sub_type, flow_id]
+                                    logging.info('task_handler_map: %s', task_handler_map)
+                                    
+                                    if task_handler_map not in self.issue_handler_task_type_map:
+                                        self.issue_handler_task_type_map.append(task_handler_map)
+            logging.info('issue_handler_task_type_map: %s', self.issue_handler_task_type_map)
         except KeyError as error:
             logging.info(error)
         
-        if self.issue_handler_ids:
+        if self.issue_handler_task_type_map:
+            handler_info_details = defaultdict(list)
+            handler_map_details = defaultdict(list)
+            handler_details = []
+            
             configManager_object = ConfigManager()
-            configManager_object.getHandlerConfig(self.issue_handler_ids)
-            logging.info('handler details: %s', configManager_object.handler_info)
+            configManager_object.getHandlerInfo(self.issue_handler_task_type_map, "handler_info")
+            logging.info('handler info details: %s', configManager_object.handler_info)
+            handler_details.append(configManager_object.handler_info)
+            configManager_object.getHandlerInfo(self.issue_handler_task_type_map, "handler_map")
+            logging.info('handler map details: %s', configManager_object.handler_map)
+            handler_details.append(configManager_object.handler_map)
+            
             
             # if configManager_object.handler_info:
-            self.prism_handler_info_dict = {"PRISM_ISSUE_HANDLER_DETAILS": configManager_object.handler_info}
+            self.prism_handler_info_dict = {"PRISM_ISSUE_HANDLER_DETAILS": handler_details}
             self.prism_data_dict_list.append(self.prism_handler_info_dict)
                 
             

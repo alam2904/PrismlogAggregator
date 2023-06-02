@@ -16,7 +16,7 @@ class TlogProcessor:
                     prism_tomcat_request_log_dict, prism_daemon_request_log_dict,\
                     prism_tomcat_callbackV2_log_dict, prism_daemon_callbackV2_log_dict,\
                     prism_tomcat_perf_log_dict, prism_daemon_perf_log_dict,\
-                    prism_handler_info_dict, issue_task_types, issue_handler_ids,\
+                    prism_handler_info_dict, issue_task_types, issue_handler_task_type_map,\
                     prism_smsd_tlog_dict, oarm_uid):
         
         self.initializedPath_object = initializedPath_object
@@ -46,7 +46,7 @@ class TlogProcessor:
         self.prism_daemon_perf_log_dict = prism_daemon_perf_log_dict
         self.prism_handler_info_dict = prism_handler_info_dict
         self.issue_task_types = issue_task_types
-        self.issue_handler_ids = issue_handler_ids
+        self.issue_handler_task_type_map = issue_handler_task_type_map
         
         self.prism_smsd_tlog_dict = prism_smsd_tlog_dict
         self.oarm_uid = oarm_uid
@@ -67,7 +67,7 @@ class TlogProcessor:
                             self.prism_tomcat_request_log_dict, self.prism_daemon_request_log_dict,\
                             self.prism_tomcat_callbackV2_log_dict, self.prism_daemon_callbackV2_log_dict,\
                             self.prism_tomcat_perf_log_dict, self.prism_daemon_perf_log_dict, self.combined_perf_data,\
-                            self.prism_handler_info_dict, self.issue_task_types, self.issue_handler_ids,\
+                            self.prism_handler_info_dict, self.issue_task_types, self.issue_handler_task_type_map,\
                             self.prism_smsd_tlog_dict, self.oarm_uid)
           
         if pname == "PRISM_TOMCAT":

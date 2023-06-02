@@ -160,9 +160,17 @@ class TlogAccessLogParser:
                             if "#PUSH" in task:
                                 logging.info('prism flow tasks: %s', task)
                             
+                            if var_name == "SUB_TYPE_CHECK":
+                                sub_type = 'A'
+                            else:
+                                sub_type = tlog_dict["SUB_TYPE"]
+                            
+                            charge_type = tlog_dict["CHARGE_TYPE"]
+                            
                             #list of tasks for which handler details will be fetched later
-                            if var_value not in self.issue_task_types:
-                                self.issue_task_types.append(var_value)
+                            if [var_name, var_value, sub_type, charge_type] not in self.issue_task_types:
+                                task_name_type = [var_name, var_value, sub_type, charge_type]
+                                self.issue_task_types.append(task_name_type)
                                 logging.info("input tags: %s", self.issue_task_types)
                             
                             #substitution parameters

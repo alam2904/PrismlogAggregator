@@ -42,7 +42,7 @@ class PROCESSOR:
         self.prism_daemon_perf_log_dict = {}
         self.prism_handler_info_dict = {}
         self.issue_task_types = []
-        self.issue_handler_ids = []
+        self.issue_handler_task_type_map = []
         self.stop_prism_process = False
         self.hostname = socket.gethostname()
     
@@ -59,7 +59,7 @@ class PROCESSOR:
                                         self.prism_tomcat_request_log_dict, self.prism_daemon_request_log_dict,\
                                         self.prism_tomcat_callbackV2_log_dict, self.prism_daemon_callbackV2_log_dict,\
                                         self.prism_tomcat_perf_log_dict, self.prism_daemon_perf_log_dict,\
-                                        self.prism_handler_info_dict, self.issue_task_types, self.issue_handler_ids,\
+                                        self.prism_handler_info_dict, self.issue_task_types, self.issue_handler_task_type_map,\
                                         self.prism_smsd_tlog_dict, self.oarm_uid)
         
         

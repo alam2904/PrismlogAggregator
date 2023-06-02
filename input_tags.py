@@ -189,4 +189,13 @@ class PrismTasks(object):
     GENERIC_TASK1 = "G1"
     GENERIC_TASK2 = "G2"
     GENERIC_TASK3 = "G3"
-    GENERIC_TASK4 = "G4"    
+    GENERIC_TASK4 = "G4"
+    
+class PrismFlowId(object):
+    #charge type flow id mapping
+    A = 1
+    R = 2
+    U = 4
+    D = 3
+    J = 2
+    

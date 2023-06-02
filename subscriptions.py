@@ -44,8 +44,8 @@ class SubscriptionController:
                     # Execute the query
                     query_executor.execute(query_type, Query)
                     
-                    if query_executor.formatted_row:
-                        result_set = query_executor.formatted_row
+                    if query_executor.result_set:
+                        result_set = query_executor.result_set
                         
                         # Convert result_set(ordered dictionary) to JSON object
                         subscription_json_object = json.dumps(result_set)
@@ -70,8 +70,8 @@ class SubscriptionController:
                 # Execute the query
                 query_executor.execute(query_type, Query)
                 
-                if query_executor.formatted_row:
-                    result_set = query_executor.formatted_row
+                if query_executor.result_set:
+                    result_set = query_executor.result_set
                     
                     # Convert result_set(ordered dictionary) to JSON object
                     subscription_json_object = json.dumps(result_set)

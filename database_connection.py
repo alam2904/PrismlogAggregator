@@ -22,6 +22,7 @@ class DatabaseConnection:
     def execute_select(self, query):
         cursor = self.connection.cursor()
         cursor.execute(query)
+            
         column_names = [desc[0] for desc in cursor.description]
         results = cursor.fetchall()
         cursor.close()
