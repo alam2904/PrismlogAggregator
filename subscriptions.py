@@ -15,7 +15,7 @@ class SubscriptionController:
         self.sbn_thread_dict = sbn_thread_dict
         self.tlog_data_dict = tlog_data_dict
         self.process_subs_data = process_subs_data
-        self.subscription_data = None
+        self.subscription_data = []
         self.pname = pname
         
     def get_subscription(self, reprocess_sbnId=None):
@@ -51,7 +51,7 @@ class SubscriptionController:
                         subscription_json_object = json.dumps(result_set)
                         logging.info("subscription json object before update: %s", subscription_json_object)
                         
-                        self.subscription_data = json.loads(subscription_json_object, object_pairs_hook=OrderedDict)
+                        self.subscription_data.append(json.loads(subscription_json_object, object_pairs_hook=OrderedDict))
                         if self.pname == "PRISM_TOMCAT":
                             current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                             if self.subscription_data["charge_schedule"] > current_system_datetime:
@@ -78,7 +78,7 @@ class SubscriptionController:
                     logging.info("subscription json object after update: %s", subscription_json_object)
                     
                     self.constructor_parameter_reinitialize()
-                    self.subscription_data = json.loads(subscription_json_object, object_pairs_hook=OrderedDict)
+                    self.subscription_data.append(json.loads(subscription_json_object, object_pairs_hook=OrderedDict))
             
             return self.subscription_data
         except Exception as ex:
@@ -110,7 +110,7 @@ class SubscriptionController:
                 self.get_subscription(sbnId)
     
     def constructor_parameter_reinitialize(self):
-        self.subscription_data = None
+        self.subscription_data = []
             
             
             

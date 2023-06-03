@@ -348,13 +348,16 @@ class Tlog:
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             logging.info('subscriptions data is: %s', self.subscriptions_data)
-            last_modified_time = self.subscriptions_data["last_modified_time"]
-            logging.info('last modified time: %s', last_modified_time)
             
-            reprocessed_tlog_files = logfile_object.get_tlog_files(pname, last_modified_time)
-            logging.info('reprocessed tlog files: %s', reprocessed_tlog_files)
+            for subscription in self.subscriptions_data:
+                last_modified_time = subscription["last_modified_time"]
+                logging.info('last modified time: %s', last_modified_time)
+                
+                reprocessed_tlog_files = logfile_object.get_tlog_files(pname, last_modified_time)
             
-            self.lastModifiedTime_based_tlog_fetch(pname, reprocessed_tlog_files, last_modified_time)
+                logging.info('reprocessed tlog files: %s', reprocessed_tlog_files)
+                
+                self.lastModifiedTime_based_tlog_fetch(pname, reprocessed_tlog_files, last_modified_time)
             
             if self.reprocessed_tlog_record:
                 data_list = []
@@ -367,7 +370,6 @@ class Tlog:
                 # logging.info('msisdn_data_dict: %s', self.msisdn_data_dict)
     
     def lastModifiedTime_based_tlog_fetch(self, pname, files, last_modified_time):
-        self.reprocessed_constructor_parameter_reinitialize()
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             # temp_map = self.prism_ctid  //support not available for now
             msisdn = self.validation_object.fmsisdn
@@ -658,18 +660,20 @@ class Tlog:
             logging.info(error)
         
         if self.issue_handler_task_type_map:
-            handler_info_details = defaultdict(list)
-            handler_map_details = defaultdict(list)
+            handler_info_details = {}
+            handler_map_details = {}
             handler_details = []
             
             configManager_object = ConfigManager()
             configManager_object.getHandlerInfo(self.issue_handler_task_type_map, "handler_info")
             logging.info('handler info details: %s', configManager_object.handler_info)
-            handler_details.append(configManager_object.handler_info)
-            configManager_object.getHandlerInfo(self.issue_handler_task_type_map, "handler_map")
-            logging.info('handler map details: %s', configManager_object.handler_map)
-            handler_details.append(configManager_object.handler_map)
+            handler_info_details["HANDLER_INFO"] = configManager_object.handler_info
+            handler_details.append(handler_info_details)
             
+            configManager_object.getHandlerMap(self.issue_handler_task_type_map, "handler_map")
+            logging.info('handler map details: %s', configManager_object.handler_map)
+            handler_map_details["HANDLER_MAP"] = configManager_object.handler_map
+            handler_details.append(handler_map_details)
             
             # if configManager_object.handler_info:
             self.prism_handler_info_dict = {"PRISM_ISSUE_HANDLER_DETAILS": handler_details}
