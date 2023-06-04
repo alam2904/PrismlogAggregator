@@ -9,9 +9,9 @@ class QueryExecutor:
         self.result_set = []
         self.is_success = False
 
-    def execute(self, query_type, query):
+    def execute(self, query_type, query, params):
         if query_type == "SELECT":
-            column_names, results = self.connection.execute_select(query)
+            column_names, results = self.connection.execute_select(query, params)
                 
             # column_names = [desc[0] for desc in self.connection.cursor().description]
             logging.info('result set: %s', results)
@@ -35,5 +35,5 @@ class QueryExecutor:
         elif query_type == "UPDATE":
             # Prepare the SQL statement
             # query = "UPDATE subscriptions SET QUEUE_ID = 99, PMT_STATUS = '%d', TASK_TYPE = '%s' WHERE SBN_ID = '%d'"
-            if self.connection.execute_update(query):
+            if self.connection.execute_update(query, params):
                 self.is_success = True

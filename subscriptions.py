@@ -34,15 +34,15 @@ class SubscriptionController:
             if self.process_subs_data:
                 for sbnId, thread in self.sbn_thread_dict.items():
                     # Prepare the SQL statement
-                    Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id='{}'".format(sbnId)
+                    Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id = %s"
                     query_type = "SELECT"
-                    logging.info('SELECT_QUERY: %s', Query)
+                    logging.info('SELECT_QUERY: %s and params: %s', Query, sbnId)
                     
                     # Create a QueryExecutor instance with the connection object
                     query_executor = QueryExecutor(db_connection)
 
                     # Execute the query
-                    query_executor.execute(query_type, Query)
+                    query_executor.execute(query_type, Query, sbnId)
                     
                     if query_executor.result_set:
                         result_set = query_executor.result_set
@@ -57,10 +57,10 @@ class SubscriptionController:
                             if self.subscription_data["charge_schedule"] > current_system_datetime:
                                 self.process_data(query_executor, sbnId, self.subscription_data)
                         else:
-                            self.process_data(query_executor, sbnId, self.subscription_data)
+                            self.process_data(query_executor, sbnId)
                            
             else:
-                Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id='{}'".format(reprocess_sbnId)
+                Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id = %s"
                 query_type = "SELECT"
                 # logging.info('SELECT_QUERY: %s', Query)
                 
@@ -68,7 +68,7 @@ class SubscriptionController:
                 query_executor = QueryExecutor(db_connection)
 
                 # Execute the query
-                query_executor.execute(query_type, Query)
+                query_executor.execute(query_type, Query, reprocess_sbnId)
                 
                 if query_executor.result_set:
                     result_set = query_executor.result_set
@@ -89,21 +89,40 @@ class SubscriptionController:
             logging.info('reached subs finally block')
             db_connection.close()
         
-    def process_data(self, query_executor, sbnId, subs_data):
+    def process_data(self, query_executor, sbnId):
         query_type = "UPDATE"
         Query = ""
         
-        if (subs_data["SUB_STATUS"] not in ('E', 'F') and (subs_data["task_type"] != 'N')):
-            if subs_data["pmt_status"] == 3 and subs_data["task_type"] == 'Q':
-                Query = "UPDATE subscriptions set queue_id = 99, task_status = '0', charge_schedule = now() where sbn_id = '{}'".format(sbnId)
-            elif subs_data["pmt_status"] == 3 and subs_data["task_type"] != 'Q':
-                Query = "UPDATE subscriptions set queue_id = 99, task_status = 0, charge_schedule = now() where sbn_id = '{}'".format(sbnId)
-        
+        # logging.info('subscription: %s', self.subscription_data)
+        for subscriptionRecords in self.subscription_data:
+            if subscriptionRecords:
+                for subscriptionRecord in subscriptionRecords:
+                    logging.info('subscription record: %s', subscriptionRecord)
+                    if subscriptionRecord:
+                        if (subscriptionRecord["SUB_STATUS"] not in ('E', 'F') and (subscriptionRecord["task_type"] != 'N')):
+                            if subscriptionRecord["pmt_status"] == 3 and subscriptionRecord["task_type"] == 'Q':
+                                queue_id = 99,
+                                task_status = 0
+                                charge_schedule = "now()"
+                                sbn_id = sbnId
+                                
+                                params = (queue_id, task_status, sbn_id)    
+                                Query = "UPDATE subscriptions set queue_id = %s, task_status = %s, charge_schedule = now() where sbn_id = %s"
+                            
+                            elif subscriptionRecord["pmt_status"] == 3 and subscriptionRecord["task_type"] != 'Q':
+                                queue_id = 99,
+                                task_status = 0
+                                charge_schedule = "now()"
+                                sbn_id = sbnId
+                                
+                                params = (queue_id, task_status, sbn_id)
+                                Query = "UPDATE SUBSCRIPTIONS SET queue_id = %s, task_status = %s, charge_schedule = now() where sbn_id = %s"
+            
         logging.info("Update query: %s", Query)
         
-        if Query:
+        if Query and params:
             # Execute update query
-            query_executor.execute(query_type, Query)
+            query_executor.execute(query_type, Query, params)
             if query_executor.is_success:
                 logging.info('is update success: %s', query_executor.is_success)
                 self.process_subs_data = False

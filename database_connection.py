@@ -19,18 +19,18 @@ class DatabaseConnection:
         if self.connection:
             self.connection.close()
     
-    def execute_select(self, query):
+    def execute_select(self, query, params):
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, params)
             
         column_names = [desc[0] for desc in cursor.description]
         results = cursor.fetchall()
         cursor.close()
         return column_names, results
     
-    def execute_update(self, query):
+    def execute_update(self, query, params):
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, params)
 
         # Check if the query was successful
         rows_affected = cursor.rowcount

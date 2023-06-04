@@ -313,7 +313,7 @@ class Tlog:
                     if not tlogAccessLogParser_object.is_daemon_log and self.subscriptions_data:
                         self.is_record_reprocessed = True
                         logging.info('daemon log not present')
-                        time.sleep(15)
+                        time.sleep(30)
                         if pname == "PRISM_DEAMON":
                             self.get_reprocessed_tlog(pname, tlogAccessLogParser_object)
     
@@ -349,15 +349,16 @@ class Tlog:
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             logging.info('subscriptions data is: %s', self.subscriptions_data)
             
-            for subscription in self.subscriptions_data:
-                last_modified_time = subscription["last_modified_time"]
-                logging.info('last modified time: %s', last_modified_time)
+            for subscriptions in self.subscriptions_data:
+                for subscription in subscriptions:
+                    last_modified_time = subscription["last_modified_time"]
+                    logging.info('last modified time: %s', last_modified_time)
+                    
+                    reprocessed_tlog_files = logfile_object.get_tlog_files(pname, last_modified_time)
                 
-                reprocessed_tlog_files = logfile_object.get_tlog_files(pname, last_modified_time)
-            
-                logging.info('reprocessed tlog files: %s', reprocessed_tlog_files)
-                
-                self.lastModifiedTime_based_tlog_fetch(pname, reprocessed_tlog_files, last_modified_time)
+                    logging.info('reprocessed tlog files: %s', reprocessed_tlog_files)
+                    
+                    self.lastModifiedTime_based_tlog_fetch(pname, reprocessed_tlog_files, last_modified_time)
             
             if self.reprocessed_tlog_record:
                 data_list = []
@@ -650,7 +651,7 @@ class Tlog:
                                             flow_id = f_id 
                                     
                                     #task type and handler id mapping
-                                    task_handler_map = [task_type, handler_id, sub_type, flow_id]
+                                    task_handler_map = (task_type, handler_id, sub_type, "-1")
                                     logging.info('task_handler_map: %s', task_handler_map)
                                     
                                     if task_handler_map not in self.issue_handler_task_type_map:

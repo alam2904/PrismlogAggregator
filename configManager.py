@@ -25,12 +25,12 @@ class ConfigManager:
     def getHandlerInfo(self, issue_handler_task_type_map, handler_table):
         # Connect to the database
         try:
-            for item in issue_handler_task_type_map:
-                task_type, handler_id, sub_type, flow_id = item
+            for params in issue_handler_task_type_map:
+                task_type, handler_id, sub_type, flow_id = params
                 # Prepare the SQL statement
                 
-                Query = "SELECT * FROM HANDLER_INFO WHERE handler_id = '{}'".format(handler_id)
-                self.get_handler_info_map(Query, self.db_connection, handler_table)
+                Query = "SELECT * FROM HANDLER_INFO WHERE handler_id = %s"
+                self.get_handler_info_map(Query, (handler_id,), self.db_connection, handler_table)
         except Exception as ex:
             logging.info(ex)
         
@@ -39,25 +39,26 @@ class ConfigManager:
     def getHandlerMap(self, issue_handler_task_type_map, handler_table):
         
         try:
-            for item in issue_handler_task_type_map:
-                task_type, handler_id, sub_type, flow_id = item
+            for params in issue_handler_task_type_map:
                 # Prepare the SQL statement
-                Query = "SELECT * FROM HANDLER_MAP WHERE sub_type = '{0}' AND task_type = '{1}' AND flow_id = '{2}' AND handler_id = '{3}'".format(sub_type, task_type, flow_id, handler_id)
-                self.get_handler_info_map(Query, self.db_connection, handler_table)
+                # Query = "SELECT * FROM HANDLER_MAP WHERE sub_type = '{0}' AND task_type = '{1}' AND flow_id = '{2}' AND handler_id = '{3}'".format(sub_type, task_type, flow_id, handler_id)
+                Query = "SELECT * FROM HANDLER_MAP WHERE task_type = %s AND handler_id = %s AND sub_type = %s AND flow_id = %s"
+
+                self.get_handler_info_map(Query, params, self.db_connection, handler_table)
         except Exception as ex:
             logging.info(ex)
         
         logging.info("handler_map: %s", self.handler_map)
     
-    def get_handler_info_map(self, query, conn, handler_table):
+    def get_handler_info_map(self, query, params, conn, handler_table):
         query_type = "SELECT"
-        logging.info('SELECT_QUERY: %s', query)
+        logging.info('SELECT_QUERY: %s and params: %s', query, params)
         
         # Create a QueryExecutor instance with the connection object
         query_executor = QueryExecutor(conn)
 
         # Execute the query
-        query_executor.execute(query_type, query)
+        query_executor.execute(query_type, query, params)
             
         if query_executor.result_set:
             result_set = query_executor.result_set

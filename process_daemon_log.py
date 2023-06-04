@@ -47,7 +47,11 @@ class DaemonLogProcessor:
                 self.process_daemon_log(pname, tlog_thread, ctid, task_type, sub_type, input_tag, index)
                 index += 1
         elif pname == "PRISM_SMSD":
-            self.process_daemon_log(pname, tlog_thread, ctid, task_types, sub_type, input_tag)   
+            self.process_daemon_log(pname, tlog_thread, ctid, task_types, sub_type, input_tag)
+        
+        if not self.is_trimmed_log:
+            return False
+        return True  
         
     def process_daemon_log(self, pname, tlog_thread, ctid, task_type, sub_type, input_tag, index=None):
         #creating out file writter object for writting log to out file
@@ -161,10 +165,6 @@ class DaemonLogProcessor:
                         self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
             except KeyError as error:
                 logging.info(error)
-                    
-            if not self.is_trimmed_log:
-                return False
-            return True
     
     def dated_log_files(self, pname):
         try:            
