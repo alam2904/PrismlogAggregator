@@ -100,10 +100,13 @@ class TlogAccessLogParser:
                                     
                                     self.is_query_reprocessing_required(self.is_daemon_log, value)
                 
-                if self.sbn_thread_dict:
+                logging.info('IS_SUB_REPROCESS_REQUIRED: %s', self.validation_object.is_sub_reprocess_required)
+                if self.sbn_thread_dict and self.validation_object.is_sub_reprocess_required:
                     logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
+                    
                     subscription_object = SubscriptionController(pname, self.sbn_thread_dict, tlog_header_data_dict, self.process_subs_data)
                     self.subscriptions_data = subscription_object.get_subscription()
+                    self.validation_object.is_sub_reprocess_required = False
                 
             elif pname == "PRISM_SMSD":
                 if self.log_mode == "error":

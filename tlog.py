@@ -646,12 +646,13 @@ class Tlog:
                                                 task_type = ptask_value
                                     
                                     flow_id = ""
+                                    default_flow_id = '-1'
                                     for ch_type, f_id in PrismFlowId.__dict__.items():
                                         if charge_type == str(ch_type):
                                             flow_id = f_id 
                                     
                                     #task type and handler id mapping
-                                    task_handler_map = (task_type, handler_id, sub_type, "-1")
+                                    task_handler_map = (task_type, handler_id, sub_type, flow_id, default_flow_id)
                                     logging.info('task_handler_map: %s', task_handler_map)
                                     
                                     if task_handler_map not in self.issue_handler_task_type_map:

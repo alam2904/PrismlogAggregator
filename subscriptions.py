@@ -55,9 +55,9 @@ class SubscriptionController:
                         if self.pname == "PRISM_TOMCAT":
                             current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                             if self.subscription_data["charge_schedule"] > current_system_datetime:
-                                self.process_data(query_executor, sbnId, self.subscription_data)
+                                self.update_query_formatter(query_executor, sbnId, self.subscription_data)
                         else:
-                            self.process_data(query_executor, sbnId)
+                            self.update_query_formatter(query_executor, sbnId)
                            
             else:
                 Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id = %s"
@@ -89,7 +89,7 @@ class SubscriptionController:
             logging.info('reached subs finally block')
             db_connection.close()
         
-    def process_data(self, query_executor, sbnId):
+    def update_query_formatter(self, query_executor, sbnId):
         query_type = "UPDATE"
         Query = ""
         
