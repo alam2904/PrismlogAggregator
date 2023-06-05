@@ -91,8 +91,7 @@ class TlogAccessLogParser:
                                     latest_thread = thread
                                     self.is_daemon_log = daemonLogProcessor_object.process_daemon_log_init(pname, thread, None, self.task_types, self.stck_sub_type, self.input_tags)
                                     
-                                    if pname == "PRISM_DEAMON":
-                                        self.is_query_reprocessing_required(self.is_daemon_log, value)
+                                    self.is_query_reprocessing_required(self.is_daemon_log, value)
                                 else:
                                     latest_thread = thread
                                     logging.info('reached thread: %s', latest_thread)
@@ -101,7 +100,7 @@ class TlogAccessLogParser:
                                     self.is_query_reprocessing_required(self.is_daemon_log, value)
                 
                 logging.info('IS_SUB_REPROCESS_REQUIRED: %s', self.validation_object.is_sub_reprocess_required)
-                if self.sbn_thread_dict and self.validation_object.is_sub_reprocess_required:
+                if self.sbn_thread_dict and self.validation_object.is_sub_reprocess_required:    
                     logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
                     
                     subscription_object = SubscriptionController(pname, self.sbn_thread_dict, tlog_header_data_dict, self.process_subs_data)

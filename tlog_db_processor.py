@@ -1,5 +1,6 @@
 import logging
 from tlog import Tlog
+from handler_files import HandlerFileProcessor
 
 class TlogProcessor:
     """
@@ -120,8 +121,12 @@ class TlogProcessor:
             
             logging.info('issue tasks are: %s', self.issue_task_types)
             if self.issue_task_types:
-                tlog_object.get_issue_handler_details()
-        
+                handler_info = tlog_object.get_issue_handler_details()
+                
+                if handler_info:
+                    handlerfile_object = HandlerFileProcessor(self.config, handler_info, self.outputDirectory_object, self.oarm_uid)
+                    handlerfile_object.getHandler_files()
+                    
         elif pname == "PRISM_SMSD":
             tlog_object.get_tlog(pname)
             

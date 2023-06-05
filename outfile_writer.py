@@ -120,7 +120,15 @@ class FileWriter:
         else:
             return False
 
-    
+    def write_handler_files(self, handler_files, folder):
+        # Execute the shell command to copy the file
+        try:
+            for file in handler_files:
+                if file: 
+                    shutil.copy(file, folder)
+        except IOError as error:
+            logging.error(error)
+        
     def set_initial_index(self, initial_index):
         """
         Setting initial index from

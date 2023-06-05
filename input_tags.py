@@ -198,4 +198,9 @@ class PrismFlowId(object):
     U = 4
     D = 3
     J = 2
+
+class PrismHandlerClass(object):
+    GENERIC_HTTP = "com.onmobile.prism.interfaceHandler.GenericHTTPHandlerV2"
+    GENERIC_SOAP = "com.onmobile.prism.interfaceHandler.GenericSoapHandler"
+    GENERIC_CDR = "com.onmobile.prism.interfaceHandler.universal.cdr.GenericCDRWriter"
     

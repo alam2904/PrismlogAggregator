@@ -313,7 +313,7 @@ class Tlog:
                     if not tlogAccessLogParser_object.is_daemon_log and self.subscriptions_data:
                         self.is_record_reprocessed = True
                         logging.info('daemon log not present')
-                        time.sleep(30)
+                        time.sleep(15)
                         if pname == "PRISM_DEAMON":
                             self.get_reprocessed_tlog(pname, tlogAccessLogParser_object)
     
@@ -628,6 +628,15 @@ class Tlog:
         try:
             logging.info('combined perf data: %s', self.combined_perf_data)
             
+            flow_id = ""
+            default_flow_id = '-1'
+            
+            if self.subscriptions_data:
+                for subscriptions in self.subscriptions_data:
+                    for subscription in subscriptions:
+                        flow_id = str(subscription["system_info"]).split("flowId:")[1].split("|")[0]
+                        logging.info('sys info flow_id: %s', flow_id)
+            
             if self.issue_task_types:
                 for perf_data in self.combined_perf_data: 
                     for key, value in perf_data.items():
@@ -645,15 +654,13 @@ class Tlog:
                                             if ptask_name == task_name:
                                                 task_type = ptask_value
                                     
-                                    flow_id = ""
-                                    default_flow_id = '-1'
-                                    for ch_type, f_id in PrismFlowId.__dict__.items():
-                                        if charge_type == str(ch_type):
-                                            flow_id = f_id 
+                                    if not flow_id:
+                                        for ch_type, f_id in PrismFlowId.__dict__.items():
+                                            if charge_type == str(ch_type):
+                                                flow_id = f_id 
                                     
                                     #task type and handler id mapping
                                     task_handler_map = (task_type, handler_id, sub_type, flow_id, default_flow_id)
-                                    logging.info('task_handler_map: %s', task_handler_map)
                                     
                                     if task_handler_map not in self.issue_handler_task_type_map:
                                         self.issue_handler_task_type_map.append(task_handler_map)
@@ -680,9 +687,9 @@ class Tlog:
             # if configManager_object.handler_info:
             self.prism_handler_info_dict = {"PRISM_ISSUE_HANDLER_DETAILS": handler_details}
             self.prism_data_dict_list.append(self.prism_handler_info_dict)
-                
+        
+        return handler_info_details
             
-    
     def perf_map(self, header, thread, splitted_data, data_dict, flow_tasks_element, index_count):
         logging.info('length of perf splitted data: %s', len(splitted_data))
         try:
