@@ -56,6 +56,7 @@ class DaemonLogProcessor:
     def process_daemon_log(self, pname, tlog_thread, ctid, task_type, sub_type, input_tag, index=None):
         #creating out file writter object for writting log to out file
         fileWriter_object = FileWriter(self.outputDirectory_object, self.oarm_uid)
+        logging.info("INPUT_TAG_INDEX: %s", input_tag[index])
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON" or pname == "PRISM_SMSD":
             # #msisdn log processing
@@ -112,10 +113,10 @@ class DaemonLogProcessor:
                     self.fetch_daemon_log(tlog_thread, self.log_files)
                     
                     if self.issue_record:
-                        if index:
-                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
-                        else:
-                            self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type)
+                        # if index != None:
+                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                        # else:
+                        # self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type)
             except KeyError as error:
                 logging.info(error)
             

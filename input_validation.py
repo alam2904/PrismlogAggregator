@@ -1,5 +1,5 @@
 from datetime import datetime
-from input_tags import logMode
+from status_tags import logMode
 import logging
 
 

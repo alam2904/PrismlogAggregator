@@ -6,7 +6,7 @@ import shutil
 import socket
 from zipfile import ZipFile
 import zipfile
-from input_tags import Prism_St_SString, Prism_En_SString
+from status_tags import Prism_St_SString, Prism_En_SString
 # import subprocess
 
 class FileWriter:
@@ -31,6 +31,7 @@ class FileWriter:
         process_folder = ""
         error_code = tlog_thread
         RequestOrigin = task_type
+        logging.info("INPUT_TAG_OUTFILE: %s", input_tag)
         
         if pname == "PRISM_TOMCAT":
             process_folder = os.path.join(self.outputDirectory_object, "{}_issue_prism_tomcat".format(self.hostname))                
@@ -120,11 +121,11 @@ class FileWriter:
         else:
             return False
 
-    def write_handler_files(self, handler_files, folder):
+    def write_handler_files(self, handler_files, macro_name_list, folder):
         # Execute the shell command to copy the file
         try:
             for file in handler_files:
-                if file: 
+                if file:
                     shutil.copy(file, folder)
         except IOError as error:
             logging.error(error)

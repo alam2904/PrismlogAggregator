@@ -1,7 +1,8 @@
 import logging
 import os
+import re
 import socket
-from input_tags import PrismHandlerClass
+from status_tags import PrismHandlerClass
 import xml.etree.ElementTree as ET
 from outfile_writer import FileWriter
 
@@ -18,6 +19,7 @@ class HandlerFileProcessor:
         self.web_services = []
         self.prism_deamon_conf_path = ""
         self.prism_tmcat_conf_path = ""
+        self.macro_name = []
     
     def getHandler_files(self):
         try:
@@ -61,27 +63,32 @@ class HandlerFileProcessor:
             for param in self.params:
                 root = ET.fromstring(param)
                 # Retrieve the value of the XML_PATH attribute
-                self.handler_files.append(root.find('params').get('XML_PATH'))
+                if root.find('params').get('XML_PATH') != None:
+                    self.handler_files.append(root.find('params').get('XML_PATH'))
                 
-                velocity_path = self.find_absolute_velocity_prop_path(root, 'VELOCITY_PROP_FILE_PATH')
-                logging.info("VELOCITY_PROP_FILE_PATH: %s", velocity_path)
-                if velocity_path:
-                    self.handler_files.append(velocity_path)
+                self.find_absolute_velocity_prop_path(root, 'VELOCITY_PROP_FILE_PATH')
                     
-                self.handler_files.append(root.find('params').get('RESPONSE_FILE'))
+                if ( root.find('params').get('RESPONSE_FILE') != None 
+                    and root.find('params').get('RESPONSE_FILE') not in self.handler_files):
+                    self.handler_files.append(root.find('params').get('RESPONSE_FILE'))
+                    
+                if root.find('params').get('REQUEST_FILE') != None:
+                    self.handler_files.append(root.find('params').get('REQUEST_FILE'))
                 
-                self.handler_files.append(root.find('params').get('REQUEST_FILE'))
-                self.handler_files.append(root.find('params').get('CONF_FILE'))
-                self.handler_files.append(root.find('params').get('RESPONSE_FILE'))
-                self.handler_files.append(root.find('params').get('DYN_EXEC_FILE'))
+                if root.find('params').get('CONF_FILE') != None:
+                    self.handler_files.append(root.find('params').get('CONF_FILE'))
                 
-                self.handler_files.append(root.find('params').get('TEMPLATE_XML_PATH'))
+                if ( root.find('params').get('RESPONSE_FILE') != None 
+                    and root.find('params').get('RESPONSE_FILE') not in self.handler_files):
+                    self.handler_files.append(root.find('params').get('RESPONSE_FILE'))
                 
-                velocity_path = self.find_absolute_velocity_prop_path(root, 'VELOCITY_PROP_FILE')
-                logging.info("VELOCITY_PROP_FILE: %s", velocity_path)
+                if root.find('params').get('DYN_EXEC_FILE') != None:
+                    self.handler_files.append(root.find('params').get('DYN_EXEC_FILE'))
                 
-                if velocity_path:
-                    self.handler_files.append(velocity_path)
+                if root.find('params').get('TEMPLATE_XML_PATH') != None:
+                    self.handler_files.append(root.find('params').get('TEMPLATE_XML_PATH'))
+                
+                self.find_absolute_velocity_prop_path(root, 'VELOCITY_PROP_FILE')
                 
                 logging.info("HANDLER_FILES: %s", self.handler_files)
         except ET.ParseError as ex:
@@ -96,23 +103,49 @@ class HandlerFileProcessor:
         folder = os.path.join(self.outputDirectory_object, "{}_issue_handler_files".format(self.hostname))
         self.create_folder(folder)
         
-        fileWriter_object.write_handler_files(self.handler_files, folder)
+        fileWriter_object.write_handler_files(self.handler_files, self.macro_name, folder)
     
     def find_absolute_velocity_prop_path(self, root, properties):
         path = ""
         
-        if self.prism_deamon_conf_path:
+        if self.prism_deamon_conf_path and root.find('params').get('{}'.format(properties)) != None:
             path = os.path.join(self.prism_deamon_conf_path, '{}'.format(root.find('params').get('{}'.format(properties))))
             
             if os.path.exists(path):
-                return path
+                logging.info("PRISM_VELOCITY_PROP_FILE_PATH: %s", path)
+                self.get_macro_file(path)
     
-        if self.prism_tmcat_conf_path:
+        if self.prism_tmcat_conf_path and root.find('params').get('{}'.format(properties)) != None:
             path = os.path.join(self.prism_tmcat_conf_path, '{}'.format(root.find('params').get('{}'.format(properties))))
             
             if os.path.exists(path):
-                return path
-        return path
+                logging.info("TOMCAT_VELOCITY_PROP_FILE_PATH: %s", path)
+                self.get_macro_file(path)
+    
+    def get_macro_file(self, velocity_path):
+        if velocity_path:
+            file_resource_loader_path = []
+            velocimacro_library = []
+            macro_path = ""
+            with open(str(velocity_path), 'r') as properties:
+                file_resource_loader_path = [loader_path.split("=")[1] for loader_path in properties.readlines() if re.search("file.resource.loader.path", loader_path, re.DOTALL)]
+                velocimacro_library = [macro_name.split("=")[1].strip() for macro_name in properties.readlines() if re.search("^velocimacro.library", macro_name, re.DOTALL)]
+                            
+            with open(str(velocity_path), 'r') as properties:
+                velocimacro_library = [macro_name.split("=")[1].strip() for macro_name in properties.readlines() if re.search("^velocimacro.library", macro_name, re.DOTALL)]
+                logging.info("macro_name1st: %s", velocimacro_library)
+            
+            if file_resource_loader_path and velocimacro_library:
+                for macro_file_path in file_resource_loader_path:
+                    if macro_file_path.startswith("/"):
+                        for macro_name in velocimacro_library:
+                            self.macro_name.append(macro_name)
+                            logging.info("file_resource_loader_path: %s", macro_file_path)
+                            logging.info("macro_name: %s", macro_name)
+                            macro_path = macro_file_path.replace("\n", "") + "/" + macro_name.replace("\n", "")
+                    
+            if macro_path:
+                self.handler_files.append(macro_path)
             
     def create_folder(self, folder):
         """

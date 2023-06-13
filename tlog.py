@@ -8,7 +8,7 @@ from collections import defaultdict
 from tlog_accesslog_parser import TlogAccessLogParser
 from collections import OrderedDict
 from configManager import ConfigManager
-from input_tags import PrismTasks, PrismFlowId
+from status_tags import PrismTasks, PrismFlowId
 
 
 class Tlog:
@@ -688,7 +688,9 @@ class Tlog:
             self.prism_handler_info_dict = {"PRISM_ISSUE_HANDLER_DETAILS": handler_details}
             self.prism_data_dict_list.append(self.prism_handler_info_dict)
         
-        return handler_info_details
+            if handler_info_details:
+                return handler_info_details
+        return None
             
     def perf_map(self, header, thread, splitted_data, data_dict, flow_tasks_element, index_count):
         logging.info('length of perf splitted data: %s', len(splitted_data))

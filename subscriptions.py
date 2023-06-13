@@ -100,10 +100,9 @@ class SubscriptionController:
                     logging.info('subscription record: %s', subscriptionRecord)
                     if subscriptionRecord:
                         if (subscriptionRecord["SUB_STATUS"] not in ('E', 'F') and (subscriptionRecord["task_type"] != 'N')):
-                            if subscriptionRecord["pmt_status"] == 3 and subscriptionRecord["task_type"] == 'Q':
+                            if subscriptionRecord["pmt_status"] in (3, 40) and subscriptionRecord["task_type"] == 'Q':
                                 queue_id = 99,
                                 task_status = 0
-                                charge_schedule = "now()"
                                 sbn_id = sbnId
                                 
                                 params = (queue_id, task_status, sbn_id)    
@@ -112,21 +111,22 @@ class SubscriptionController:
                             elif subscriptionRecord["pmt_status"] == 3 and subscriptionRecord["task_type"] != 'Q':
                                 queue_id = 99,
                                 task_status = 0
-                                charge_schedule = "now()"
                                 sbn_id = sbnId
                                 
                                 params = (queue_id, task_status, sbn_id)
                                 Query = "UPDATE SUBSCRIPTIONS SET queue_id = %s, task_status = %s, charge_schedule = now() where sbn_id = %s"
             
-        logging.info("Update query: %s", Query)
         
         if Query and params:
+            logging.info("Update query: %s", Query)
             # Execute update query
             query_executor.execute(query_type, Query, params)
             if query_executor.is_success:
                 logging.info('is update success: %s', query_executor.is_success)
                 self.process_subs_data = False
                 self.get_subscription(sbnId)
+            else:
+                self.subscription_data = None
     
     def constructor_parameter_reinitialize(self):
         self.subscription_data = []
