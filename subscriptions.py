@@ -46,7 +46,7 @@ class SubscriptionController:
                     if query_executor.result_set:
                         result_set = query_executor.result_set
                         
-                        # Convert result_set(ordered dictionary) to JSON object
+                        # Convert result_set(ordered dictionary) to JSON object.
                         subscription_json_object = json.dumps(result_set)
                         logging.info("subscription json object: %s", subscription_json_object)
                         
