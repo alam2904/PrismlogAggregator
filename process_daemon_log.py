@@ -203,13 +203,13 @@ class DaemonLogProcessor:
     def fetch_daemon_log(self, tlog_thread, log_files):
         #check file for the recod for the given thread
         for file in log_files:
-            try:
-                # logging.info('tlog thread is: %s and log_file is: %s', tlog_thread, file)
-                
+            try:    
                 if self.is_msisdn_backup_file or self.is_backup_file or self.is_backup_root_file:
                     thread_log = subprocess.check_output("zcat {0} | grep -a {1}".format(file, tlog_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                    # thread_log = subprocess.check_output(awk_command, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 else:
                     thread_log = subprocess.check_output("grep -a {0} {1}".format(tlog_thread, file), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                    # thread_log = subprocess.check_output(awk_command, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 
                 record = [data for data in thread_log]
                 if record:

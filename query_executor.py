@@ -26,8 +26,10 @@ class QueryExecutor:
                         formatted_row[column_name] = float(item)
                     elif isinstance(item, datetime):
                         formatted_row[column_name] = item.strftime("%Y-%m-%d %H:%M:%S")
-                    elif item is None:
+                    elif item == '':
                         formatted_row[column_name] = ''
+                    elif item is None:
+                        formatted_row[column_name] = 'NULL'
                     else:
                         formatted_row[column_name] = item
                 self.result_set.append(formatted_row)

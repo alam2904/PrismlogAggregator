@@ -3,9 +3,6 @@ import os
 import socket
 from process_daemon_log import DaemonLogProcessor
 from status_tags import PrismTlogIssueTag, HttpErrorCodes, PrismTlogSmsTag, PrismTasks
-# from status_tags import PrismTlogErrorTag, PrismTlogLowBalTag, PrismTlogRetryTag,\
-#     PrismTlogHandlerExp, PrismTlogNHFTag, PrismTlogAwaitPushTag, PrismTlogAwaitPushTimeOutTag,\
-#     HttpErrorCodes, PrismTlogHdlrExcpTag, PrismTlogSmsTag, PrismTasks
 from subscriptions import SubscriptionController
 
 class TlogAccessLogParser:
@@ -14,7 +11,8 @@ class TlogAccessLogParser:
         for parsing tlog for any issue
     """
     def __init__(self, initializedPath_object, outputDirectory_object, validation_object, log_mode, oarm_uid,\
-                    prism_daemon_tlog_thread_dict, prism_tomcat_tlog_thread_dict, issue_task_types):
+                    prism_daemon_tlog_thread_dict, prism_tomcat_tlog_thread_dict, issue_task_types,\
+                    sbn_thread_dict, non_issue_sbn_thread_dict):
         
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
@@ -39,7 +37,8 @@ class TlogAccessLogParser:
         self.input_tags = []
         self.issue_access_threads = []
         self.is_daemon_log = False
-        self.sbn_thread_dict = {}
+        self.sbn_thread_dict = sbn_thread_dict
+        self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
         self.process_subs_data = True
         self.subscriptions_data = None
     
@@ -84,14 +83,6 @@ class TlogAccessLogParser:
                                                                     pname, folder, value,
                                                                     PrismTasks, PrismTlogIssueTag
                                                                 ):
-                            # if self.check_for_issue_in_prism_tlog(
-                            #                                         pname, folder, value,
-                            #                                         PrismTasks, PrismTlogErrorTag,
-                            #                                         PrismTlogLowBalTag, PrismTlogRetryTag,
-                            #                                         PrismTlogNHFTag, PrismTlogHandlerExp,
-                            #                                         PrismTlogAwaitPushTag, PrismTlogHdlrExcpTag,\
-                            #                                         PrismTlogAwaitPushTimeOutTag
-                            #                                     ):
                                 
                                 if self.stck_sub_type:
                                     latest_thread = thread
@@ -109,8 +100,8 @@ class TlogAccessLogParser:
                     logging.info('IS_SUB_REPROCESS_REQUIRED: %s', self.validation_object.is_sub_reprocess_required)
                     logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
                     
-                    subscription_object = SubscriptionController(pname, self.sbn_thread_dict, tlog_header_data_dict, self.process_subs_data)
-                    self.subscriptions_data = subscription_object.get_subscription()
+                    subscription_object = SubscriptionController(pname, self.sbn_thread_dict, self.process_subs_data)
+                    self.subscriptions_data = subscription_object.get_subscription(self.validation_object.is_sub_reprocess_required)
                     self.validation_object.is_sub_reprocess_required = False
                 
             elif pname == "PRISM_SMSD":
@@ -203,57 +194,6 @@ class TlogAccessLogParser:
             logging.info('task types: %s', self.task_types)
             return True
         return False
-    # def check_for_issue_in_prism_tlog(self, pname, folder, tlog_dict, prism_tasks, *args):
-    #     #issue validation against input_tags
-    #     for prism_status_tag in args:
-    #         class_name = prism_status_tag.__name__
-    #         logging.info('prism_status_tag_name: %s', class_name)
-    #         if class_name == "PrismTlogHdlrExcpTag":
-    #             pass
-            
-    #         for var_name, var_value in prism_status_tag.__dict__.items():
-    #             if not var_name.startswith("__"):
-    #         # for status in prism_input_tags:
-    #                 for task in tlog_dict["FLOW_TASKS"]:
-    #                     if var_value in task:
-    #                         if "#PUSH" in task:
-    #                             logging.info('prism flow tasks: %s', task)
-    #                         logging.info('prism flow tasks: %s', task)
-                            
-    #                         if var_name == "SUB_TYPE_CHECK":
-    #                             sub_type = 'A'
-    #                         else:
-    #                             sub_type = tlog_dict["SUB_TYPE"]
-                            
-    #                         charge_type = tlog_dict["CHARGE_TYPE"]
-                            
-    #                         #list of tasks for which handler details will be fetched later
-    #                         if [var_name, var_value, sub_type, charge_type] not in self.issue_task_types:
-    #                             task_name_type = [var_name, var_value, sub_type, charge_type]
-    #                             self.issue_task_types.append(task_name_type)
-    #                             logging.info("input tags: %s", self.issue_task_types)
-                            
-    #                         #substitution parameters
-    #                         self.input_tags.append(var_value)
-    #                         for ptask_name, ptask_value in prism_tasks.__dict__.items():
-    #                             if not ptask_name.startswith("__"):
-    #                         # for ptask in prism_tasks:
-    #                                 if ptask_name == var_name:
-    #                                     if var_name == "SUB_TYPE_CHECK":
-    #                                         self.stck_sub_type = 'A'
-    #                                     # self.task_type = ptask_value
-    #                                     self.task_types.append(ptask_value)
-    #     if self.task_types:
-    #         #issue thread found hence going to create prism process folder for the 1st time
-    #         if pname == "PRISM_TOMCAT":
-    #             if not self.prism_tomcat_out_folder:
-    #                 self.create_process_folder(pname, folder)
-    #         elif pname == "PRISM_DEAMON":
-    #             if not self.prism_daemon_out_folder:
-    #                 self.create_process_folder(pname, folder)
-    #         logging.info('task types: %s', self.task_types)
-    #         return True
-    #     return False
     
     def is_query_reprocessing_required(self, is_daemon_log, tlog_dict):
         #check if daemon log returned True/False and accordingly maintain the sbn-thread dict
@@ -269,6 +209,17 @@ class TlogAccessLogParser:
                 logging.info("sbn not present in map")
         else:
             self.sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
+        
+        try:
+            for key, value in self.non_issue_sbn_thread_dict.items(): 
+                logging.info('non_issues:- tlog sbn id: %s and map sbn id: %s', tlog_dict["SBN_OR_EVT_ID"], key)
+                if tlog_dict["SBN_OR_EVT_ID"] == key:
+                    self.non_issue_sbn_thread_dict.pop(tlog_dict["SBN_OR_EVT_ID"])
+            else:
+                self.non_issue_sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
+        except KeyError as error:
+            logging.info("non_issue:- sbn not present in map")
+        
                                
     def create_process_folder(self, pname, folder):
         """

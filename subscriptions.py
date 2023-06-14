@@ -11,14 +11,13 @@ class SubscriptionController:
         This is the class responsible for SELECT and UPDATE db query processing
         based on various subscription condition 
     """
-    def __init__(self, pname, sbn_thread_dict, tlog_data_dict, process_subs_data):
+    def __init__(self, pname, sbn_thread_dict, process_subs_data):
         self.sbn_thread_dict = sbn_thread_dict
-        self.tlog_data_dict = tlog_data_dict
         self.process_subs_data = process_subs_data
         self.subscription_data = []
         self.pname = pname
         
-    def get_subscription(self, reprocess_sbnId=None):
+    def get_subscription(self, is_reprocessing_required, reprocess_sbnId=None):
         # Create a DatabaseConnection instance
         db_connection = DatabaseConnection(
             host= "172.19.113.108",
@@ -49,15 +48,17 @@ class SubscriptionController:
                         
                         # Convert result_set(ordered dictionary) to JSON object
                         subscription_json_object = json.dumps(result_set)
-                        logging.info("subscription json object before update: %s", subscription_json_object)
+                        logging.info("subscription json object: %s", subscription_json_object)
                         
                         self.subscription_data.append(json.loads(subscription_json_object, object_pairs_hook=OrderedDict))
-                        if self.pname == "PRISM_TOMCAT":
-                            current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                            if self.subscription_data["charge_schedule"] > current_system_datetime:
-                                self.update_query_formatter(query_executor, sbnId, self.subscription_data)
-                        else:
-                            self.update_query_formatter(query_executor, sbnId)
+                        
+                        if is_reprocessing_required:
+                            if self.pname == "PRISM_TOMCAT":
+                                current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                if self.subscription_data["charge_schedule"] > current_system_datetime:
+                                    self.update_query_formatter(query_executor, sbnId, self.subscription_data)
+                            else:
+                                self.update_query_formatter(query_executor, sbnId)
                            
             else:
                 Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id = %s"
@@ -124,7 +125,7 @@ class SubscriptionController:
             if query_executor.is_success:
                 logging.info('is update success: %s', query_executor.is_success)
                 self.process_subs_data = False
-                self.get_subscription(sbnId)
+                self.get_subscription(False, sbnId)
             else:
                 self.subscription_data = None
     

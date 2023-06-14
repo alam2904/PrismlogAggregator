@@ -9,6 +9,7 @@ from tlog_accesslog_parser import TlogAccessLogParser
 from collections import OrderedDict
 from configManager import ConfigManager
 from status_tags import PrismTasks, PrismFlowId
+from subscriptions import SubscriptionController
 
 
 class Tlog:
@@ -100,6 +101,8 @@ class Tlog:
         self.subscriptions_data = None
         self.reprocessed_tlog_record = []
         self.reprocessed_thread = []
+        self.sbn_thread_dict = {}
+        self.non_issue_sbn_thread_dict = {}
         
     
     def get_tlog(self, pname):
@@ -112,7 +115,7 @@ class Tlog:
         tlogAccessLogParser_object = TlogAccessLogParser(self.initializedPath_object, self.outputDirectory_object,\
                                         self.validation_object, self.log_mode, self.oarm_uid,\
                                         self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict,\
-                                        self.issue_task_types)
+                                        self.issue_task_types, self.sbn_thread_dict, self.non_issue_sbn_thread_dict)
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             self.constructor_parameter_reinitialize()
@@ -624,7 +627,19 @@ class Tlog:
             self.prism_data_dict_list.append(self.prism_daemon_perf_log_dict)
             logging.info('prism daemon perf log: %s', self.prism_daemon_perf_log_dict)
     
-    def get_issue_handler_details(self):
+    def get_issue_subscriptions_handler_details(self):
+        #fetch subscriptions
+        try:
+            logging.info("NON_ISSUE_SBN_THREAD_DICT: %s", self.non_issue_sbn_thread_dict)
+            if self.non_issue_sbn_thread_dict:
+                subscription_object = SubscriptionController(None, self.non_issue_sbn_thread_dict, True)
+                subscriptions_data_dict = subscription_object.get_subscription(False)
+                logging.info("SUBSCRIPTION_DATA: %s", subscriptions_data_dict)
+                prism_subscription_dict = {"PRISM_SUBSCRIPTIONS_ENTRY": subscriptions_data_dict}
+                self.prism_data_dict_list.append(prism_subscription_dict)
+        except Exception as ex:
+            logging.info(ex)
+            
         try:
             logging.info('combined perf data: %s', self.combined_perf_data)
             
