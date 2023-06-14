@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import os
+import re
 import shutil
 import signal
 import socket
@@ -201,23 +202,43 @@ class DaemonLogProcessor:
             logging.info(error)
         
     def fetch_daemon_log(self, tlog_thread, log_files):
-        #check file for the recod for the given thread
+        #check file for the record for the given thread
         for file in log_files:
-            try:    
-                if self.is_msisdn_backup_file or self.is_backup_file or self.is_backup_root_file:
-                    thread_log = subprocess.check_output("zcat {0} | grep -a {1}".format(file, tlog_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                    # thread_log = subprocess.check_output(awk_command, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                else:
-                    thread_log = subprocess.check_output("grep -a {0} {1}".format(tlog_thread, file), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                    # thread_log = subprocess.check_output(awk_command, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            lines = []
+            start_line = None
+            end_line = None
+
+            try:
+                with open(file, 'r') as file:
+                    for line_number, line in enumerate(file, start=1):
+                        if tlog_thread in line:
+                            if start_line is None:
+                                start_line = line_number
+                            end_line = line_number
+                            lines.append(line)
+                        elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
+                            lines.append(line)
                 
-                record = [data for data in thread_log]
-                if record:
-                    self.issue_record = record
-            except subprocess.CalledProcessError as error:
-                logging.info('eigther %s does not exists or %s could not be found', file, tlog_thread)
-                logging.info(error)
-    
+                logging.info("START_LINE: %s and END_LINE: %s", start_line, end_line)
+                if lines:
+                    self.issue_record = lines
+            except Exception as ex:
+                logging.debug(ex)
+            # try:    
+            #     if self.is_msisdn_backup_file or self.is_backup_file or self.is_backup_root_file:
+            #         thread_log = subprocess.check_output("zcat {0} | grep -a {1}".format(file, tlog_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            #         # thread_log = subprocess.check_output(awk_command, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            #     else:
+            #         thread_log = subprocess.check_output("grep -a {0} {1}".format(tlog_thread, file), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            #         # thread_log = subprocess.check_output(awk_command, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                
+            #     record = [data for data in thread_log]
+            #     if record:
+            #         self.issue_record = record
+            # except subprocess.CalledProcessError as error:
+            #     logging.info('eigther %s does not exists or %s could not be found', file, tlog_thread)
+            #     logging.info(error)
+            
     def process_tomcat_http_log(self, pname, folder, access_dict, issue_access_thread):
         #creating out file writter object for writting log to out file
         fileWriter_object = FileWriter(self.outputDirectory_object, self.oarm_uid)
