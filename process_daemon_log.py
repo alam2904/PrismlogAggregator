@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import gzip
 import logging
 import os
 import re
@@ -40,13 +41,10 @@ class DaemonLogProcessor:
         self.onmopay_out_folder = False
     
     def process_daemon_log_init(self, pname, tlog_thread, ctid, task_types, sub_type, input_tag):
+        #msisdn log processing
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-            #msisdn log processing
-            logging.info("input tag: %s", input_tag)
-            index = 0
-            for task_type in task_types:
-                self.process_daemon_log(pname, tlog_thread, ctid, task_type, sub_type, input_tag, index)
-                index += 1
+            logging.info("INPUT_TAGS: %s", input_tag)
+            self.process_daemon_log(pname, tlog_thread, ctid, task_types, sub_type, input_tag)
         elif pname == "PRISM_SMSD":
             self.process_daemon_log(pname, tlog_thread, ctid, task_types, sub_type, input_tag)
         
@@ -54,17 +52,11 @@ class DaemonLogProcessor:
             return False
         return True  
         
-    def process_daemon_log(self, pname, tlog_thread, ctid, task_type, sub_type, input_tag, index=None):
+    def process_daemon_log(self, pname, tlog_thread, ctid, task_types, sub_type, input_tag):
         #creating out file writter object for writting log to out file
         fileWriter_object = FileWriter(self.outputDirectory_object, self.oarm_uid)
-        logging.info("INPUT_TAG_INDEX: %s", input_tag[index])
-        
+        #msisdn based processing initially
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON" or pname == "PRISM_SMSD":
-            # #msisdn log processing
-            # logging.info("input tag: %s", input_tag)
-            # index = 0
-            # for task_type in task_types:
-            # input_tag = input_tag[index]
             try:
                 self.reinitialize_constructor_parameter()
                 
@@ -76,7 +68,7 @@ class DaemonLogProcessor:
                 self.fetch_daemon_log(tlog_thread, self.log_files) 
                     
                 if self.issue_record:
-                    self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                    self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_types, sub_type, input_tag)
             except KeyError as error:
                 logging.error(error)
             
@@ -95,7 +87,7 @@ class DaemonLogProcessor:
                     self.fetch_daemon_log(tlog_thread, self.log_files) 
                     
                     if self.issue_record:
-                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_types, sub_type, input_tag)
             except KeyError as error:
                 logging.info(error)
             
@@ -114,10 +106,7 @@ class DaemonLogProcessor:
                     self.fetch_daemon_log(tlog_thread, self.log_files)
                     
                     if self.issue_record:
-                        # if index != None:
-                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
-                        # else:
-                        # self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type)
+                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_types, sub_type, input_tag)
             except KeyError as error:
                 logging.info(error)
             
@@ -136,7 +125,7 @@ class DaemonLogProcessor:
                     self.fetch_daemon_log(tlog_thread, self.log_files) 
                     
                     if self.issue_record:
-                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_types, sub_type, input_tag)
             except KeyError as error:
                 logging.info(error)
             
@@ -150,7 +139,7 @@ class DaemonLogProcessor:
                     self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
                     
                     if self.issue_record:
-                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_types, sub_type, input_tag)
             except KeyError as error:
                 logging.info(error)
             
@@ -164,7 +153,7 @@ class DaemonLogProcessor:
                     self.fetch_daemon_log(tlog_thread, self.backup_log_files) 
                     
                     if self.issue_record:
-                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_type, sub_type, input_tag[index])
+                        self.is_trimmed_log = fileWriter_object.write_complete_thread_log(pname, tlog_thread, self.issue_record, None, task_types, sub_type, input_tag)
             except KeyError as error:
                 logging.info(error)
     
@@ -203,13 +192,12 @@ class DaemonLogProcessor:
         
     def fetch_daemon_log(self, tlog_thread, log_files):
         #check file for the record for the given thread
-        for file in log_files:
-            lines = []
-            start_line = None
-            end_line = None
-
-            try:
-                with open(file, 'r') as file:
+        lines = []
+        start_line = None
+        end_line = None
+        try:    
+            if self.is_msisdn_backup_file or self.is_backup_file or self.is_backup_root_file:
+                with gzip.open(file, 'rt') as file:
                     for line_number, line in enumerate(file, start=1):
                         if tlog_thread in line:
                             if start_line is None:
@@ -218,14 +206,50 @@ class DaemonLogProcessor:
                             lines.append(line)
                         elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
                             lines.append(line)
-                
-                logging.info("START_LINE: %s and END_LINE: %s", start_line, end_line)
-                if lines:
-                    self.issue_record = lines
-            except Exception as ex:
-                logging.debug(ex)
-            # try:    
-            #     if self.is_msisdn_backup_file or self.is_backup_file or self.is_backup_root_file:
+            else:
+                for file in log_files:
+
+                    with open(file, 'r') as file:
+                        for line_number, line in enumerate(file, start=1):
+                            if tlog_thread in line:
+                                if start_line is None:
+                                    start_line = line_number
+                                end_line = line_number
+                                lines.append(line)
+                            elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
+                                lines.append(line)
+                    
+            logging.info("START_LINE: %s and END_LINE: %s", start_line, end_line)
+            if lines:
+                self.issue_record = lines
+        except Exception as ex:
+            logging.debug(ex)
+
+
+        # lines = []
+        # start_line = None
+        # end_line = None
+
+        # try:
+        #     with zipfile.ZipFile(file, 'r') as zip_file:
+        #         for file_name in zip_file.namelist():
+        #             with zip_file.open(file_name, 'r') as file:
+        #                 for line_number, line in enumerate(file, start=1):
+        #                     line = line.decode('utf-8')  # Decode binary content to Unicode string
+        #                     if tlog_thread in line:
+        #                         if start_line is None:
+        #                             start_line = line_number
+        #                         end_line = line_number
+        #                         lines.append(line)
+        #                     elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
+        #                         lines.append(line)
+                        
+        #     logging.info("START_LINE: %s and END_LINE: %s", start_line, end_line)
+        #     if lines:
+        #         self.issue_record = lines
+        # except Exception as ex:
+        #     logging.debug(ex)
+
             #         thread_log = subprocess.check_output("zcat {0} | grep -a {1}".format(file, tlog_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
             #         # thread_log = subprocess.check_output(awk_command, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
             #     else:

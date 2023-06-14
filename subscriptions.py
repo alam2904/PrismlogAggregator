@@ -101,7 +101,7 @@ class SubscriptionController:
                     logging.info('subscription record: %s', subscriptionRecord)
                     if subscriptionRecord:
                         if (subscriptionRecord["SUB_STATUS"] not in ('E', 'F') and (subscriptionRecord["task_type"] != 'N')):
-                            if subscriptionRecord["pmt_status"] in (3, 40) and subscriptionRecord["task_type"] == 'Q':
+                            if subscriptionRecord["pmt_status"] in (3, 40) and subscriptionRecord["task_type"] in ('S','Q'):
                                 queue_id = 99,
                                 task_status = 0
                                 sbn_id = sbnId

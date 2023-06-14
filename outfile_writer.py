@@ -16,30 +16,29 @@ class FileWriter:
         self.oarm_uid = oarm_uid
         self.hostname = socket.gethostname()
         self.__initial_index = 0
-        self.__final_index = 0 
+        self.__final_index = 0
+        self.is_trimmed_log = False
         
     def write_json_tlog_data(self, payment_data_dict):
-                
         #dumping payment transaction data
-
         with open("{0}/{1}_prismTransactionData.json".format(self.outputDirectory_object, self.hostname), "w") as outfile:
             json.dump(payment_data_dict, outfile, indent=4)
     
-    def write_complete_thread_log(self, pname, tlog_thread, record, ctid, task_type, sub_type, input_tag=None):
+    def write_complete_thread_log(self, pname, tlog_thread, record, ctid, task_types, sub_type, input_tag=None):
         #write complete thread log
         thread_outfile = ""
         process_folder = ""
         error_code = tlog_thread
-        RequestOrigin = task_type
+        RequestOrigin = task_types
         logging.info("INPUT_TAG_OUTFILE: %s", input_tag)
         
         if pname == "PRISM_TOMCAT":
-            process_folder = os.path.join(self.outputDirectory_object, "{}_issue_prism_tomcat".format(self.hostname))                
-            thread_outfile = "{0}/{1}_{2}_prism_tomcat.log".format(process_folder, task_type, tlog_thread)
+            process_folder = os.path.join(self.outputDirectory_object, "{}_issue_prism_tomcat".format(self.hostname))
+            thread_outfile = "{0}/{1}_prism_tomcat.log".format(process_folder, tlog_thread)
         
         elif pname == "PRISM_DEAMON":
             process_folder = os.path.join(self.outputDirectory_object, "{}_issue_prism_daemon".format(self.hostname))      
-            thread_outfile = "{0}/{1}_{2}_prism_daemon.log".format(process_folder, task_type, tlog_thread)
+            thread_outfile = "{0}/{1}_prism_daemon.log".format(process_folder, tlog_thread)
         
         elif pname == "PRISM_SMSD":
             process_folder = os.path.join(self.outputDirectory_object, "{}_issue_prism_smsd".format(self.hostname))                
@@ -49,7 +48,7 @@ class FileWriter:
             with open(thread_outfile, "w") as write_file:
                 write_file.writelines(record)
                 if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-                    return self.write_trimmed_thread_log(pname, process_folder, tlog_thread, thread_outfile, ctid, task_type, sub_type, input_tag)
+                    return self.write_trimmed_thread_log(pname, process_folder, tlog_thread, thread_outfile, ctid, task_types, sub_type, input_tag)
                     
         except FileNotFoundError as error:
             logging.info(error)
@@ -70,56 +69,58 @@ class FileWriter:
         except FileNotFoundError as error:
             logging.info(error)
         
-                
-    def write_trimmed_thread_log(self, pname, process_folder, tlog_thread, thread_outfile, ctid, task_type, sub_type, input_tag):
-        self.reinitialize_index()
+    def write_trimmed_thread_log(self, pname, process_folder, tlog_thread, thread_outfile, ctid, task_types, sub_type, input_tag):
         
         error_code = tlog_thread
-        RequestOrigin = task_type
+        RequestOrigin = task_types
         trimmed_thread_outfile = ""
+        index = 0
         
-        if pname == "PRISM_TOMCAT":
-            trimmed_thread_outfile = "{0}/{1}_{2}_trimmed_prism_tomcat.log".format(process_folder, task_type, tlog_thread)
-        
-        elif pname == "PRISM_DEAMON":
-            trimmed_thread_outfile = "{0}/{1}_{2}_trimmed_prism_daemon.log".format(process_folder, task_type, tlog_thread)
-        
-        try:   
-            if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-                #set initial index based on start of search string
-                for sm_start_serach_string_name, sm_start_serach_string_value in Prism_St_SString.__dict__.items():
-                    if not sm_start_serach_string_name.startswith("__"):
-                        sm_start_serach_string = str(sm_start_serach_string_value).format(task_type, sub_type)
-                        with open(thread_outfile, "r") as outFile:
-                            for i, line in enumerate(outFile):
-                                if re.search(sm_start_serach_string, line, re.DOTALL):
-                                    self.set_initial_index(i)
-                                    break
-                
-                #set final index based on end of search string
-                for sm_end_serach_string_name, sm_end_serach_string_value in Prism_En_SString.__dict__.items():
-                    if not sm_end_serach_string_name.startswith("__"):
-                        sm_end_serach_string = str(sm_end_serach_string_value).format(input_tag)
-                        with open(thread_outfile, "r") as outFile:
-                            for i, line in enumerate(outFile):
-                                if re.search(sm_end_serach_string, line, re.DOTALL):
-                                    self.set_final_index(i)
-                                    break
-                                
-        except FileNotFoundError as error:
-            logging.info(error)
+        for task_type in task_types:
+            self.reinitialize_index()
+            if pname == "PRISM_TOMCAT":
+                trimmed_thread_outfile = "{0}/{1}_{2}_trimmed_prism_tomcat.log".format(process_folder, task_type, tlog_thread)
             
-        logging.info('initial_index: %s and final_index: %s', self.__initial_index, self.__final_index)
-        #write trim log
-        if self.__initial_index != self.__final_index != 0:
-            with open(thread_outfile, "r") as read_file:
-                for i, line in enumerate(read_file):
-                    if self.__initial_index <= i < self.__final_index + 1:
-                        with open(trimmed_thread_outfile, "a") as write_file:
-                            write_file.writelines(line)
-            return True
-        else:
-            return False
+            elif pname == "PRISM_DEAMON":
+                trimmed_thread_outfile = "{0}/{1}_{2}_trimmed_prism_daemon.log".format(process_folder, task_type, tlog_thread)
+            
+            try:
+                if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
+                    #set initial index based on start of search string
+                    for sm_start_serach_string_name, sm_start_serach_string_value in Prism_St_SString.__dict__.items():
+                        if not sm_start_serach_string_name.startswith("__"):
+                            sm_start_serach_string = str(sm_start_serach_string_value).format(task_type, sub_type)
+                            with open(thread_outfile, "r") as outFile:
+                                for i, line in enumerate(outFile):
+                                    if re.search(sm_start_serach_string, line, re.DOTALL):
+                                        self.set_initial_index(i)
+                                        break
+                    
+                    #set final index based on end of search string
+                    for sm_end_serach_string_name, sm_end_serach_string_value in Prism_En_SString.__dict__.items():
+                        if not sm_end_serach_string_name.startswith("__"):
+                            sm_end_serach_string = str(sm_end_serach_string_value).format(input_tag[index])
+                            with open(thread_outfile, "r") as outFile:
+                                for i, line in enumerate(outFile):
+                                    if re.search(sm_end_serach_string, line, re.DOTALL):
+                                        self.set_final_index(i)
+                                        break
+                                    
+            except FileNotFoundError as error:
+                logging.info(error)
+                
+            logging.info('initial_index: %s and final_index: %s', self.__initial_index, self.__final_index)
+            #write trim log
+            if self.__initial_index != self.__final_index != 0:
+                with open(thread_outfile, "r") as read_file:
+                    for i, line in enumerate(read_file):
+                        if self.__initial_index <= i < self.__final_index + 1:
+                            with open(trimmed_thread_outfile, "a") as write_file:
+                                write_file.writelines(line)
+                self.is_trimmed_log = True
+            index += 1
+        
+        return self.is_trimmed_log
 
     def write_handler_files(self, handler_files, macro_name_list, folder):
         # Execute the shell command to copy the file
