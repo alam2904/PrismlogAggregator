@@ -154,7 +154,7 @@ class TlogAccessLogParser:
             if not var_name.startswith("__"):
                 for task in tlog_dict["FLOW_TASKS"]:
                     for status in var_value:
-                        logging.info('STATUS_TAG: %s', task)
+                        # logging.info('STATUS_TAG: %s', task)
                         if status in task:
                             if "#PUSH" in task:
                                 logging.info('prism flow tasks: %s', task)
