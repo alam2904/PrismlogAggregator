@@ -37,6 +37,7 @@ class Tlog:
         
         self.s_date = datetime.strptime(datetime.strftime(self.start_date, "%Y%m%d"), "%Y%m%d")
         self.e_date = datetime.strptime(datetime.strftime(self.end_date, "%Y%m%d"), "%Y%m%d")
+        logging.info("tlog sdate: %s and edate: %s", self.start_date, self.e_date)
 
         self.log_mode = log_mode
         self.tlog_files = []

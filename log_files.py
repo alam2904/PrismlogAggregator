@@ -310,7 +310,7 @@ class LogFileFinder:
         
         for date in self.input_date:
             # logging.info('search date is: %s', datetime.strftime(date, "%Y-%m-%d"))
-            input_date_formatted = datetime.strftime(date, "%Y-%m-%d")            
+            input_date_formatted = datetime.strftime(date, "%Y-%m-%d")       
             
             #input dated access file in the access log path
             

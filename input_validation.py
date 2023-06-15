@@ -15,7 +15,6 @@ class InputValidation:
         self.start_date = start_date
         self.end_date = end_date
         self.input_mode = input_mode 
-        #default log mode is data(to fetch only transaction data accross product)
         self.log_mode = "txn"
         self.is_sub_reprocess_required = reprocess
         self.is_input_valid = False
@@ -24,10 +23,10 @@ class InputValidation:
     def validate_argument(self):
         #Input argument validation
         logging.debug('Number of arguments passed is: %s', self.num_argv - 2)
-        if self.num_argv == 7:
+        if self.num_argv == 3:
             for var_name, var_value in logMode.__dict__.items():
                 if not var_name.startswith("__"):
-                    if var_value == self.input_mode.split("=")[1]:
+                    if var_value == self.input_mode:
                         self.log_mode = var_value
                         self.is_input_valid = True
                         break
@@ -35,20 +34,13 @@ class InputValidation:
                 self.is_input_valid = True
                 logging.error('%s passed can eigther be "txn/error", default value is %s', self.input_mode, self.log_mode)
 
-            arg = self.is_sub_reprocess_required.split("=")[1]
+            arg = self.is_sub_reprocess_required
+            
             if self.is_boolean(arg):
                 self.is_sub_reprocess_required = arg.lower() == 'true'
             
             logging.debug('Arguments passed are :- msisdn:%s, start_date:%s, end_date:%s and log_mode:%s and reprocess_sub:%s', self.msisdn, self.start_date, self.end_date, self.log_mode, self.is_sub_reprocess_required)
-            # for status in logMode:
-            #     if status.value == self.input_mode.split("=")[1]:
-            #         self.log_mode = status.value
-            #         logging.debug('Arguments passed are :- msisdn:%s, start_date:%s, end_date:%s and log_mode:%s', self.msisdn, self.start_date, self.end_date, self.log_mode)
-            #         self.is_input_valid = True
-            #         break
-            # else:
-            #     self.is_input_valid = True
-            #     logging.error('%s passed can eigther be "data/error/all", default value is %s', self.input_mode, self.log_mode)
+            
     def is_boolean(self, arg):
         return arg.lower() in ['true', 'false']
 
@@ -70,16 +62,12 @@ class InputValidation:
         Validate date.
         """
         try:
-            # formatted_sdate = self.start_date.strftime("%Y%m%d")
-            # self.start_date = formatted_sdate
-            self.start_date = datetime.strptime(str(self.start_date), "%Y%m%d")
-            # formatted_edate = self.end_date.strftime("%Y%m%d")
-            # self.end_date = formatted_edate
-            self.end_date = datetime.strptime(str(self.end_date), "%Y%m%d")
+            self.start_date = datetime.strptime(str(self.start_date), "%Y-%m-%d")
+            self.end_date = datetime.strptime(str(self.end_date), "%Y-%m-%d")
             self.is_input_valid = True
-            logging.debug('start date: %s and end date: %s entered is valid', datetime.strftime(self.start_date, "%Y%m%d"), datetime.strftime(self.end_date, "%Y%m%d"))
+            logging.debug('start date: %s and end date: %s entered is valid', datetime.strftime(self.start_date, "%d-%m-%Y"), datetime.strftime(self.end_date, "%d-%m-%Y"))
         except Exception as error:
-            logging.error('start date: %s or/and end date: %s entered is of invalid format. The format should be "yyyymmdd".', self.start_date, self.end_date)
+            logging.error('start date: %s or/and end date: %s entered is of invalid format. The format should be "ddmmyyyy".', self.start_date, self.end_date)
             self.is_input_valid = False
             raise
         

@@ -35,7 +35,9 @@ class Main:
         fileWriter_object = FileWriter(outputDirectory_object, uid)
         
         try:
-            validation_object = InputValidation(num_argv, sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+            msisdn, start_date, end_date, log_mode, is_sub_reprocessing = sys.argv[1].split("|")
+            
+            validation_object = InputValidation(num_argv, msisdn, start_date, end_date, log_mode, is_sub_reprocessing)
             validation_object.validate_argument()
         
             
@@ -58,7 +60,6 @@ class Main:
                 with open(file_path, 'r') as f:
                     data = f.read()
                 
-                # data = os.path("{}.json".format(hostname)).read_text()
                 config = json.loads(data, object_pairs_hook=OrderedDict)
                 
                 if config:
