@@ -1,0 +1,55 @@
+{
+    "schema": {
+      "MSISDN": {
+        "label": "MSISDN *",
+        "input": "input",
+        "type": "text",
+        "option_value": "",
+        "enum": [],
+        "input_category": "",
+        "required": "True"
+      },
+      "SDATE": {
+        "label": "START_DATE *",
+        "input": "input",
+        "type": "date",
+        "option_value": "",
+        "input_category": "",
+        "enum": [],
+        "required": "True"
+      },
+      "EDATE": {
+        "label": "END_DATE *",
+        "input": "input",
+        "type": "date",
+        "option_value": "",
+        "input_category": "",
+        "enum": [],
+        "required": "True"
+      },
+      "logmode": {
+        "label": "LOG_MODE",
+        "input": "select",
+        "type": "text",
+        "option_value": "",
+        "enum": [
+          "txn",
+          "error"
+        ],
+        "input_category": "",
+        "required": "True"
+      },
+      "reprocessing": {
+        "label": "ALLOW_REPROCESSING",
+        "input": "select",
+        "type": "text",
+        "option_value": "",
+        "enum": [
+          "true",
+          "false"
+        ],
+        "input_category": "",
+        "required": "True"
+      }
+    }
+  }

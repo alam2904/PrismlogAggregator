@@ -119,9 +119,11 @@ class TlogProcessor:
             if self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_perf_log_path"]:
                 tlog_object.get_tlog("PRISM_DAEMON_PERF_LOG")
             
+            subscriptions_data_dict = tlog_object.get_subscription_details()
+            
             logging.info('issue tasks are: %s', self.issue_task_types)
             if self.issue_task_types:
-                handler_info = tlog_object.get_issue_subscriptions_handler_details()
+                handler_info = tlog_object.get_issue_handler_details(subscriptions_data_dict)
                 
                 if handler_info:
                     handlerfile_object = HandlerFileProcessor(self.config, handler_info, self.outputDirectory_object, self.oarm_uid)

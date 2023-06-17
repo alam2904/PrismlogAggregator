@@ -18,7 +18,7 @@ class HandlerFileProcessor:
         self.handler_files = []
         self.web_services = []
         self.prism_deamon_conf_path = ""
-        self.prism_tmcat_conf_path = ""
+        self.prism_tomcat_conf_path = ""
         self.macro_name = []
     
     def getHandler_files(self):
@@ -50,7 +50,7 @@ class HandlerFileProcessor:
         
                 try:
                     if self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['CONF_PATH'] != "":
-                        self.prism_tmcat_conf_path = self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['CONF_PATH']
+                        self.prism_tomcat_conf_path = self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['CONF_PATH']
                     else:
                         logging.info('%s conf path not available in %s.json file', webService, self.hostname)
                 except KeyError as error:
@@ -113,13 +113,15 @@ class HandlerFileProcessor:
             
             if os.path.exists(path):
                 logging.info("PRISM_VELOCITY_PROP_FILE_PATH: %s", path)
+                self.handler_files.append(path)
                 self.get_macro_file(path)
     
-        if self.prism_tmcat_conf_path and root.find('params').get('{}'.format(properties)) != None:
-            path = os.path.join(self.prism_tmcat_conf_path, '{}'.format(root.find('params').get('{}'.format(properties))))
+        if self.prism_tomcat_conf_path and root.find('params').get('{}'.format(properties)) != None:
+            path = os.path.join(self.prism_tomcat_conf_path, '{}'.format(root.find('params').get('{}'.format(properties))))
             
             if os.path.exists(path):
                 logging.info("TOMCAT_VELOCITY_PROP_FILE_PATH: %s", path)
+                self.handler_files.append(path)
                 self.get_macro_file(path)
     
     def get_macro_file(self, velocity_path):

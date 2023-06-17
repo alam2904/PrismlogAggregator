@@ -26,7 +26,7 @@ class ConfigManager:
         # Connect to the database
         try:
             for params in issue_handler_task_type_map:
-                task_type, handler_id, sub_type, flow_id, default_flow_id = params
+                task_type, handler_id, sub_type, srv_id, flow_id = params
                 # Prepare the SQL statement
                 
                 Query = "SELECT * FROM HANDLER_INFO WHERE handler_id = %s"
@@ -42,9 +42,19 @@ class ConfigManager:
             for params in issue_handler_task_type_map:
                 # Prepare the SQL statement
                 # Query = "SELECT * FROM HANDLER_MAP WHERE sub_type = '{0}' AND task_type = '{1}' AND flow_id = '{2}' AND handler_id = '{3}'".format(sub_type, task_type, flow_id, handler_id)
-                Query = "SELECT * FROM HANDLER_MAP WHERE task_type = %s AND handler_id = %s AND sub_type = %s AND (flow_id = %s OR flow_id = %s)"
+                task_type, handler_id, sub_type, srv_id, flow_id = params
+                sparam = task_type, handler_id, sub_type, srv_id
+                wsparam = task_type, handler_id, sub_type, flow_id
+                
+                Query_srv = "SELECT * FROM HANDLER_MAP WHERE task_type = %s AND handler_id = %s AND sub_type = %s AND srv_id in %s"
+                
+                Query = "SELECT * FROM HANDLER_MAP WHERE task_type = %s AND handler_id = %s AND sub_type = %s AND (flow_id in %s OR flow_id = '-1')"
 
-                self.get_handler_info_map(Query, params, self.db_connection, handler_table)
+                if self.get_handler_info_map(Query_srv, sparam, self.db_connection, handler_table):
+                    pass
+                else:
+                    self.get_handler_info_map(Query, wsparam, self.db_connection, handler_table)
+                    
         except Exception as ex:
             logging.info(ex)
         
@@ -70,3 +80,7 @@ class ConfigManager:
                 self.handler_info.append(json.loads(h_info, object_pairs_hook=OrderedDict))
             elif handler_table == "handler_map":
                 self.handler_map.append(json.loads(h_info, object_pairs_hook=OrderedDict))
+            
+            return True
+        else:
+            return False

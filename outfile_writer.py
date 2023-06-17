@@ -127,7 +127,10 @@ class FileWriter:
         try:
             for file in handler_files:
                 if file:
-                    shutil.copy(file, folder)
+                    filename = os.path.basename(file)
+                    destination_file = os.path.join(folder, filename)
+                    shutil.copy2(file, destination_file)
+                    # shutil.copy2(file, folder)
         except IOError as error:
             logging.error(error)
         

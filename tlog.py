@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+from re import sub
 import signal
 import subprocess
 import time
@@ -628,7 +629,7 @@ class Tlog:
             self.prism_data_dict_list.append(self.prism_daemon_perf_log_dict)
             logging.info('prism daemon perf log: %s', self.prism_daemon_perf_log_dict)
     
-    def get_issue_subscriptions_handler_details(self):
+    def get_subscription_details(self):
         #fetch subscriptions
         try:
             logging.info("NON_ISSUE_SBN_THREAD_DICT: %s", self.non_issue_sbn_thread_dict)
@@ -638,49 +639,27 @@ class Tlog:
                 logging.info("SUBSCRIPTION_DATA: %s", subscriptions_data_dict)
                 prism_subscription_dict = {"PRISM_SUBSCRIPTIONS_ENTRY": subscriptions_data_dict}
                 self.prism_data_dict_list.append(prism_subscription_dict)
+                return subscriptions_data_dict
         except Exception as ex:
             logging.info(ex)
-            
+        
+    def get_issue_handler_details(self, subscriptions_data_dict):
+        #handler info and map    
         try:
             logging.info('combined perf data: %s', self.combined_perf_data)
             
-            flow_id = ""
-            default_flow_id = '-1'
+            flow_id = []
+            srv_id = []
             
-            if self.subscriptions_data:
-                for subscriptions in self.subscriptions_data:
+            if subscriptions_data_dict:
+                for subscriptions in subscriptions_data_dict:
                     for subscription in subscriptions:
-                        flow_id = str(subscription["system_info"]).split("flowId:")[1].split("|")[0]
-                        logging.info('sys info flow_id: %s', flow_id)
+                        flow_id.append(str(subscription["system_info"]).split("flowId:")[1].split("|")[0])
+                        srv_id.append(subscription["srv_id"])
+                        logging.info('srv_id: %s and sys_info flow_id: %s', srv_id, flow_id)
             
             if self.issue_task_types:
-                for perf_data in self.combined_perf_data: 
-                    for key, value in perf_data.items():
-                        for item in self.issue_task_types:
-                            task_name, task_value, sub_type, charge_type = item
-                            task = str(task_value).replace("=", ",")
-                            # logging.info('perf task list: %s', value["PERF_TASK"])
-                            for ptask in value["PERF_TASK"]:
-                                if task in ptask:
-                                    handler_id = str(ptask).split(task)[1].split(",")[0]
-                                    
-                                    task_type = ""
-                                    for ptask_name, ptask_value in PrismTasks.__dict__.items():
-                                        if not ptask_name.startswith("__"):
-                                            if ptask_name == task_name:
-                                                task_type = ptask_value
-                                    
-                                    if not flow_id:
-                                        for ch_type, f_id in PrismFlowId.__dict__.items():
-                                            if charge_type == str(ch_type):
-                                                flow_id = f_id 
-                                    
-                                    #task type and handler id mapping
-                                    task_handler_map = (task_type, handler_id, sub_type, flow_id, default_flow_id)
-                                    
-                                    if task_handler_map not in self.issue_handler_task_type_map:
-                                        self.issue_handler_task_type_map.append(task_handler_map)
-            logging.info('issue_handler_task_type_map: %s', self.issue_handler_task_type_map)
+                self.task_perf_handler_mapping(tuple(srv_id), tuple(flow_id))
         except KeyError as error:
             logging.info(error)
         
@@ -707,6 +686,35 @@ class Tlog:
             if handler_info_details:
                 return handler_info_details
         return None
+    
+    def task_perf_handler_mapping(self, srv_id, flow_id):
+        for perf_data in self.combined_perf_data: 
+            for key, value in perf_data.items():
+                for item in self.issue_task_types:
+                    task_name, task_value, sub_type, charge_type = item
+                    task = str(task_value).replace("=", ",")
+                    # logging.info('perf task list: %s', value["PERF_TASK"])
+                    for ptask in value["PERF_TASK"]:
+                        if task in ptask:
+                            handler_id = str(ptask).split(task)[1].split(",")[0]
+                            
+                            task_type = ""
+                            for ptask_name, ptask_value in PrismTasks.__dict__.items():
+                                if not ptask_name.startswith("__"):
+                                    if ptask_name == task_name:
+                                        task_type = ptask_value
+                            
+                            # if not flow_id:
+                            #     for ch_type, f_id in PrismFlowId.__dict__.items():
+                            #         if charge_type == str(ch_type):
+                            #             flow_id = f_id
+                            
+                            #task type and handler id mapping
+                            task_handler_map = (task_type, handler_id, sub_type, srv_id, flow_id)
+                            
+                            if task_handler_map not in self.issue_handler_task_type_map:
+                                self.issue_handler_task_type_map.append(task_handler_map)
+            logging.info('issue_handler_task_type_map: %s', self.issue_handler_task_type_map)
             
     def perf_map(self, header, thread, splitted_data, data_dict, flow_tasks_element, index_count):
         logging.info('length of perf splitted data: %s', len(splitted_data))

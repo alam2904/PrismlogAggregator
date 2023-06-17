@@ -4,6 +4,7 @@ import json
 from database_connection import DatabaseConnection
 from query_executor import QueryExecutor
 from datetime import datetime
+from update_query_criteria import UpdateQueryCriteria
 
 
 class SubscriptionController:
@@ -52,13 +53,15 @@ class SubscriptionController:
                         
                         self.subscription_data.append(json.loads(subscription_json_object, object_pairs_hook=OrderedDict))
                         
-                        if is_reprocessing_required:
-                            if self.pname == "PRISM_TOMCAT":
-                                current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                                if self.subscription_data["charge_schedule"] > current_system_datetime:
-                                    self.update_query_formatter(query_executor, sbnId, self.subscription_data)
-                            else:
-                                self.update_query_formatter(query_executor, sbnId)
+                        if is_reprocessing_required and self.subscription_data:
+                            subscriptionRecord = self.get_subscription_dict()
+                            if subscriptionRecord:
+                                if self.pname == "PRISM_TOMCAT":
+                                    current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                    if subscriptionRecord["charge_schedule"] > current_system_datetime:
+                                        self.update_query_formatter(query_executor, sbnId, subscriptionRecord)
+                                else:
+                                    self.update_query_formatter(query_executor, sbnId, subscriptionRecord)
                            
             else:
                 Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id = %s"
@@ -89,33 +92,36 @@ class SubscriptionController:
         finally:
             logging.info('reached subs finally block')
             db_connection.close()
-        
-    def update_query_formatter(self, query_executor, sbnId):
-        query_type = "UPDATE"
-        Query = ""
-        
-        # logging.info('subscription: %s', self.subscription_data)
+    
+    def get_subscription_dict(self):
         for subscriptionRecords in self.subscription_data:
             if subscriptionRecords:
                 for subscriptionRecord in subscriptionRecords:
                     logging.info('subscription record: %s', subscriptionRecord)
                     if subscriptionRecord:
-                        if (subscriptionRecord["SUB_STATUS"] not in ('E', 'F') and (subscriptionRecord["task_type"] != 'N')):
-                            if subscriptionRecord["pmt_status"] in (3, 40) and subscriptionRecord["task_type"] in ('S','Q'):
-                                queue_id = 99,
-                                task_status = 0
-                                sbn_id = sbnId
-                                
-                                params = (queue_id, task_status, sbn_id)    
-                                Query = "UPDATE subscriptions set queue_id = %s, task_status = %s, charge_schedule = now() where sbn_id = %s"
-                            
-                            elif subscriptionRecord["pmt_status"] == 3 and subscriptionRecord["task_type"] != 'Q':
-                                queue_id = 99,
-                                task_status = 0
-                                sbn_id = sbnId
-                                
-                                params = (queue_id, task_status, sbn_id)
-                                Query = "UPDATE SUBSCRIPTIONS SET queue_id = %s, task_status = %s, charge_schedule = now() where sbn_id = %s"
+                        return subscriptionRecord
+        
+    def update_query_formatter(self, query_executor, sbnId, subscriptionRecord):
+        query_type = "UPDATE"
+        Query = ""
+        
+        if (subscriptionRecord["SUB_STATUS"] not in ('E', 'F') and (subscriptionRecord["task_type"] != 'N')):
+            query_object = UpdateQueryCriteria()
+            if subscriptionRecord["pmt_status"] in (3, 40) and subscriptionRecord["task_type"] in ('S','Q'):
+                queue_id = 99,
+                task_status = 0
+                sbn_id = sbnId
+                
+                params = (queue_id, task_status, sbn_id)    
+                Query = "UPDATE subscriptions set queue_id = %s, task_status = %s, charge_schedule = now() where sbn_id = %s"
+            
+            elif subscriptionRecord["pmt_status"] == 3 and subscriptionRecord["task_type"] != 'Q':
+                queue_id = 99,
+                task_status = 0
+                sbn_id = sbnId
+                
+                params = (queue_id, task_status, sbn_id)
+                Query = "UPDATE SUBSCRIPTIONS SET queue_id = %s, task_status = %s, charge_schedule = now() where sbn_id = %s"
             
         
         if Query and params:
