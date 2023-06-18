@@ -669,12 +669,12 @@ class Tlog:
             handler_details = []
             
             configManager_object = ConfigManager()
-            configManager_object.getHandlerInfo(self.issue_handler_task_type_map, "handler_info")
+            configManager_object.getHandlerInfo(self.issue_handler_task_type_map)
             logging.info('handler info details: %s', configManager_object.handler_info)
             handler_info_details["HANDLER_INFO"] = configManager_object.handler_info
             handler_details.append(handler_info_details)
             
-            configManager_object.getHandlerMap(self.issue_handler_task_type_map, "handler_map")
+            configManager_object.getHandlerMap(self.issue_handler_task_type_map)
             logging.info('handler map details: %s', configManager_object.handler_map)
             handler_map_details["HANDLER_MAP"] = configManager_object.handler_map
             handler_details.append(handler_map_details)

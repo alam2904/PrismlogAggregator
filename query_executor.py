@@ -11,6 +11,7 @@ class QueryExecutor:
 
     def execute(self, query_type, query, params):
         if query_type == "SELECT":
+            
             column_names, results = self.connection.execute_select(query, params)
                 
             # column_names = [desc[0] for desc in self.connection.cursor().description]

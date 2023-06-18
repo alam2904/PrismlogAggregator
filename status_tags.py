@@ -112,11 +112,10 @@ class PrismTasks(object):
     
 class PrismFlowId(object):
     #charge type flow id mapping
-    A = 1
-    R = 2
-    U = 4
-    D = 3
-    J = 2
+    A = ["1", "7"]
+    R = ["2", "9", "10"]
+    U = ["4"]
+    D = ["3"]
 
 class PrismHandlerClass(object):
     GENERIC_HTTP = "com.onmobile.prism.interfaceHandler.GenericHTTPHandlerV2"

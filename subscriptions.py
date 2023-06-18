@@ -59,9 +59,9 @@ class SubscriptionController:
                                 if self.pname == "PRISM_TOMCAT":
                                     current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                                     if subscriptionRecord["charge_schedule"] > current_system_datetime:
-                                        self.update_query_formatter(query_executor, sbnId, subscriptionRecord)
+                                        self.execute_update(query_executor, sbnId, subscriptionRecord)
                                 else:
-                                    self.update_query_formatter(query_executor, sbnId, subscriptionRecord)
+                                    self.execute_update(query_executor, sbnId, subscriptionRecord)
                            
             else:
                 Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id = %s"
@@ -101,30 +101,19 @@ class SubscriptionController:
                     if subscriptionRecord:
                         return subscriptionRecord
         
-    def update_query_formatter(self, query_executor, sbnId, subscriptionRecord):
+    def execute_update(self, query_executor, sbnId, subscriptionRecord):
         query_type = "UPDATE"
         Query = ""
+        params = sbnId
         
-        if (subscriptionRecord["SUB_STATUS"] not in ('E', 'F') and (subscriptionRecord["task_type"] != 'N')):
-            query_object = UpdateQueryCriteria()
-            if subscriptionRecord["pmt_status"] in (3, 40) and subscriptionRecord["task_type"] in ('S','Q'):
-                queue_id = 99,
-                task_status = 0
-                sbn_id = sbnId
-                
-                params = (queue_id, task_status, sbn_id)    
-                Query = "UPDATE subscriptions set queue_id = %s, task_status = %s, charge_schedule = now() where sbn_id = %s"
+        if (subscriptionRecord["SUB_STATUS"] not in ('E', 'F') and subscriptionRecord["task_type"] != 'N'
+            and subscriptionRecord["task_status"] in (97, 98)):
             
-            elif subscriptionRecord["pmt_status"] == 3 and subscriptionRecord["task_type"] != 'Q':
-                queue_id = 99,
-                task_status = 0
-                sbn_id = sbnId
-                
-                params = (queue_id, task_status, sbn_id)
-                Query = "UPDATE SUBSCRIPTIONS SET queue_id = %s, task_status = %s, charge_schedule = now() where sbn_id = %s"
-            
+            updateCriteria_object = UpdateQueryCriteria(subscriptionRecord)
+            updateCriteria_object.update_query_formatter()
         
-        if Query and params:
+        if updateCriteria_object.update_query:
+            Query = updateCriteria_object.update_query
             logging.info("Update query: %s", Query)
             # Execute update query
             query_executor.execute(query_type, Query, params)
