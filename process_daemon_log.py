@@ -197,15 +197,20 @@ class DaemonLogProcessor:
         end_line = None
         try:    
             if self.is_msisdn_backup_file or self.is_backup_file or self.is_backup_root_file:
-                with gzip.open(file, 'rt') as file:
-                    for line_number, line in enumerate(file, start=1):
-                        if tlog_thread in line:
-                            if start_line is None:
-                                start_line = line_number
-                            end_line = line_number
-                            lines.append(line)
-                        elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
-                            lines.append(line)
+                for file in log_files:
+                    bk_files = subprocess.check_output("ls {0}".format(file), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                    bk_file_names = bk_files.splitlines()
+                    for bkfile in bk_file_names: 
+                        logging.info('backup_log_file file: %s', bkfile)
+                        with gzip.open(bkfile, 'rt') as file:
+                            for line_number, line in enumerate(file, start=1):
+                                if tlog_thread in line:
+                                    if start_line is None:
+                                        start_line = line_number
+                                    end_line = line_number
+                                    lines.append(line)
+                                elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
+                                    lines.append(line)
             else:
                 for file in log_files:
 
@@ -222,6 +227,8 @@ class DaemonLogProcessor:
             logging.info("START_LINE: %s and END_LINE: %s", start_line, end_line)
             if lines:
                 self.issue_record = lines
+        except subprocess.CalledProcessError as e:
+            logging.debug("Error executing ls command: %s", e)
         except Exception as ex:
             logging.debug(ex)
 
