@@ -414,7 +414,7 @@ class Tlog:
         elif pname == "PRISM_TOMCAT_REQ_RESP" or pname == "PRISM_DAEMON_REQ_RESP":
             
             header = [
-                        "TIMESTAMP","THREAD","REQTYPE","URL","ENTITY_DATA","PARAMTERS","RESPONSE_CODE",\
+                        "TIMESTAMP","THREAD","REQTYPE","URL","HEADERS","ENTITY_DATA","PARAMTERS","RESPONSE_CODE",\
                         "RESPONSE_TIME(sec)","RESPONSE"
                     ]
             

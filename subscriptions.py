@@ -24,7 +24,7 @@ class SubscriptionController:
             host= "172.19.113.108",
             user="root",
             passwd="Onm0bile",
-            db="prism"
+            db="safaricom"
         )
 
         # Connect to the database
@@ -56,12 +56,12 @@ class SubscriptionController:
                         if is_reprocessing_required and self.subscription_data:
                             subscriptionRecord = self.get_subscription_dict()
                             if subscriptionRecord:
-                                if self.pname == "PRISM_TOMCAT":
-                                    current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                                    if subscriptionRecord["charge_schedule"] > current_system_datetime:
-                                        self.execute_update(query_executor, sbnId, subscriptionRecord)
-                                else:
-                                    self.execute_update(query_executor, sbnId, subscriptionRecord)
+                                # if self.pname == "PRISM_TOMCAT":
+                                #     current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                #     if subscriptionRecord["charge_schedule"] > current_system_datetime:
+                                #         self.execute_update(query_executor, sbnId, subscriptionRecord)
+                                # else:
+                                self.execute_update(query_executor, sbnId, subscriptionRecord)
                            
             else:
                 Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id = %s"
@@ -95,6 +95,7 @@ class SubscriptionController:
     
     def get_subscription_dict(self):
         for subscriptionRecords in self.subscription_data:
+            logging.info('subscription_data: %s', subscriptionRecords)
             if subscriptionRecords:
                 for subscriptionRecord in subscriptionRecords:
                     logging.info('subscription record: %s', subscriptionRecord)
@@ -105,15 +106,22 @@ class SubscriptionController:
         query_type = "UPDATE"
         Query = ""
         params = sbnId
-        
-        if (subscriptionRecord["SUB_STATUS"] not in ('E', 'F') and subscriptionRecord["task_type"] != 'N'
-            and subscriptionRecord["task_status"] in (97, 98)):
+        updateCriteria_object = UpdateQueryCriteria(subscriptionRecord)
+        logging.info("SUBSCRIPTIONS_SUB_STATUS: %s", subscriptionRecord["sub_status"])
+        try:
+            if (subscriptionRecord["sub_status"] not in ('E', 'F') and subscriptionRecord["task_type"] != 'N'
+                and subscriptionRecord["task_status"] in (97, 98)):
+                
+                updateCriteria_object.update_query_formatter()
+        except KeyError as err:
+            logging.debug(err)
             
-            updateCriteria_object = UpdateQueryCriteria(subscriptionRecord)
-            updateCriteria_object.update_query_formatter()
-        
         if updateCriteria_object.update_query:
             Query = updateCriteria_object.update_query
+            
+            if updateCriteria_object.next_task_type:
+                params = updateCriteria_object.next_task_type, sbnId
+                
             logging.info("Update query: %s", Query)
             # Execute update query
             query_executor.execute(query_type, Query, params)
@@ -123,6 +131,9 @@ class SubscriptionController:
                 self.get_subscription(False, sbnId)
             else:
                 self.subscription_data = None
+        else:
+            self.subscription_data = None
+            
     
     def constructor_parameter_reinitialize(self):
         self.subscription_data = []

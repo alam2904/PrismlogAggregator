@@ -15,7 +15,7 @@ class ConfigManager:
             host= "172.19.113.108",
             user="root",
             passwd="Onm0bile",
-            db="prism"
+            db="safaricom"
         )
         # Connect to the database
         self.db_connection.create_connection()
@@ -25,7 +25,6 @@ class ConfigManager:
         self.handler_processor_map = []
         self.subtype_parameter = []
         
-        self.initialize_handler_processors()
         self.initialize_subtype_parameter()    
     
     def initialize_subtype_parameter(self):
@@ -36,20 +35,16 @@ class ConfigManager:
         if configMap:
             self.subtype_parameter.append(json.loads(configMap, object_pairs_hook=OrderedDict))
     
-    def initialize_handler_processors(self):
-        #initializing handler_processor_info and handler_processor_map
-        logging.info("Initializing handler_processor_info_map")
-        Query_hpi = "SELECT * FROM HANDLER_PROCESSOR_INFO"
-        configMap = self.get_db_config_map(Query_hpi, None, self.db_connection)
+    def flow_handler_mapping(self):
+        logging.info("getting flow handler mapping")
+        Query = "SELECT hm.transaction_type, hi.params FROM handler_processor_info hi INNER JOIN handler_processor_map hm ON hi.handler_id = hm.handler_id WHERE hi.handler_name = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler' GROUP BY hi.params, hm.transaction_type"
+        
+        configMap = self.get_db_config_map(Query, None, self.db_connection)
         
         if configMap:
-            self.handler_processor_info.append(json.loads(configMap, object_pairs_hook=OrderedDict))
+            return json.loads(configMap, object_pairs_hook=OrderedDict)
+        return None
             
-        Query_hpm = "SELECT * FROM HANDLER_PROCESSOR_MAP"
-        configMap = self.get_db_config_map(Query_hpm, None, self.db_connection)
-        
-        if configMap:
-            self.handler_processor_map.append(json.loads(configMap, object_pairs_hook=OrderedDict))
 
     def getHandlerInfo(self, issue_handler_task_type_map):
         # Connect to the database
@@ -64,7 +59,7 @@ class ConfigManager:
                 if configMap:
                     self.handler_info.append(json.loads(configMap, object_pairs_hook=OrderedDict))
                 else:
-                    logging.debug("No handler configured for handler_id= %s", handler_id)
+                    logging.debug("No handler configured for handler_id = %s", handler_id)
                     
         except Exception as ex:
             logging.info(ex)

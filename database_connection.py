@@ -1,3 +1,4 @@
+import logging
 import MySQLdb
 
 class DatabaseConnection:
@@ -38,7 +39,7 @@ class DatabaseConnection:
         # Check if the query was successful
         rows_affected = cursor.rowcount
         if rows_affected > 0:
-            print("Update query executed successfully. Rows affected:%d" %cursor.rowcount)
+            logging.info("Update query executed successfully. Rows affected: %s" %cursor.rowcount)
             # Commit the changes to the database
             self.connection.commit()
             cursor.close()
