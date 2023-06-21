@@ -82,8 +82,11 @@ class UpdateQueryCriteria:
         self.get_next_task_type(configManager_object)
         
         if self.next_task_type:
-            self.update_query = "UPDATE SUBSCRIPTIONS SET queue_id = 99, task_type = %s, task_status = 0, remote_status = 127, cycle_status = 'R', charge_schedule = now() WHERE sbn_id = %s"
-            
+            if self.subscriptions_pmt_status != 1:
+                self.update_query = "UPDATE SUBSCRIPTIONS SET queue_id = 99, task_type = %s, task_status = 0, remote_status = 127, pmt_status = 0, cycle_status = 'R', charge_schedule = now() WHERE sbn_id = %s"
+            else:
+                self.update_query = "UPDATE SUBSCRIPTIONS SET queue_id = 99, task_type = %s, task_status = 0, remote_status = 127, cycle_status = 'R', charge_schedule = now() WHERE sbn_id = %s"
+                
         elif self.subscriptions_task_type in ('CN', 'S', 'L', 'I', 'C'):
             self.update_query = "UPDATE SUBSCRIPTIONS SET queue_id = 99, task_status = 0, remote_status = 127, cycle_status = 'R', charge_schedule = now() WHERE sbn_id = %s"
         
