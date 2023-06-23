@@ -79,6 +79,7 @@ class UpdateQueryCriteria:
     
     def set_update_query(self, configManager_object):
         #check for generic flow handler for retry next task type
+        logging.info("NEXT_TASK_TYPE: %s", self.next_task_type)
         self.get_next_task_type(configManager_object)
         
         if self.next_task_type:
