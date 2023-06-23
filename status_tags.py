@@ -5,11 +5,11 @@ class logMode(object):
 #prism tags
 class Prism_St_SString(object):
     #griff search string to get initial index
-    search_string = "-process handler params for task {} for subType:{}"
+    search_string = ["-process handler params for task {} for subType:{}","-Handler not found"]
 
 class Prism_En_SString(object):
     #griff search string to get initial index
-    search_string = "-Tlog record added:{}"
+    search_string = ["-Tlog record added:{}","-Tlog record added:TSK = {}"]
 
 class PrismTlogIssueTag(object):
     """
@@ -31,6 +31,25 @@ class PrismTlogIssueTag(object):
     GENERIC_TASK2 = ["GT2=3,", "GT2=0,", "GT2=8,"]
     GENERIC_TASK3 = ["GT3=3,", "GT3=0,", "GT3=8,"]
     GENERIC_TASK4 = ["GT1=4,", "GT4=0,", "GT4=8,"]
+    GENERAL_FAILURE = ["NHF:NO handler configured for request"]
+
+class PrismGeneralIssueTage(object):
+    SUB_TYPE_CHECK = "STCK"
+    CHECK_BALANCE = "CBAL"
+    RESERVE = "RSRV"
+    CHARGING = "CHG"
+    REMOTE_ACT = "RMAC"
+    REMOTE_DCT = "RMD"
+    DECTIVATION = "DCT"
+    CALLBACK = "CBCK"
+    CDR = "CRM"
+    INFORM_CSS = "CSS"
+    REFUND = "RFD"
+    INFORM_OMF = "OMF"
+    GENERIC_TASK1 = "GT1"
+    GENERIC_TASK2 = "GT2"
+    GENERIC_TASK3 = "GT3"
+    GENERIC_TASK4 = "GT1" 
 
 class PrismTlogSmsTag(object):
     SMS_INVALID = "I"

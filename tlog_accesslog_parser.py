@@ -2,7 +2,7 @@ import logging
 import os
 import socket
 from process_daemon_log import DaemonLogProcessor
-from status_tags import PrismTlogIssueTag, HttpErrorCodes, PrismTlogSmsTag, PrismTasks
+from status_tags import PrismTlogIssueTag, HttpErrorCodes, PrismTlogSmsTag, PrismTasks, PrismGeneralIssueTage
 from subscriptions import SubscriptionController
 
 class TlogAccessLogParser:
@@ -156,6 +156,18 @@ class TlogAccessLogParser:
                     for status in var_value:
                         # logging.info('STATUS_TAG: %s', task)
                         if status in task:
+                            if var_name == "GENERAL_FAILURE":
+                                equals_index = task.find("[")
+                                comma_index = task.find("=")
+                                gtask_type = task[equals_index + 1:comma_index]
+                                
+                                logging.info('GENERAL_TASK_TYPE: %s', gtask_type)
+                                for gvar_name, gvar_value in PrismGeneralIssueTage.__dict__.items():
+                                    if not gvar_name.startswith("__"):
+                                        if gtask_type == gvar_value:
+                                            var_name = gvar_name
+                                            status = gvar_value
+
                             if "#PUSH" in task:
                                 logging.info('prism flow tasks: %s', task)
                             

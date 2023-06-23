@@ -89,22 +89,24 @@ class FileWriter:
                     #set initial index based on start of search string
                     for sm_start_serach_string_name, sm_start_serach_string_value in Prism_St_SString.__dict__.items():
                         if not sm_start_serach_string_name.startswith("__"):
-                            sm_start_serach_string = str(sm_start_serach_string_value).format(task_type, sub_type)
-                            with open(thread_outfile, "r") as outFile:
-                                for i, line in enumerate(outFile):
-                                    if re.search(sm_start_serach_string, line, re.DOTALL):
-                                        self.set_initial_index(i)
-                                        break
+                            for ssString in sm_start_serach_string_value:
+                                sm_start_serach_string = str(ssString).format(task_type, sub_type)
+                                with open(thread_outfile, "r") as outFile:
+                                    for i, line in enumerate(outFile):
+                                        if re.search(sm_start_serach_string, line, re.DOTALL):
+                                            self.set_initial_index(i)
+                                            break
                     
                     #set final index based on end of search string
                     for sm_end_serach_string_name, sm_end_serach_string_value in Prism_En_SString.__dict__.items():
                         if not sm_end_serach_string_name.startswith("__"):
-                            sm_end_serach_string = str(sm_end_serach_string_value).format(input_tag[index])
-                            with open(thread_outfile, "r") as outFile:
-                                for i, line in enumerate(outFile):
-                                    if re.search(sm_end_serach_string, line, re.DOTALL):
-                                        self.set_final_index(i)
-                                        break
+                            for esString in sm_end_serach_string_value:
+                                sm_end_serach_string = str(esString).format(input_tag[index])
+                                with open(thread_outfile, "r") as outFile:
+                                    for i, line in enumerate(outFile):
+                                        if re.search(sm_end_serach_string, line, re.DOTALL):
+                                            self.set_final_index(i)
+                                            break
                                     
             except FileNotFoundError as error:
                 logging.info(error)

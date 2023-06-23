@@ -35,25 +35,24 @@ class Main:
         fileWriter_object = FileWriter(outputDirectory_object, uid)
         
         try:
-            msisdn, start_date, end_date, log_mode, is_sub_reprocessing = sys.argv[1].split("|")
+            msisdn, operator_id, start_date, end_date, log_mode, is_sub_reprocessing = sys.argv[1].split("|")
             
-            validation_object = InputValidation(num_argv, msisdn, start_date, end_date, log_mode, is_sub_reprocessing)
-            validation_object.validate_argument()
-        
-            
-            if os.path.exists('modified_log4j2.xml'):
-                logging.info('removing old modified_log4j2.xml')
-                os.remove('modified_log4j2.xml')
-            
-            if os.path.exists('modified_nlog.config'):
-                logging.info('removing old modified_nlog.config')
-                os.remove('modified_nlog.config')
-            
-            if os.path.exists('out/{}_paymentTransactionData.json'.format(hostname)):
-                logging.info('out/{}_paymentTransactionData.json'.format(hostname))
-                os.remove('out/{}_paymentTransactionData.json'.format(hostname))
+            validation_object = InputValidation(num_argv, msisdn, operator_id, start_date, end_date, log_mode, is_sub_reprocessing)
+            validation_object.validate_argument()        
             
             if validation_object.is_input_valid:
+                if os.path.exists('modified_log4j2.xml'):
+                    logging.info('removing old modified_log4j2.xml')
+                    os.remove('modified_log4j2.xml')
+                
+                if os.path.exists('modified_nlog.config'):
+                    logging.info('removing old modified_nlog.config')
+                    os.remove('modified_nlog.config')
+                
+                if os.path.exists('out/{}_paymentTransactionData.json'.format(hostname)):
+                    logging.info('out/{}_paymentTransactionData.json'.format(hostname))
+                    os.remove('out/{}_paymentTransactionData.json'.format(hostname))
+                
                 file_path = "{}.json".format(hostname)
 
                 # read the file contents
@@ -65,23 +64,14 @@ class Main:
                 if config:
                     logging.info('\n')
                     logging.info('Log aggregation for automation started')
-                    logging.info("*******************************************")
-                    
-                    try:
-                        validation_object.validate_msisdn()
-                        validation_object.validate_date()
-                    except Exception as error:
-                        logging.exception(error)
-                    
+                    logging.info("*******************************************")                    
                     logging.info('\n')
                     
-                    if validation_object.is_input_valid:
-                        initializer_object = Initializer(hostname, outputDirectory_object, config, validation_object, validation_object.log_mode, uid)
-                        initializer_object.initialize_process()
-                
+                    initializer_object = Initializer(hostname, outputDirectory_object, config, validation_object, validation_object.log_mode, uid)
+                    initializer_object.initialize_process()
             else:
-                logging.error('Invalid number of argument passed, should be "4" Please refer to the syntax.')
-                logging.error('Hence log fetch could not happen.')
+                logging.error('input validation failed. Hence log fetch could not happen.')
+                logging.error('check aggregator.log for the reason.')
             
         except Exception as error:
             logging.error(traceback.format_exc())

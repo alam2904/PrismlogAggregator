@@ -669,21 +669,22 @@ class Tlog:
             handler_details = []
             
             configManager_object = ConfigManager()
-            configManager_object.getHandlerInfo(self.issue_handler_task_type_map)
-            logging.info('handler info details: %s', configManager_object.handler_info)
-            handler_info_details["HANDLER_INFO"] = configManager_object.handler_info
-            handler_details.append(handler_info_details)
+            configManager_object.get_handler_info(self.issue_handler_task_type_map)
+            if configManager_object.handler_info:
+                logging.info('handler info details: %s', configManager_object.handler_info)
+                handler_info_details["HANDLER_INFO"] = configManager_object.handler_info
+                handler_details.append(handler_info_details)
             
-            configManager_object.getHandlerMap(self.issue_handler_task_type_map)
-            logging.info('handler map details: %s', configManager_object.handler_map)
-            handler_map_details["HANDLER_MAP"] = configManager_object.handler_map
-            handler_details.append(handler_map_details)
+            configManager_object.get_handler_map(self.issue_handler_task_type_map)
+            if configManager_object.handler_map:
+                logging.info('handler map details: %s', configManager_object.handler_map)
+                handler_map_details["HANDLER_MAP"] = configManager_object.handler_map
+                handler_details.append(handler_map_details)
             
-            # if configManager_object.handler_info:
-            self.prism_handler_info_dict = {"PRISM_ISSUE_HANDLER_DETAILS": handler_details}
-            self.prism_data_dict_list.append(self.prism_handler_info_dict)
-        
-            if handler_info_details:
+            if handler_details:
+                self.prism_handler_info_dict = {"PRISM_ISSUE_HANDLER_DETAILS": handler_details}
+                self.prism_data_dict_list.append(self.prism_handler_info_dict)
+    
                 return handler_info_details
         return None
     

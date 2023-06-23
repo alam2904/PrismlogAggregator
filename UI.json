@@ -9,6 +9,15 @@
         "input_category": "",
         "required": "True"
       },
+      "OP_ID": {
+        "label": "OPERATOR_ID *",
+        "input": "input",
+        "type": "text",
+        "option_value": "-1",
+        "enum": [],
+        "input_category": "",
+        "required": "True"
+      },
       "SDATE": {
         "label": "START_DATE *",
         "input": "input",

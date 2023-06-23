@@ -24,8 +24,7 @@ class ConfigManager:
         self.handler_processor_info = []
         self.handler_processor_map = []
         self.subtype_parameter = []
-        
-        self.initialize_subtype_parameter()    
+        self.initialize_subtype_parameter()   
     
     def initialize_subtype_parameter(self):
         #initializing prism_config_params subtype boolean parameter
@@ -35,7 +34,24 @@ class ConfigManager:
         if configMap:
             self.subtype_parameter.append(json.loads(configMap, object_pairs_hook=OrderedDict))
     
-    def flow_handler_mapping(self):
+    def is_multitenant_system(self):
+        is_global_instance = False
+        try:
+            Query = "SELECT PARAM_VALUE FROM PRISM_CONFIG_PARAMS WHERE MODULE_NAME = 'SYSTEM' AND SITE_ID = -1 AND PARAM_NAME = 'IS_SINGLE_INSTANCE'"
+            configMap = self.get_db_config_map(Query, None, self.db_connection)
+            
+            if configMap:
+                param_value = json.loads(configMap, object_pairs_hook=OrderedDict)
+                if param_value:
+                    for row in param_value:
+                        if self.is_boolean(row["PARAM_VALUE"]):
+                            is_global_instance = str(row["PARAM_VALUE"]).lower() == 'true'
+        except KeyError as error:
+            logging.info(error)
+            
+        return is_global_instance
+                    
+    def get_flow_handler_mapping(self):
         logging.info("getting flow handler mapping")
         Query = "SELECT hm.transaction_type, hi.params FROM handler_processor_info hi INNER JOIN handler_processor_map hm ON hi.handler_id = hm.handler_id WHERE hi.handler_name = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler' GROUP BY hi.params, hm.transaction_type"
         
@@ -44,29 +60,45 @@ class ConfigManager:
         if configMap:
             return json.loads(configMap, object_pairs_hook=OrderedDict)
         return None
-            
+    
+    def get_operator_site_map(self, operator_id):
+        #initializing prism_config_params subtype boolean parameter
+        operator_site_map = None
+        try:
+            Query = "SELECT site_id, time_zone FROM operator_site_map WHERE operator_id = %s"
+            configMap = self.get_db_config_map(Query, (operator_id,), self.db_connection)
+            if configMap:
+                operator_site_map = json.loads(configMap, object_pairs_hook=OrderedDict)
+                # logging.info("OPERATOR_SITE_MAP: %s", operator_site_map)
+                if operator_site_map:
+                    for row in operator_site_map:
+                        logging.info("SITE_ID: %s AND TIME_ZONE: %s", row["site_id"], row["time_zone"])
+                        operator_site_map = row["site_id"], row["time_zone"]    
+            return operator_site_map
+        except KeyError as ex:
+            logging.exception("operator_id: %s site map is not found", operator_id, ex)
 
-    def getHandlerInfo(self, issue_handler_task_type_map):
+    def get_handler_info(self, issue_handler_task_type_map):
         # Connect to the database
         try:
             for params in issue_handler_task_type_map:
                 task_type, handler_id, sub_type, srv_id, flow_id = params
                 # Prepare the SQL statement
-                
-                Query = "SELECT * FROM HANDLER_INFO WHERE handler_id = %s"
-                configMap = self.get_db_config_map(Query, (handler_id,), self.db_connection)
-                
-                if configMap:
-                    self.handler_info.append(json.loads(configMap, object_pairs_hook=OrderedDict))
-                else:
-                    logging.debug("No handler configured for handler_id = %s", handler_id)
+                if handler_id:
+                    Query = "SELECT * FROM handler_info WHERE handler_id = %s"
+                    configMap = self.get_db_config_map(Query, (handler_id,), self.db_connection)
+                    
+                    if configMap:
+                        self.handler_info.append(json.loads(configMap, object_pairs_hook=OrderedDict))
+                    else:
+                        logging.debug("No handler configured for handler_id = %s", handler_id)
                     
         except Exception as ex:
             logging.info(ex)
         
         logging.info("handler_info: %s", self.handler_info)
     
-    def getHandlerMap(self, issue_handler_task_type_map):
+    def get_handler_map(self, issue_handler_task_type_map):
         
         try:
             for params in issue_handler_task_type_map:
@@ -76,18 +108,19 @@ class ConfigManager:
                 sparam = task_type, handler_id, sub_type, srv_id
                 wsparam = task_type, handler_id, sub_type, flow_id
                 
-                Query_srv = "SELECT * FROM HANDLER_MAP WHERE task_type = %s AND handler_id = %s AND sub_type = %s AND srv_id in %s"
-                
-                Query = "SELECT * FROM HANDLER_MAP WHERE task_type = %s AND handler_id = %s AND sub_type = %s AND (flow_id in %s OR flow_id = '-1')"
+                if handler_id:
+                    Query_srv = "SELECT * FROM handler_map WHERE task_type = %s AND handler_id = %s AND sub_type = %s AND srv_id in %s"
+                    
+                    Query = "SELECT * FROM handler_map WHERE task_type = %s AND handler_id = %s AND sub_type = %s AND (flow_id in %s OR flow_id = '-1')"
 
-                configMap = self.get_db_config_map(Query_srv, sparam, self.db_connection)
-                
-                if configMap:
-                    pass
-                else:
-                    configMap = self.get_db_config_map(Query, wsparam, self.db_connection)
-                
-                self.handler_map.append(json.loads(configMap, object_pairs_hook=OrderedDict))
+                    configMap = self.get_db_config_map(Query_srv, sparam, self.db_connection)
+                    
+                    if configMap:
+                        pass
+                    else:
+                        configMap = self.get_db_config_map(Query, wsparam, self.db_connection)
+                    
+                    self.handler_map.append(json.loads(configMap, object_pairs_hook=OrderedDict))
                     
         except Exception as ex:
             logging.info(ex)
@@ -111,6 +144,9 @@ class ConfigManager:
             configMap = json.dumps(result_set)
         
         return configMap
+    
+    def is_boolean(self, arg):
+        return arg.lower() in ['true', 'false']
     
     def select(self):
         return "SELECT"
