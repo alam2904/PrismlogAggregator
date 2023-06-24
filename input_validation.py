@@ -23,6 +23,7 @@ class InputValidation:
         self.is_input_valid = False
         self.site_id = ""
         self.time_zone = ""
+        self.is_multitenant_system = False
 
 
     def validate_argument(self):
@@ -31,13 +32,16 @@ class InputValidation:
         if self.num_argv == 3:
             if self.validate_msisdn():
                 if self.validate_operator_site_map():
-                    logging.info("IS_OPERATOR_SITE_MAP_VALID: %s", self.is_input_valid)
+                    if self.is_input_valid:
+                        self.is_multitenant_system = True
                     if self.validate_date():
                         logging.info("IS_INPUT_DATE_VALID: %s", self.is_input_valid)
                         if self.validate_log_mode():
                             logging.info("IS_LOG_MODE_VALID: %s", self.is_input_valid)
                             if self.validate_reprocessing():
                                 pass
+            logging.info("IS_INPUT_VALID: %s", self.is_input_valid)
+            logging.info("IS_MULTITENANT_SYSTEM: %s", self.is_multitenant_system)
         
         logging.debug('Arguments passed are :- msisdn:%s, operator_id: %s, start_date:%s, end_date:%s and log_mode:%s and reprocess_sub:%s', self.msisdn, self.operator_id, self.start_date, self.end_date, self.log_mode, self.is_sub_reprocess_required)
         logging.info("OPERATOR_ID: %s AND SITE_ID: %s AND TIME_ZONE: %s", self.operator_id, self.site_id, self.time_zone)
@@ -94,7 +98,7 @@ class InputValidation:
             logging.debug('start date: %s and end date: %s entered is valid', datetime.strftime(self.start_date, "%d-%m-%Y"), datetime.strftime(self.end_date, "%d-%m-%Y"))
             return self.is_input_valid
         except Exception as error:
-            logging.exception('start date: %s or/and end date: %s entered is of invalid format. The format should be "ddmmyyyy".', self.start_date, self.end_date)
+            logging.error(traceback.format_exc())
             self.is_input_valid = False
             return self.is_input_valid
         

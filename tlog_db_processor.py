@@ -50,6 +50,7 @@ class TlogProcessor:
         self.issue_handler_task_type_map = issue_handler_task_type_map
         
         self.prism_smsd_tlog_dict = prism_smsd_tlog_dict
+        self.non_issue_sbn_thread_dict = {}
         self.oarm_uid = oarm_uid
         
         self.combined_perf_data = []
@@ -69,7 +70,7 @@ class TlogProcessor:
                             self.prism_tomcat_callbackV2_log_dict, self.prism_daemon_callbackV2_log_dict,\
                             self.prism_tomcat_perf_log_dict, self.prism_daemon_perf_log_dict, self.combined_perf_data,\
                             self.prism_handler_info_dict, self.issue_task_types, self.issue_handler_task_type_map,\
-                            self.prism_smsd_tlog_dict, self.oarm_uid)
+                            self.prism_smsd_tlog_dict, self.non_issue_sbn_thread_dict, self.oarm_uid)
           
         if pname == "PRISM_TOMCAT":
             # fetching prism tomcat access and tlog

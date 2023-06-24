@@ -4,7 +4,8 @@ from status_tags import PrismFlowId
 import xml.etree.ElementTree as ET
 
 class UpdateQueryCriteria:
-    def __init__(self, subscriptionRecord):
+    def __init__(self, validation_object, subscriptionRecord):
+        self.validation_object = validation_object
         self.subscriptionRecord = subscriptionRecord
         self.forced_subtype_check = None
         self.renewal_subtype_check = None
@@ -31,7 +32,8 @@ class UpdateQueryCriteria:
         return dictionaries
         
     def update_query_formatter(self):
-        configManager_object = ConfigManager()
+        configManager_object = ConfigManager(self.validation_object)
+        configManager_object.initialize_subtype_parameter()
         logging.info("SUBTYPE_BOOLEAN_PARAM: %s", configManager_object.subtype_parameter)
         
         try:

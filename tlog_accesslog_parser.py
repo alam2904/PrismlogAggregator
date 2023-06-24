@@ -12,7 +12,7 @@ class TlogAccessLogParser:
     """
     def __init__(self, initializedPath_object, outputDirectory_object, validation_object, log_mode, oarm_uid,\
                     prism_daemon_tlog_thread_dict, prism_tomcat_tlog_thread_dict, issue_task_types,\
-                    sbn_thread_dict, non_issue_sbn_thread_dict):
+                    sbn_thread_dict):
         
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
@@ -38,7 +38,7 @@ class TlogAccessLogParser:
         self.issue_access_threads = []
         self.is_daemon_log = False
         self.sbn_thread_dict = sbn_thread_dict
-        self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
+        # self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
         self.process_subs_data = True
         self.subscriptions_data = None
     
@@ -75,7 +75,7 @@ class TlogAccessLogParser:
                 for thread in thread_list:
                     #re-initializing self.task_types for each threads
                     self.reinitialize_constructor_parameters()
-                    for key, value in dict(tlog_header_data_dict).items():       
+                    for key, value in dict(tlog_header_data_dict).items():
                         # logging.info('tlog key: %s value: %s', key, value['THREAD'])
         
                         if self.log_mode == "error" and thread == value['THREAD']:
@@ -100,7 +100,7 @@ class TlogAccessLogParser:
                     logging.info('IS_SUB_REPROCESS_REQUIRED: %s', self.validation_object.is_sub_reprocess_required)
                     logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
                     
-                    subscription_object = SubscriptionController(pname, self.sbn_thread_dict, self.process_subs_data)
+                    subscription_object = SubscriptionController(pname, self.validation_object, self.sbn_thread_dict, self.process_subs_data)
                     self.subscriptions_data = subscription_object.get_subscription(self.validation_object.is_sub_reprocess_required)
                     self.validation_object.is_sub_reprocess_required = False
                 
@@ -222,15 +222,15 @@ class TlogAccessLogParser:
         else:
             self.sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
         
-        try:
-            for key, value in self.non_issue_sbn_thread_dict.items(): 
-                logging.info('non_issues:- tlog sbn id: %s and map sbn id: %s', tlog_dict["SBN_OR_EVT_ID"], key)
-                if tlog_dict["SBN_OR_EVT_ID"] == key:
-                    self.non_issue_sbn_thread_dict.pop(tlog_dict["SBN_OR_EVT_ID"])
-            else:
-                self.non_issue_sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
-        except KeyError as error:
-            logging.info("non_issue:- sbn not present in map")
+        # try:
+        #     for key, value in self.non_issue_sbn_thread_dict.items(): 
+        #         logging.info('non_issues:- tlog sbn id: %s and map sbn id: %s', tlog_dict["SBN_OR_EVT_ID"], key)
+        #         if tlog_dict["SBN_OR_EVT_ID"] == key:
+        #             self.non_issue_sbn_thread_dict.pop(tlog_dict["SBN_OR_EVT_ID"])
+        #     else:
+        #         self.non_issue_sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
+        # except KeyError as error:
+        #     logging.info("non_issue:- sbn not present in map")
         
                                
     def create_process_folder(self, pname, folder):

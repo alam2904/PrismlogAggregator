@@ -9,7 +9,7 @@ class ConfigManager:
         This is the class responsible for db config fetch
     """
     
-    def __init__(self):
+    def __init__(self, validation_object=None):
         # Create a DatabaseConnection instance
         self.db_connection = DatabaseConnection(
             host= "172.19.113.108",
@@ -19,12 +19,13 @@ class ConfigManager:
         )
         # Connect to the database
         self.db_connection.create_connection()
+        self.validation_object = validation_object
         self.handler_info = []
         self.handler_map = []
         self.handler_processor_info = []
         self.handler_processor_map = []
         self.subtype_parameter = []
-        self.initialize_subtype_parameter()   
+        # self.initialize_subtype_parameter()   
     
     def initialize_subtype_parameter(self):
         #initializing prism_config_params subtype boolean parameter

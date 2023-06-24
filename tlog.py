@@ -9,7 +9,7 @@ from collections import defaultdict
 from tlog_accesslog_parser import TlogAccessLogParser
 from collections import OrderedDict
 from configManager import ConfigManager
-from status_tags import PrismTasks, PrismFlowId
+from status_tags import PrismTasks
 from subscriptions import SubscriptionController
 
 
@@ -27,7 +27,7 @@ class Tlog:
                     prism_daemon_handler_generic_soap_req_resp_dict, prism_tomcat_request_log_dict,\
                     prism_daemon_request_log_dict, prism_tomcat_callbackV2_log_dict, prism_daemon_callbackV2_log_dict,\
                     prism_tomcat_perf_log_dict, prism_daemon_perf_log_dict, combined_perf_data, prism_handler_info_dict,\
-                    issue_task_types, issue_handler_task_type_map, prism_smsd_tlog_dict, oarm_uid):
+                    issue_task_types, issue_handler_task_type_map, prism_smsd_tlog_dict, non_issue_sbn_thread_dict, oarm_uid):
         
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
@@ -104,7 +104,7 @@ class Tlog:
         self.reprocessed_tlog_record = []
         self.reprocessed_thread = []
         self.sbn_thread_dict = {}
-        self.non_issue_sbn_thread_dict = {}
+        self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
         
     
     def get_tlog(self, pname):
@@ -117,7 +117,7 @@ class Tlog:
         tlogAccessLogParser_object = TlogAccessLogParser(self.initializedPath_object, self.outputDirectory_object,\
                                         self.validation_object, self.log_mode, self.oarm_uid,\
                                         self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict,\
-                                        self.issue_task_types, self.sbn_thread_dict, self.non_issue_sbn_thread_dict)
+                                        self.issue_task_types, self.sbn_thread_dict)
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             self.constructor_parameter_reinitialize()
@@ -278,6 +278,7 @@ class Tlog:
         if pname == "PRISM_TOMCAT":
             logging.info('msisdn data dict: %s', self.msisdn_data_dict)
             for thread, data in self.msisdn_data_dict.items():
+                self.sbn_thread_map(dict(data))
                 self.prism_tomcat_tlog_thread_dict["PRISM_TOMCAT_THREAD"].append(thread)
             logging.info('prism tomcat thread: %s', self.prism_tomcat_tlog_thread_dict)
                 
@@ -288,6 +289,7 @@ class Tlog:
                     self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"].append(thread)
             else:
                 for thread, data in self.msisdn_data_dict.items():
+                    self.sbn_thread_map(dict(data))
                     self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"].append(thread)
             logging.info('prism daemon thread: %s', self.prism_daemon_tlog_thread_dict)
                     
@@ -568,16 +570,41 @@ class Tlog:
                                         element = element.split("]")[0]
             
                                     data_dict[header[index]] = element
-                                self.msisdn_access_data_dict[data_dict["THREAD"]] = data_dict
+                                
+                                #IS_MULTITENANT_SYSTEM
+                                if self.validation_object.is_multitenant_system:
+                                    if self.url_operator_id_check(data_dict["URL"]):
+                                        self.msisdn_access_data_dict[data_dict["THREAD"]] = data_dict
+                                else:
+                                    self.msisdn_access_data_dict[data_dict["THREAD"]] = data_dict
             except Exception as ex:
                 logging.info(ex)
                         
         
         if self.msisdn_access_data_dict:
             self.access_data_mapping(tlogAccessLogParser_object, pname)
+    
+    def url_operator_id_check(self, prism_url):
+        #check for operator id in prism URL
+        url_pre_param, url_param = str(prism_url).split("?")
+        url_pre_param_splitted = url_pre_param.split("/")[-1]
+        if str(url_pre_param_splitted).startswith("opid_"):
+            operator_id = str(url_pre_param_splitted).split("_")[1]
+            # logging.info("URL_OPERATOR_ID: %s", operator_id)
+            if operator_id == self.validation_object.operator_id:
+                return True
+        else:
+            url_param_splitted = url_param.split("&")
+            for param in url_param_splitted:
+                key, value = param.split("=")
+                # logging.info("URL_OPERATOR_ID: %s", value)
+                if key == "operatorId" and value == self.validation_object.operator_id:
+                    return True
+            else:
+                return False 
+        
 
     def access_data_mapping(self, tlogAccessLogParser_object, pname):
-        
         logging.info('msisdn based access data dict: %s', self.msisdn_access_data_dict)
         
         if pname == "PRISM_TOMCAT":
@@ -634,7 +661,7 @@ class Tlog:
         try:
             logging.info("NON_ISSUE_SBN_THREAD_DICT: %s", self.non_issue_sbn_thread_dict)
             if self.non_issue_sbn_thread_dict:
-                subscription_object = SubscriptionController(None, self.non_issue_sbn_thread_dict, True)
+                subscription_object = SubscriptionController(None, self.validation_object, self.non_issue_sbn_thread_dict, True)
                 subscriptions_data_dict = subscription_object.get_subscription(False)
                 logging.info("SUBSCRIPTION_DATA: %s", subscriptions_data_dict)
                 prism_subscription_dict = {"PRISM_SUBSCRIPTIONS_ENTRY": subscriptions_data_dict}
@@ -668,7 +695,7 @@ class Tlog:
             handler_map_details = {}
             handler_details = []
             
-            configManager_object = ConfigManager()
+            configManager_object = ConfigManager(self.validation_object)
             configManager_object.get_handler_info(self.issue_handler_task_type_map)
             if configManager_object.handler_info:
                 logging.info('handler info details: %s', configManager_object.handler_info)
@@ -744,6 +771,17 @@ class Tlog:
                 self.tlog_record.append(data)
             except Exception as ex:
                 logging.info(ex)
+                
+    def sbn_thread_map(self, tlog_dict):
+        try:
+            for key, value in self.non_issue_sbn_thread_dict.items(): 
+                logging.info('non_issues:- tlog sbn id: %s and map sbn id: %s', tlog_dict["SBN_OR_EVT_ID"], key)
+                if tlog_dict["SBN_OR_EVT_ID"] == key:
+                    self.non_issue_sbn_thread_dict.pop(tlog_dict["SBN_OR_EVT_ID"])
+            else:
+                self.non_issue_sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
+        except KeyError as error:
+            logging.info("non_issue:- sbn not present in map")
  
     def constructor_parameter_reinitialize(self):
         self.tlog_files = []
