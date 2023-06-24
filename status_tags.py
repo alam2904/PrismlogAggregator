@@ -136,6 +136,18 @@ class PrismFlowId(object):
     U = ["4"]
     D = ["3"]
 
+class TimeZoneGmtOffsetValue(object):
+    #offset value in UTC
+    Pacific_Pago_Pago =	"-11:00"
+    Pacific_Marquesas =	"-09:30"
+    America_Nassau = "-05:00"
+    America_St_Johns = "-03:30"
+    America_Danmarkshavn = ""
+    Asia_Tehran = "+03:30"
+    Asia_Kolkata = "+05:30"
+    Asia_Jakarta = "+07:00"
+    Pacific_Efate = "+11:00"
+
 class PrismHandlerClass(object):
     GENERIC_HTTP = "com.onmobile.prism.interfaceHandler.GenericHTTPHandlerV2"
     GENERIC_SOAP = "com.onmobile.prism.interfaceHandler.GenericSoapHandler"
