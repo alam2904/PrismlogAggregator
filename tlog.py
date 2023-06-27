@@ -361,6 +361,10 @@ class Tlog:
                     last_modified_time = subscription["last_modified_time"]
                     logging.info('last modified time: %s', last_modified_time)
                     
+                    if self.validation_object.is_multitenant_system:
+                        last_modified_time = str(self.validation_object.time_zone_conversion(last_modified_time))
+                        logging.info("CONVERTED_LAST_MODIFIED_TIME: %s", last_modified_time)
+                    
                     reprocessed_tlog_files = logfile_object.get_tlog_files(pname, last_modified_time)
                 
                     logging.info('reprocessed tlog files: %s', reprocessed_tlog_files)
@@ -381,7 +385,6 @@ class Tlog:
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             # temp_map = self.prism_ctid  //support not available for now
             msisdn = self.validation_object.fmsisdn
-        
             temp = []
             for file in files:
                 # logging.info('file: %s', file)
@@ -389,7 +392,7 @@ class Tlog:
                     data = subprocess.check_output("cat {0} | grep -a {1}".format(file, msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     temp = data.splitlines()  # Split the data into individual lines/records
                     for record in temp:
-                        if str(record).split("|")[0].split(",")[0] >= last_modified_time:
+                        if str(record).split("|")[0].split(",")[0] >= str(last_modified_time):
                             self.reprocessed_thread.append(str(record).split("|")[1])
                             logging.info('latest tlog timestamp: %s and thread: %s', str(record).split("|")[0].split(",")[0], self.reprocessed_thread)
                             self.reprocessed_tlog_record.append(record)

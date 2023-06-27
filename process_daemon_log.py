@@ -195,25 +195,32 @@ class DaemonLogProcessor:
         lines = []
         start_line = None
         end_line = None
+        
         try:    
             if self.is_msisdn_backup_file or self.is_backup_file or self.is_backup_root_file:
                 for file in log_files:
                     bk_files = subprocess.check_output("ls {0}".format(file), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     bk_file_names = bk_files.splitlines()
-                    for bkfile in bk_file_names: 
-                        logging.info('backup_log_file file: %s', bkfile)
+                    for bkfile in bk_file_names:
+                        # output = subprocess.check_output("zcat {0} | grep -a {1}".format(bkfile, tlog_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                        # logging.info('OUTPUT: %s', output.strip())
+                        # if output.strip():
+                        logging.info('BACKUP_LOG_FILE: %s', bkfile)
+                        
                         with gzip.open(bkfile, 'rt') as file:
                             for line_number, line in enumerate(file, start=1):
                                 if tlog_thread in line:
+                                    # logging.info('MATCHED_BACKUP_LOG_FILE: %s', bkfile)
                                     if start_line is None:
                                         start_line = line_number
                                     end_line = line_number
                                     lines.append(line)
                                 elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
                                     lines.append(line)
+                        if lines:
+                            break
             else:
                 for file in log_files:
-
                     with open(file, 'r') as file:
                         for line_number, line in enumerate(file, start=1):
                             if tlog_thread in line:
@@ -231,44 +238,6 @@ class DaemonLogProcessor:
             logging.debug("Error executing ls command: %s", e)
         except Exception as ex:
             logging.debug(ex)
-
-
-        # lines = []
-        # start_line = None
-        # end_line = None
-
-        # try:
-        #     with zipfile.ZipFile(file, 'r') as zip_file:
-        #         for file_name in zip_file.namelist():
-        #             with zip_file.open(file_name, 'r') as file:
-        #                 for line_number, line in enumerate(file, start=1):
-        #                     line = line.decode('utf-8')  # Decode binary content to Unicode string
-        #                     if tlog_thread in line:
-        #                         if start_line is None:
-        #                             start_line = line_number
-        #                         end_line = line_number
-        #                         lines.append(line)
-        #                     elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
-        #                         lines.append(line)
-                        
-        #     logging.info("START_LINE: %s and END_LINE: %s", start_line, end_line)
-        #     if lines:
-        #         self.issue_record = lines
-        # except Exception as ex:
-        #     logging.debug(ex)
-
-            #         thread_log = subprocess.check_output("zcat {0} | grep -a {1}".format(file, tlog_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-            #         # thread_log = subprocess.check_output(awk_command, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-            #     else:
-            #         thread_log = subprocess.check_output("grep -a {0} {1}".format(tlog_thread, file), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-            #         # thread_log = subprocess.check_output(awk_command, shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                
-            #     record = [data for data in thread_log]
-            #     if record:
-            #         self.issue_record = record
-            # except subprocess.CalledProcessError as error:
-            #     logging.info('eigther %s does not exists or %s could not be found', file, tlog_thread)
-            #     logging.info(error)
             
     def process_tomcat_http_log(self, pname, folder, access_dict, issue_access_thread):
         #creating out file writter object for writting log to out file

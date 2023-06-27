@@ -150,11 +150,12 @@ class UpdateQueryCriteria:
         flow_handler_params = []
         
         logging.info("FLOW_ID: %s AND CHARGE_TYPE: %s", self.subscriptions_flow_id, self.charge_type)
-        flow_handler_map = configManager_object.flow_handler_mapping()
+        flow_handler_map = configManager_object.get_flow_handler_mapping()
         if flow_handler_map:
             for data in flow_handler_map:
-                if self.charge_type == data["transaction_type"]:
-                    flow_handler_params.append(data["params"])
+                
+                if self.charge_type == data["TRANSACTION_TYPE"]:
+                    flow_handler_params.append(data["PARAMS"])
                     
         if flow_handler_params:
             try:

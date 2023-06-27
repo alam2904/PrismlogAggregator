@@ -30,11 +30,12 @@ class ConfigManager:
     def initialize_subtype_parameter(self):
         #initializing prism_config_params subtype boolean parameter
         if self.validation_object.is_multitenant_system:
-            Query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE SITE_ID = %s PARAM_NAME LIKE '%SUBTYPE%'"
-            params = self.validation_object.site_id,
+            Query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE SITE_ID = %s AND PARAM_NAME LIKE '%%SUBTYPE%%'"
+            params = (self.validation_object.site_id,)
         else:
             Query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE PARAM_NAME LIKE '%SUBTYPE%'"
-            params = -1,
+            params = (-1,)
+        logging.info("PARAMS: %s", params)
         configMap = self.get_db_config_map(Query, params, self.db_connection)
         
         if configMap:
@@ -44,7 +45,7 @@ class ConfigManager:
         is_global_instance = False
         try:
             Query = "SELECT PARAM_VALUE FROM PRISM_CONFIG_PARAMS WHERE MODULE_NAME = %s AND SITE_ID = %s AND PARAM_NAME = %s"
-            params = 'SYSTEM', -1, 'IS_SINGLE_INSTANCE'
+            params = ('SYSTEM', -1, 'IS_SINGLE_INSTANCE')
             configMap = self.get_db_config_map(Query, params, self.db_connection)
             
             if configMap:
@@ -62,10 +63,10 @@ class ConfigManager:
         #generic flow handler mapping
         if self.validation_object.is_multitenant_system:
             Query = "SELECT hm.TRANSACTION_TYPE, hi.PARAMS FROM HANDLER_PROCESSOR_INFO hi INNER JOIN HANDLER_PROCESSOR_MAP hm ON hi.HANDLER_ID = hm.HANDLER_ID WHERE hi.HANDLER_NAME = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler' AND hm.SITE_ID = %s GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE"
-            params = self.validation_object.site_id,
+            params = (self.validation_object.site_id,)
         else:
-            Query = "SELECT hm.transaction_type, hi.params FROM HANDLER_PROCESSOR_INFO hi INNER JOIN HANDLER_PROCESSOR_MAP hm ON hi.HANDLER_ID = hm.HANDLER_ID WHERE hi.HANDLER_NAME = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler' AND hm.SITE_ID = %s GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE"
-            params = -1,
+            Query = "SELECT hm.TRANSACTION_TYPE, hi.PARAMS FROM HANDLER_PROCESSOR_INFO hi INNER JOIN HANDLER_PROCESSOR_MAP hm ON hi.HANDLER_ID = hm.HANDLER_ID WHERE hi.HANDLER_NAME = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler' AND hm.SITE_ID = %s GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE"
+            params = (-1,)
             
         configMap = self.get_db_config_map(Query, params, self.db_connection)
         
@@ -78,8 +79,8 @@ class ConfigManager:
         operator_site_map = None
         try:
             Query = "SELECT SITE_ID, TIME_ZONE FROM OPERATOR_SITE_MAP WHERE OPERATOR_ID = %s"
-            
-            configMap = self.get_db_config_map(Query, (operator_id,), self.db_connection)
+            params = (operator_id,)
+            configMap = self.get_db_config_map(Query, params, self.db_connection)
             
             if configMap:
                 operator_site_map = json.loads(configMap, object_pairs_hook=OrderedDict)
@@ -99,7 +100,7 @@ class ConfigManager:
                 # Prepare the SQL statement
                 if handler_id:
                     Query = "SELECT * FROM HANDLER_INFO WHERE HANDLER_ID = %s"
-                    params = handler_id,
+                    params = (handler_id,)
                         
                     configMap = self.get_db_config_map(Query, params, self.db_connection)
                     
@@ -121,11 +122,11 @@ class ConfigManager:
                 task_type, handler_id, sub_type, srv_id, flow_id = params
                 
                 if self.validation_object.is_multitenant_system:
-                    sparam = self.validation_object.site_id, task_type, handler_id, sub_type, srv_id
-                    wsparam = self.validation_object.site_id, task_type, handler_id, sub_type, flow_id
+                    sparam = (self.validation_object.site_id, task_type, handler_id, sub_type, srv_id)
+                    wsparam = (self.validation_object.site_id, task_type, handler_id, sub_type, flow_id)
                 else:
-                    sparam = -1, task_type, handler_id, sub_type, srv_id
-                    wsparam = -1, task_type, handler_id, sub_type, flow_id
+                    sparam = (-1, task_type, handler_id, sub_type, srv_id)
+                    wsparam = (-1, task_type, handler_id, sub_type, flow_id)
                     
                 if handler_id:
                     Query_srv = "SELECT * FROM HANDLER_MAP WHERE SITE_ID = %s AND TASK_TYPE = %s AND HANDLER_ID = %s AND SUB_TYPE = %s AND SRV_ID in %s"
