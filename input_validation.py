@@ -1,9 +1,12 @@
+from collections import OrderedDict
 from datetime import datetime, timedelta
+import json
+import socket
 import traceback
 from status_tags import logMode
 import logging
 from configManager import ConfigManager
-
+from status_tags import TimeZoneGmtOffsetValue
 
 class InputValidation:
     """
@@ -73,7 +76,12 @@ class InputValidation:
                 
                 elif is_global_instance and self.operator_id != '-1':
                     self.site_id, self.time_zone = configManager_object.get_operator_site_map(self.operator_id)
+                    self.start_date = datetime.strftime(self.time_zone_conversion(self.start_date), "%Y-%m-%d")
+                    self.end_date = datetime.strftime(self.time_zone_conversion(self.end_date), "%Y-%m-%d")
+                    
+                    logging.info("CONVERTED_START_DATE: %s AND CONVERTED_END_DATE: %s", self.start_date, self.end_date)
             
+                    
                     if self.site_id and self.time_zone:
                         self.is_input_valid = True    
                     else:
@@ -92,8 +100,8 @@ class InputValidation:
         Validate date.
         """
         try:
-            self.start_date = datetime.strptime(str(self.start_date), "%Y-%m-%d") - timedelta(days=1)
-            self.end_date = datetime.strptime(str(self.end_date), "%Y-%m-%d") + timedelta(days=1)
+            self.start_date = datetime.strptime(str(self.start_date), "%Y-%m-%d")
+            self.end_date = datetime.strptime(str(self.end_date), "%Y-%m-%d")
             self.is_input_valid = True
             logging.debug('start date: %s and end date: %s entered is valid', datetime.strftime(self.start_date, "%d-%m-%Y"), datetime.strftime(self.end_date, "%d-%m-%Y"))
             return self.is_input_valid
@@ -120,6 +128,45 @@ class InputValidation:
         if self.is_boolean(arg):
             self.is_sub_reprocess_required = arg.lower() == 'true'
         return True
+    
+    def time_zone_conversion(self, input_date):
+        hostname = socket.gethostname()
+        file_path = "{}.json".format(hostname)
+
+        # read the file contents
+        with open(file_path, 'r') as f:
+            data = f.read()
+
+        config = json.loads(data, object_pairs_hook=OrderedDict)
+        
+        op_time_zone_offset = ""
+    
+        try:
+            tz_offset = config[hostname]["server_facts"]["tz_offset"]
+            
+            op_time_zone = self.time_zone.replace("/", "_")
+            
+            for var_name, var_value in TimeZoneGmtOffsetValue.__dict__.items():
+                    if not var_name.startswith("__"):
+                        if op_time_zone == var_name:
+                            op_time_zone_offset = var_value
+                            break
+            else:
+                logging.info("operator time zone not resolved")
+            
+            try:
+                start_date = datetime.strptime(input_date, "%Y-%m-%d")
+            except ValueError as err:
+                start_date = datetime.strptime(input_date, "%Y-%m-%d %H:%M:%S")
+
+
+            
+            converted_date = start_date - (timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[3:6])) -\
+                        timedelta(hours=int(op_time_zone_offset[0:3]), minutes=int(op_time_zone_offset[3:6])))
+            
+            return converted_date
+        except KeyError as err:
+            logging.error(err)
         
     def is_boolean(self, arg):
         return arg.lower() in ['true', 'false']

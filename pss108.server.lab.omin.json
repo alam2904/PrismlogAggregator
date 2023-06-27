@@ -1,5 +1,14 @@
 {
   "pss108.server.lab.omin": {
+      "server_facts": {
+        "tz": "IST",
+        "distribution_version": "7.9",
+        "major_version": "7",
+        "tz_offset": "+0530",
+        "host": "172.19.98.155",
+        "test": "+05",
+        "kernal": "3.10.0-1160.el7.x86_64"
+      },
     "PRISM": {
       "PRISM_SMSD": {
         "PRISM_SMSD": {
@@ -176,6 +185,6 @@
           "JVM_VERSION": "1.8.0_272-b10"
         }
       }
-    }
+    } 
   }
 }
