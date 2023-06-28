@@ -202,23 +202,38 @@ class DaemonLogProcessor:
                     bk_files = subprocess.check_output("ls {0}".format(file), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     bk_file_names = bk_files.splitlines()
                     for bkfile in bk_file_names:
-                        # output = subprocess.check_output("zcat {0} | grep -a {1}".format(bkfile, tlog_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                        # logging.info('OUTPUT: %s', output.strip())
-                        # if output.strip():
-                        logging.info('BACKUP_LOG_FILE: %s', bkfile)
-                        
-                        with gzip.open(bkfile, 'rt') as file:
-                            for line_number, line in enumerate(file, start=1):
-                                if tlog_thread in line:
-                                    # logging.info('MATCHED_BACKUP_LOG_FILE: %s', bkfile)
-                                    if start_line is None:
-                                        start_line = line_number
-                                    end_line = line_number
-                                    lines.append(line)
-                                elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
-                                    lines.append(line)
-                        if lines:
-                            break
+                        try:
+                            # completed_process = subprocess.run("zcat {0} | grep -l {1}".format(bkfile, tlog_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                            completed_process = subprocess.Popen("zcat {0} | grep -l {1}".format(bkfile, tlog_thread), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            output, error = completed_process.communicate()
+                            returncode = completed_process.returncode
+                            
+                            if returncode == 0:
+                                output = output.strip()
+                                if output == "(standard input)":
+                                    logging.info('BACKUP_LOG_FILE: %s', bkfile)
+                            
+                                    with gzip.open(bkfile, 'rt') as file:
+                                        for line_number, line in enumerate(file, start=1):
+                                            if tlog_thread in line:
+                                                # logging.info('MATCHED_BACKUP_LOG_FILE: %s', bkfile)
+                                                if start_line is None:
+                                                    start_line = line_number
+                                                end_line = line_number
+                                                lines.append(line)
+                                            elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
+                                                lines.append(line)
+                                    if lines:
+                                        break
+                                else:
+                                    logging.info("Thread not found in: %s", bkfile)
+                            else:
+                                logging.info("An error occurred while running the command.")
+                                logging.info("Error: %s", error.strip())
+                        except subprocess.CalledProcessError as e:
+                            # An error occurred while running the command
+                            logging.info("Error: %s", e)
+                            
             else:
                 for file in log_files:
                     with open(file, 'r') as file:

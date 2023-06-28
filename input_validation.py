@@ -158,8 +158,6 @@ class InputValidation:
                 start_date = datetime.strptime(input_date, "%Y-%m-%d")
             except ValueError as err:
                 start_date = datetime.strptime(input_date, "%Y-%m-%d %H:%M:%S")
-
-
             
             converted_date = start_date - (timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[3:6])) -\
                         timedelta(hours=int(op_time_zone_offset[0:3]), minutes=int(op_time_zone_offset[3:6])))
