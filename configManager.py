@@ -91,6 +91,24 @@ class ConfigManager:
             return operator_site_map
         except KeyError as ex:
             logging.exception("operator_id: %s site map is not found", operator_id, ex)
+    
+    def get_operator_url_map(self, operator_id):
+        #initializing prism_config_params subtype boolean parameter
+        operator_url_map = None
+        try:
+            Query = "SELECT OPERATOR_URL FROM OPERATOR_URL_MAPPING WHERE OPERATOR_ID = %s"
+            params = (operator_id,)
+            configMap = self.get_db_config_map(Query, params, self.db_connection)
+            
+            if configMap:
+                operator_url_map = json.loads(configMap, object_pairs_hook=OrderedDict)
+                if operator_url_map:
+                    for row in operator_url_map:
+                        logging.info("OPERATOR_URL: %s", row["OPERATOR_URL"])
+                        operator_url_map = row["OPERATOR_URL"]    
+            return operator_url_map
+        except KeyError as ex:
+            logging.exception("operator_id: %s url map is not found", operator_id, ex)
 
     def get_handler_info(self, issue_handler_task_type_map):
         # Connect to the database

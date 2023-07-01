@@ -42,6 +42,7 @@ class LogPathFinder():
         self.prism_daemon_callbackV2_req_resp_path = "prism_daemon_callbackV2_req_resp_path"
         self.prism_daemon_req_resp_path = "prism_daemon_req_resp_path"
         self.prism_daemon_perf_log_path = "prism_daemon_perf_log_path"
+        self.generic_server_request_bean_response = "generic_server_request_bean_response"
         
         #boolean path paramters
         self.is_routing_success = False
@@ -73,7 +74,7 @@ class LogPathFinder():
                                             'Hence access log will not be fetched.', webService, self.hostname)
                     except KeyError as error:
                         logging.exception(error)
-                        logging.error('Hence %s access log will not be fetched.', webService) 
+                        logging.error('Hence %s access log will not be fetched.', webService)
                 
                     if self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['LOGS_PATH']['TRANS_BASE_DIR'] != "":
                         transBaseDirectory = self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['LOGS_PATH']['TRANS_BASE_DIR']
@@ -84,6 +85,7 @@ class LogPathFinder():
                         self.prism_tomcat_log_path_dict[self.prism_tomcat_callbackV2_req_resp_path] = "{}/TLOG/CBCK-V2-REQ-RESPONSE".format(transBaseDirectory)
                         self.prism_tomcat_log_path_dict[self.prism_tomcat_req_resp_path] = "{}/TLOG/REQUEST_LOG".format(transBaseDirectory)
                         self.prism_tomcat_log_path_dict[self.prism_tomcat_perf_log_path] = "{}/TLOG/PERF".format(transBaseDirectory)
+                        self.prism_tomcat_log_path_dict[self.generic_server_request_bean_response] = "{}/TLOG/GENERIC_SERVER_REQUEST_BEAN_RESPONSE".format(transBaseDirectory)
 
                         # self.is_tomcat_tlog_path = True
                     else:

@@ -201,6 +201,7 @@ class DaemonLogProcessor:
                 for file in log_files:
                     bk_files = subprocess.check_output("ls {0}".format(file), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     bk_file_names = bk_files.splitlines()
+                    logging.info("BK_FILE_NAMES: %s", bk_file_names)
                     for bkfile in bk_file_names:
                         try:
                             # completed_process = subprocess.run("zcat {0} | grep -l {1}".format(bkfile, tlog_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
@@ -224,16 +225,20 @@ class DaemonLogProcessor:
                                             elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
                                                 lines.append(line)
                                     if lines:
+                                        logging.info("INNER BREAK")
                                         break
                                 else:
                                     logging.info("Thread not found in: %s", bkfile)
                             else:
                                 logging.info("An error occurred while running the command.")
                                 logging.info("Error: %s", error.strip())
+                            
                         except subprocess.CalledProcessError as e:
                             # An error occurred while running the command
                             logging.info("Error: %s", e)
-                            
+                    if lines:
+                        logging.info("OUTER BREAK")
+                        break
             else:
                 for file in log_files:
                     with open(file, 'r') as file:
