@@ -2,7 +2,11 @@ from datetime import datetime, timedelta
 import logging
 import os
 import socket
+from sys import prefix
 
+def extract_hour(filename):
+    return int(filename.split('_')[-1].split('.')[0])
+    
 class LogFileFinder:
     """
     log file finder class
@@ -102,6 +106,7 @@ class LogFileFinder:
             
             logging.info("TLOG_DIRECTORY: %s", self.tlog_dir)
             path = os.path.join(self.tlog_dir)
+            fsuffix = ".log"
             
             if last_modified_time:
                 self.input_date.append(last_modified_time)    
@@ -110,131 +115,103 @@ class LogFileFinder:
                 self.input_date = self.date_range_list(self.s_date, self.e_date)
             
             for date in self.input_date:
-                # logging.info('search date is: %s', datetime.strftime(date, "%Y-%m-%d"))
                 input_date_formatted = ""
                 
-                if last_modified_time:         
-                    # last_modified_date_formatted = datetime.strftime(last_modified_time, "%Y%m%d")
+                if last_modified_time:
                     input_date_formatted = datetime.strftime(datetime.strptime(last_modified_time, "%Y-%m-%d %H:%M:%S"), "%Y%m%d")
-                    logging.info("last modified input date formated: %s", input_date_formatted)
                 else:
                     input_date_formatted = datetime.strftime(date, "%Y%m%d")
                 
-                #input dated file in the tlog directory
+                logging.info("input date formated: %s", input_date_formatted)
                 dated_tlog_files = ""
                 
                 try:
                     if pname == "PRISM_TOMCAT":
                         if self.validation_object.is_multitenant_system:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_BILLING_REALTIME_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_BILLING_REALTIME_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+            
                         else:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_BILLING_REALTIME_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_BILLING_REALTIME_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                             
                     elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
                         if self.validation_object.is_multitenant_system:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                            
                         else:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                             
                     elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
                         if self.validation_object.is_multitenant_system:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_REQUEST_RESPONSE_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                            
                         else:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                             
                     elif pname == "PRISM_TOMCAT_REQ_RESP":
-                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_LOG_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                        fprefix = "TLOG_REQUEST_LOG_{}_".format(input_date_formatted)
+                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                        
                     elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
-                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_CBCK-V2-REQ-RESPONSE_{}_" .format(input_date_formatted)) and p.endswith(".log")]
+                        fprefix = "TLOG_CBCK-V2-REQ-RESPONSE_{}_" .format(input_date_formatted)
+                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                        
                     elif pname == "PRISM_TOMCAT_PERF_LOG":
-                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_PERF_{}_".format(input_date_formatted)) and p.endswith(".log")]
-                except OSError as error:
-                    logging.warning(error)
-                
-                try:
-                    if pname == "PRISM_DEAMON":
+                        fprefix = "TLOG_PERF_{}_".format(input_date_formatted)
+                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                        
+                    elif pname == "PRISM_DEAMON":
                         if self.validation_object.is_multitenant_system:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_BILLING_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_BILLING_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+    
                         else:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_BILLING_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_BILLING_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                             
                     elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
                         if self.validation_object.is_multitenant_system:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                            
                         else:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                             
                     elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
                         if self.validation_object.is_multitenant_system:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_REQUEST_RESPONSE_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                            
                         else:
-                            dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                            fprefix = "TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                             
                     elif pname == "PRISM_DAEMON_REQ_RESP":
-                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_REQUEST_LOG_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                        fprefix = "TLOG_REQUEST_LOG_{}_".format(input_date_formatted)
+                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                        
                     elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
-                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_CBCK-V2-REQ-RESPONSE_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                        fprefix = "TLOG_CBCK-V2-REQ-RESPONSE_{}_".format(input_date_formatted)
+                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                        
                     elif pname == "PRISM_DAEMON_PERF_LOG":
-                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_PERF_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                        fprefix = "TLOG_PERF_{}_".format(input_date_formatted)
+                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                        
                     elif pname == "PRISM_SMSD":
-                        dated_tlog_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("TLOG_SMS_{}_".format(input_date_formatted)) and p.endswith(".log")]
+                        fprefix = "TLOG_SMS_{}_".format(input_date_formatted)
+                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                        
                 except OSError as error:
                     logging.warning(error)
                 
                 if bool(dated_tlog_files):
-                    if pname == "PRISM_TOMCAT":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_BILLING_REALTIME_{0}_{1}_*..log file present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_BILLING_REALTIME_{}_*..log file present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_*..log file present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_*..log file present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_REQUEST_RESPONSE_{0}_{1}_*..log file present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_REQUEST_RESPONSE_{}_*..log file present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_TOMCAT_REQ_RESP":
-                        logging.info("TLOG_REQUEST_LOG_{}_*..log file present".format(input_date_formatted))
-                    elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
-                        logging.info("TLOG_CBCK-V2-REQ-RESPONSE_{}_*..log file present".format(input_date_formatted))
-                    elif pname == "PRISM_TOMCAT_PERF_LOG":
-                        logging.info("TLOG_PERF_{}_*..log file present".format(input_date_formatted))
-                    
-                    elif pname == "PRISM_DEAMON":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_BILLING_{0}_{1}_*..log file present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_BILLING_{}_*..log file present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_*..log file present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_*..log file present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_REQUEST_RESPONSE_{0}_{1}_*..log file present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_REQUEST_RESPONSE_{}_*..log file present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_DAEMON_REQ_RESP":
-                        logging.info("TLOG_REQUEST_LOG_{}_*..log file present".format(input_date_formatted))
-                    elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
-                        logging.info("TLOG_CBCK-V2-REQ-RESPONSE_{}_*..log file present".format(input_date_formatted))
-                    elif pname == "PRISM_DAEMON_PERF_LOG":
-                        logging.info("TLOG_PERF_{}_*..log file present".format(input_date_formatted))
-                    
-                    elif pname == "PRISM_SMSD":
-                        logging.info("TLOG_SMS_{}_*..log file present".format(input_date_formatted))
-                        
                     for files in dated_tlog_files:
                         self.tlog_files.append(str(files))
                         
@@ -346,7 +323,7 @@ class LogFileFinder:
         elif pname == "PRISM_SMSD":
             self.tlog_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_tlog_path"] + '/TLOG_SMS_*.tmp')
             
-        logging.info('tlog files ex: %s', self.tlog_files)
+        logging.info('TLOG_FILES_PRESENT: %s', self.tlog_files)
         
         return self.tlog_files
     
@@ -377,10 +354,9 @@ class LogFileFinder:
         
         for date in self.input_date:
             # logging.info('search date is: %s', datetime.strftime(date, "%Y-%m-%d"))
-            input_date_formatted = datetime.strftime(date, "%Y-%m-%d")       
+            input_date_formatted = datetime.strftime(date, "%Y-%m-%d")      
             
             #input dated access file in the access log path
-            
             dated_access_files = [os.path.join(path, p) for p in os.listdir(path) if p.startswith("{0}.{1}".format(access_log_prefix, input_date_formatted)) and p.endswith("{}".format(access_log_suffix))]
                         
             if bool(dated_access_files):
@@ -390,6 +366,13 @@ class LogFileFinder:
                 self.access_log_files.append(str(files))
         
         return self.access_log_files
+    
+    def get_sorted_dated_tlog_files(self, path, fname_prefix, fname_suffix):
+        return sorted(
+                [ os.path.join(path, p) for p in os.listdir(path) 
+                 if p.startswith(fname_prefix) and p.endswith(fname_suffix)
+                ], key=extract_hour
+            )
                     
     def date_range_list(self, start_date, end_date):
         # Return list of datetime.date objects between start_date and end_date (inclusive).

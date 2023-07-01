@@ -222,16 +222,6 @@ class TlogAccessLogParser:
         else:
             self.sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
         
-        # try:
-        #     for key, value in self.non_issue_sbn_thread_dict.items(): 
-        #         logging.info('non_issues:- tlog sbn id: %s and map sbn id: %s', tlog_dict["SBN_OR_EVT_ID"], key)
-        #         if tlog_dict["SBN_OR_EVT_ID"] == key:
-        #             self.non_issue_sbn_thread_dict.pop(tlog_dict["SBN_OR_EVT_ID"])
-        #     else:
-        #         self.non_issue_sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
-        # except KeyError as error:
-        #     logging.info("non_issue:- sbn not present in map")
-        
                                
     def create_process_folder(self, pname, folder):
         """
