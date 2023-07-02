@@ -92,6 +92,8 @@ class LogFileFinder:
         
         elif pname == "PRISM_DAEMON_PERF_LOG":
             self.tlog_dir = self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_perf_log_path"]
+        elif pname == "GENERIC_SERVER":
+            self.tlog_dir = self.initializedPath_object.prism_tomcat_log_path_dict["generic_server_request_bean_response"]
         
         elif pname == "PRISM_SMSD":
             self.tlog_dir = self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_tlog_path"]
@@ -102,7 +104,7 @@ class LogFileFinder:
             or pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP" or pname == "PRISM_TOMCAT_REQ_RESP"\
             or pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP" or pname == "PRISM_DAEMON_REQ_RESP"\
             or pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP" or pname == "PRISM_TOMCAT_PERF_LOG"\
-            or pname == "PRISM_DAEMON_PERF_LOG":
+            or pname == "PRISM_DAEMON_PERF_LOG" or pname == "GENERIC_SERVER":
             
             logging.info("TLOG_DIRECTORY: %s", self.tlog_dir)
             path = os.path.join(self.tlog_dir)
@@ -203,6 +205,10 @@ class LogFileFinder:
                     elif pname == "PRISM_DAEMON_PERF_LOG":
                         fprefix = "TLOG_PERF_{}_".format(input_date_formatted)
                         dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                    
+                    elif pname == "GENERIC_SERVER":
+                        fprefix = "TLOG_GENERIC_SERVER_REQUEST_BEAN_RESPONSE_{}_".format(input_date_formatted)
+                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                         
                     elif pname == "PRISM_SMSD":
                         fprefix = "TLOG_SMS_{}_".format(input_date_formatted)
@@ -266,6 +272,9 @@ class LogFileFinder:
                     elif pname == "PRISM_DAEMON_PERF_LOG":
                         logging.info("TLOG_PERF_{}_*..log file not present".format(input_date_formatted))
                     
+                    elif pname == "GENERIC_SERVER":
+                        logging.info("TLOG_GENERIC_SERVER_REQUEST_BEAN_RESPONSE_{}_*..log file not present".format(input_date_formatted))
+                        
                     elif pname == "PRISM_SMSD":
                         logging.info("TLOG_SMS_{}_*..log file not present".format(input_date_formatted))
         
@@ -320,6 +329,9 @@ class LogFileFinder:
         elif pname == "PRISM_DAEMON_PERF_LOG":
             self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_perf_log_path"] + "/TLOG_PERF_*.tmp")
         
+        elif pname == "GENERIC_SERVER":
+            self.tlog_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["generic_server_request_bean_response"] + "/TLOG_GENERIC_SERVER_REQUEST_BEAN_RESPONSE_*.tmp")
+            
         elif pname == "PRISM_SMSD":
             self.tlog_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_tlog_path"] + '/TLOG_SMS_*.tmp')
             

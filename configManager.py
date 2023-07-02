@@ -41,6 +41,54 @@ class ConfigManager:
         if configMap:
             self.subtype_parameter.append(json.loads(configMap, object_pairs_hook=OrderedDict))
     
+    def get_prism_config_param_value(self, module_name, site_id, param_name):
+        #get prism_config_param value
+        param_value = None
+
+        Query = "SELECT PARAM_VALUE FROM PRISM_CONFIG_PARAMS WHERE MODULE_NAME = %s AND SITE_ID = %s AND PARAM_NAME = %s"
+        params = (module_name, site_id, param_name)
+            
+        configMap = self.get_db_config_map(Query, params, self.db_connection)
+        
+        if configMap:
+            pcp_value_row = json.loads(configMap, object_pairs_hook=OrderedDict)
+            if pcp_value_row:
+                for row in pcp_value_row:
+                    param_value = row["PARAM_VALUE"]
+        return param_value
+    
+    def get_services_ref_param_value(self, service_id, site_id, param_name):
+        #get prism_config_param value
+        param_value = None
+
+        Query = "SELECT PARAM_VALUE FROM SERVICES_REF WHERE SERVICE_ID = %s AND SITE_ID = %s AND PARAM_NAME = %s"
+        params = (service_id, site_id, param_name)
+            
+        configMap = self.get_db_config_map(Query, params, self.db_connection)
+        
+        if configMap:
+            sr_value_row = json.loads(configMap, object_pairs_hook=OrderedDict)
+            if sr_value_row:
+                for row in sr_value_row:
+                    param_value = row["PARAM_VALUE"]
+        return param_value
+    
+    def get_service_charges_ref_param_value(self, sc_id, site_id, param_name):
+        #get prism_config_param value
+        param_value = None
+
+        Query = "SELECT PARAM_VALUE FROM SERVICE_CHARGES_REF WHERE SC_ID = %s AND SITE_ID = %s AND PARAM_NAME = %s"
+        params = (sc_id, site_id, param_name)
+
+        configMap = self.get_db_config_map(Query, params, self.db_connection)
+        
+        if configMap:
+            scr_value_row = json.loads(configMap, object_pairs_hook=OrderedDict)
+            if scr_value_row:
+                for row in scr_value_row:
+                    param_value = row["PARAM_VALUE"]
+        return param_value
+    
     def is_multitenant_system(self):
         is_global_instance = False
         try:
@@ -109,7 +157,23 @@ class ConfigManager:
             return operator_url_map
         except KeyError as ex:
             logging.exception("operator_id: %s url map is not found", operator_id, ex)
+    
+    def get_operator_url_from_pcp(self, module_name, site_id):
+        #get prism_config_param value
+        operator_url = None
 
+        Query = "SELECT PARAM_NAME FROM PRISM_CONFIG_PARAMS WHERE MODULE_NAME = %s AND SITE_ID = %s AND PARAM_NAME LIKE '%%:action'"
+        params = (module_name, site_id)
+            
+        configMap = self.get_db_config_map(Query, params, self.db_connection)
+        
+        if configMap:
+            param_row = json.loads(configMap, object_pairs_hook=OrderedDict)
+            if param_row:
+                for row in param_row:
+                    operator_url = str(row["PARAM_NAME"]).split(":")[0]
+        return operator_url
+        
     def get_handler_info(self, issue_handler_task_type_map):
         # Connect to the database
         try:
