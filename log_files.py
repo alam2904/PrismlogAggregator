@@ -114,7 +114,12 @@ class LogFileFinder:
                 self.input_date.append(last_modified_time)    
             else:
                 #method call to date range list
-                self.input_date = self.date_range_list(self.s_date, self.e_date)
+                if not pname == "GENERIC_SERVER":
+                    self.input_date = self.date_range_list(self.s_date, self.e_date)
+                else:
+                    s_date = datetime.strptime(self.validation_object.non_converted_start_date, "%Y-%m-%d")
+                    e_date = datetime.strptime(self.validation_object.non_converted_end_date, "%Y-%m-%d")
+                    self.input_date = self.date_range_list(s_date, e_date)
             
             for date in self.input_date:
                 input_date_formatted = ""

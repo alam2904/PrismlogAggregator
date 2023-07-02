@@ -18,6 +18,8 @@ class InputValidation:
         self.msisdn = msisdn
         self.operator_id = operator_id
         self.fmsisdn = ""
+        self.non_converted_start_date = start_date
+        self.non_converted_end_date = end_date 
         self.start_date = start_date
         self.end_date = end_date
         self.input_mode = input_mode 

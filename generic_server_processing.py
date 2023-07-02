@@ -1,5 +1,7 @@
 
 import logging
+import signal
+import subprocess
 from configManager import ConfigManager
 from subscriptions import SubscriptionController
 from log_files import LogFileFinder
@@ -17,6 +19,7 @@ class GENERIC_SERVER_PROCESSOR:
         self.payment_status = ""
         self.task_type = ""
         self.timestamp = ""
+        self.flow_tasks = ""
         self.sbn_id = ""
         self.srv_id = ""
         self.requester_ref_id = ""
@@ -26,6 +29,9 @@ class GENERIC_SERVER_PROCESSOR:
         self.last_modified_time = ""
         self.is_sbn_processed = {}
         self.gs_tlog_files = []
+        self.is_processed_by_generic_server = False
+        self.gs_tlog_record = []
+        self.gs_tlog_thread = []
         
     
     def process_generic_server_tlog(self, process_tlog):
@@ -41,15 +47,17 @@ class GENERIC_SERVER_PROCESSOR:
             
             logging.info("OPERATOR_URL: %s", self.operator_url)
             
-            self.gs_tlog_files = logfile_object.get_tlog_files("GENERIC_SERVER")
+            self.gs_tlog_files = logfile_object.get_tlog_files("GENERIC_SERVER", self.last_modified_time)
             logging.info("GS_REQUEST_BEAN_RESPONSE_TLOG_FILES: %s", self.gs_tlog_files)
             
             for pthread, ptlog in process_tlog.items():
+                self.is_processed_by_generic_server = False
                 self.site_id = ptlog["SITE_ID"]
                 self.msisdn = ptlog["MSISDN"]
                 self.payment_status = ptlog["PAYMENT_STATUS"]
                 self.task_type = ptlog["TASK_TYPE"]
                 self.timestamp = ptlog["TIMESTAMP"]
+                self.flow_tasks = ptlog["FLOW_TASKS"]
                 self.sbn_id = ptlog["SBN_OR_EVT_ID"]
                 value = self.is_sbn_processed.get(self.sbn_id)
                 if value is not None and value == "processed":
@@ -72,10 +80,44 @@ class GENERIC_SERVER_PROCESSOR:
                 logging.info(
                     "SITE_ID=%s, MSISDN=%s, PAYMENT_STATUS=%s, TASK_TYPE=%s, "
                     "TIMESTAMP=%s, CHARGING_REF_ID=%s, INTERNAL_REF_ID=%s, "
-                    "REQUESTER_REF_ID=%s, SRV_ID=%s",
+                    "REQUESTER_REF_ID=%s, SRV_ID=%s, FLOW_TASKS=%s",
                     self.site_id, self.msisdn, self.payment_status, self.task_type,
                     self.timestamp, self.charging_ref_id, self.internal_ref_id,
-                    self.requester_ref_id, self.srv_id
+                    self.requester_ref_id, self.srv_id, self.flow_tasks
                 )
+                
+                for task in self.flow_tasks:
+                    for item in task:
+                        if item == "-#PUSH":
+                            self.is_processed_by_generic_server = True
+                            break
+                    break
+                
+                if self.gs_tlog_files:
+                    self.condition_based_gs_tlog_fetch()
+                    
+            if self.gs_tlog_record:
+                data_list = []
+                for data in self.gs_tlog_record:
+                    for record in str(data).splitlines():
+                        if record not in data_list:
+                            data_list.append(record)
+                logging.info("GENERIC_REQUEST_BEAN_RESPONSE_RECORD: %s", data_list)
+                            
         except KeyError as err:
             logging.info(err)
+    
+    def condition_based_gs_tlog_fetch(self):
+        for file in self.gs_tlog_files:
+            try:
+                data = subprocess.check_output("cat {0} | grep -a '|{1}|' | grep -a {2} | grep -a {3}".format(file, self.site_id, self.operator_url, self.msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                self.gs_tlog_record.append(data)
+            except Exception as ex:
+                logging.info(ex)
+            
+            if not self.gs_tlog_record:
+                try:
+                    data = subprocess.check_output("cat {0} | grep -a '|{1}|' | grep -a {2} | grep -a {3}".format(file, self.site_id, self.operator_url, self.charging_ref_id), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                    self.gs_tlog_record.append(data)
+                except Exception as ex:
+                    logging.info(ex)
