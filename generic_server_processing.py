@@ -1,4 +1,5 @@
 
+from collections import OrderedDict
 import logging
 import signal
 import subprocess
@@ -32,6 +33,8 @@ class GENERIC_SERVER_PROCESSOR:
         self.is_processed_by_generic_server = False
         self.gs_tlog_record = []
         self.gs_tlog_thread = []
+        self.gs_req_resp_record = []
+        self.thread_data_dict = OrderedDict()
         
     
     def process_generic_server_tlog(self, process_tlog):
@@ -47,8 +50,6 @@ class GENERIC_SERVER_PROCESSOR:
             
             logging.info("OPERATOR_URL: %s", self.operator_url)
             
-            self.gs_tlog_files = logfile_object.get_tlog_files("GENERIC_SERVER", self.last_modified_time)
-            logging.info("GS_REQUEST_BEAN_RESPONSE_TLOG_FILES: %s", self.gs_tlog_files)
             
             for pthread, ptlog in process_tlog.items():
                 self.is_processed_by_generic_server = False
@@ -93,17 +94,28 @@ class GENERIC_SERVER_PROCESSOR:
                             break
                     break
                 
+                self.gs_tlog_files = logfile_object.get_tlog_files("GENERIC_SERVER")
+                logging.info("GS_REQUEST_BEAN_RESPONSE_TLOG_FILES: %s", self.gs_tlog_files)
+                
                 if self.gs_tlog_files:
                     self.condition_based_gs_tlog_fetch()
                     
-            if self.gs_tlog_record:
-                data_list = []
-                for data in self.gs_tlog_record:
-                    for record in str(data).splitlines():
-                        if record not in data_list:
-                            data_list.append(record)
-                logging.info("GENERIC_REQUEST_BEAN_RESPONSE_RECORD: %s", data_list)
-                            
+                if self.gs_tlog_record:
+                    data_list = []
+                    for data in self.gs_tlog_record:
+                        for record in str(data).splitlines():
+                            if record not in data_list:
+                                self.gs_tlog_thread.append(record.split("|")[1])
+                                data_list.append(record)
+                    logging.info("GENERIC_REQUEST_BEAN_RESPONSE_RECORD: %s", data_list)
+                    logging.info("GENERIC_REQUEST_BEAN_RESPONSE_THREAD: %s", self.gs_tlog_thread)
+                    
+                    if self.gs_tlog_thread:
+                        self.generic_server_request_response_header_map()
+                    
+                    logging.info("All the dated REQUEST_BEAN_RESPONSE have been already parsed so breaking the loop")
+                    break
+                                
         except KeyError as err:
             logging.info(err)
     
@@ -121,3 +133,40 @@ class GENERIC_SERVER_PROCESSOR:
                     self.gs_tlog_record.append(data)
                 except Exception as ex:
                     logging.info(ex)
+    
+    def generic_server_request_response_header_map(self):
+        header = [
+                    "TIMESTAMP", "THREAD_ID", "ACTION", "REQUEST", "RESPONSE", "STATUS", "TIME_TAKEN"
+                ]
+            
+        if self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_ReqResLogger_log"]:
+            gs_req_resp_log_path = self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_ReqResLogger_log"]
+            logging.info("GS_REQ_RESP_LOG_PATH: %s", gs_req_resp_log_path)
+            
+            for gs_thread in self.gs_tlog_thread:
+                temp = []
+                try:
+                    data_bytes = subprocess.check_output("cat {0} | grep -a {1}".format(gs_req_resp_log_path, gs_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                    data_str = data_bytes.decode("utf-8")
+                    self.gs_req_resp_record.append(data_str)
+                    
+                    if self.gs_req_resp_record:
+                        for data in self.gs_req_resp_record:
+                            splitted_data = str(data).split("|")
+                            if gs_thread == splitted_data[1].strip():
+                                data_dict = OrderedDict()
+                                try:
+                                    for index, element in enumerate(splitted_data):
+                                        data_dict[header[index]] = element.strip()
+                                    temp.append(data_dict)
+                                except IndexError as error:
+                                    logging.exception(error)
+                        if temp:
+                            self.thread_data_dict[gs_thread] = temp
+                            logging.info('GS_THREAD_DATA_DICT: %s', self.thread_data_dict)
+                
+                except Exception as ex:
+                    logging.info(ex)
+        
+        gs_thread_req_resp_dict = {"GENERIC_SERVER_REQUEST_RESPONSE": self.thread_data_dict}
+        self.prism_data_dict_list.append(gs_thread_req_resp_dict)
