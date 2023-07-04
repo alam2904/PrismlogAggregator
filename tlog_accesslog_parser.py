@@ -29,6 +29,7 @@ class TlogAccessLogParser:
         self.prism_daemon_out_folder = False
         self.prism_smsd_out_folder = False
         self.prism_tomcat_access_out_folder = False
+        self.prism_gs_access_out_folder = False
         
         #prism required parameters
         self.issue_task_types = issue_task_types
@@ -121,7 +122,11 @@ class TlogAccessLogParser:
             logging.exception(error)
     
     def parse_accessLog(self, pname, accesslog_header_data_dict):
-        folder = os.path.join(self.outputDirectory_object, "{}_issue_tomcat_access".format(self.hostname))
+        if not pname == "GENERIC_SERVER":
+            folder = os.path.join(self.outputDirectory_object, "{}_issue_tomcat_access".format(self.hostname))
+        else:
+            folder = os.path.join(self.outputDirectory_object, "{}_issue_generic_server_access".format(self.hostname))
+            
         for key, value in dict(accesslog_header_data_dict).items():
             logging.info('access value is: %s', value["HTTP_STATUS_CODE"])
             self.check_for_issue_in_accesslog(pname, folder, value, HttpErrorCodes)
@@ -142,9 +147,15 @@ class TlogAccessLogParser:
         
         if self.issue_access_threads:
             #issue thread found hence going to create tomcat access folder
-            if not self.prism_tomcat_access_out_folder:
-                self.create_process_folder(pname, folder)
-            return True
+            if not pname == "GENERIC_SERVER":
+                if not self.prism_tomcat_access_out_folder:
+                    self.create_process_folder(pname, folder)
+                return True
+            else:
+                if not self.prism_gs_access_out_folder:
+                    self.create_process_folder(pname, folder)
+                return True
+                
         return False
         
     
@@ -248,8 +259,9 @@ class TlogAccessLogParser:
             self.prism_daemon_out_folder = is_true
         elif pname == "PRISM_SMSD":
             self.prism_smsd_out_folder = is_true
+        elif pname == "GENERIC_SERVER":
+            self.prism_gs_access_out_folder = is_true
 
-            
     def reinitialize_constructor_parameters(self):
         self.task_types = []
         self.input_tags = []

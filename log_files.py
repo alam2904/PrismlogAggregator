@@ -352,9 +352,8 @@ class LogFileFinder:
         access_log_path = ""
         access_log_prefix = ""
         access_log_suffix = ""
-        
         try:
-            if pname == "PRISM_TOMCAT":
+            if pname == "PRISM_TOMCAT" or pname == "GENERIC_SERVER":
                 for webService in self.initializedPath_object.web_services:
                     logging.info('web service: %s', webService)
                     access_log_prefix = self.config[hostname]["PRISM"]["PRISM_TOMCAT"][webService]['LOGS_PATH']["ACCESS_LOG_PREFIX"]
@@ -367,8 +366,13 @@ class LogFileFinder:
         path = os.path.abspath(access_log_path)
         
         #method call to date range list
-        self.input_date = self.date_range_list(self.s_date, self.e_date)
-        
+        if not pname == "GENERIC_SERVER":
+            self.input_date = self.date_range_list(self.s_date, self.e_date)
+        else:
+            s_date = datetime.strptime(self.validation_object.non_converted_start_date, "%Y-%m-%d")
+            e_date = datetime.strptime(self.validation_object.non_converted_end_date, "%Y-%m-%d")
+            self.input_date = self.date_range_list(s_date, e_date)
+            
         for date in self.input_date:
             # logging.info('search date is: %s', datetime.strftime(date, "%Y-%m-%d"))
             input_date_formatted = datetime.strftime(date, "%Y-%m-%d")      

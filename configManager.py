@@ -142,25 +142,22 @@ class ConfigManager:
     
     def get_operator_url_map(self, operator_id):
         #initializing prism_config_params subtype boolean parameter
-        operator_url_map = None
+        urls = []
         try:
             Query = "SELECT OPERATOR_URL FROM OPERATOR_URL_MAPPING WHERE OPERATOR_ID = %s"
             params = (operator_id,)
             configMap = self.get_db_config_map(Query, params, self.db_connection)
             
             if configMap:
-                operator_url_map = json.loads(configMap, object_pairs_hook=OrderedDict)
-                if operator_url_map:
-                    for row in operator_url_map:
-                        logging.info("OPERATOR_URL: %s", row["OPERATOR_URL"])
-                        operator_url_map = row["OPERATOR_URL"]    
-            return operator_url_map
+                urls.extend([row["OPERATOR_URL"] for row in json.loads(configMap, object_pairs_hook=OrderedDict)])
+                logging.info("URL_LIST: %s", urls)
+            return urls
         except KeyError as ex:
             logging.exception("operator_id: %s url map is not found", operator_id, ex)
     
     def get_operator_url_from_pcp(self, module_name, site_id):
         #get prism_config_param value
-        operator_url = None
+        urls = []
 
         Query = "SELECT PARAM_NAME FROM PRISM_CONFIG_PARAMS WHERE MODULE_NAME = %s AND SITE_ID = %s AND PARAM_NAME LIKE '%%:action'"
         params = (module_name, site_id)
@@ -168,11 +165,11 @@ class ConfigManager:
         configMap = self.get_db_config_map(Query, params, self.db_connection)
         
         if configMap:
-            param_row = json.loads(configMap, object_pairs_hook=OrderedDict)
-            if param_row:
-                for row in param_row:
-                    operator_url = str(row["PARAM_NAME"]).split(":")[0]
-        return operator_url
+            param_rows = json.loads(configMap, object_pairs_hook=OrderedDict)
+            if param_rows:
+                for row in param_rows:
+                    urls.append(str(row["PARAM_NAME"]).split(":")[0])
+        return urls
         
     def get_handler_info(self, issue_handler_task_type_map):
         # Connect to the database

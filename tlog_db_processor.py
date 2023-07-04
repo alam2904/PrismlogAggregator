@@ -99,7 +99,8 @@ class TlogProcessor:
                     tlog_object.get_tlog("PRISM_TOMCAT_PERF_LOG")
                 
                 if self.initializedPath_object.prism_tomcat_log_path_dict["generic_server_request_bean_response"]:
-                    generic_server_object = GENERIC_SERVER_PROCESSOR(self.initializedPath_object, self.outputDirectory_object, self.prism_data_dict_list, self.validation_object, self.config)
+                    generic_server_object = GENERIC_SERVER_PROCESSOR(self.initializedPath_object, self.outputDirectory_object,\
+                                            self.prism_data_dict_list, self.validation_object, self.config, self.log_mode, self.oarm_uid)
                     generic_server_object.process_generic_server_tlog(self.prism_tomcat_tlog_dict["PRISM_TOMCAT_BILLING_TLOG"])
             else:
                 logging.info("NO REALTIME TLOG PRESENT")
@@ -130,7 +131,8 @@ class TlogProcessor:
                     tlog_object.get_tlog("PRISM_DAEMON_PERF_LOG")
                 
                 if self.initializedPath_object.prism_tomcat_log_path_dict["generic_server_request_bean_response"]:
-                    generic_server_object = GENERIC_SERVER_PROCESSOR(self.initializedPath_object, self.outputDirectory_object, self.prism_data_dict_list, self.validation_object, self.config)
+                    generic_server_object = GENERIC_SERVER_PROCESSOR(self.initializedPath_object, self.outputDirectory_object,\
+                                            self.prism_data_dict_list, self.validation_object, self.config, self.log_mode, self.oarm_uid)
                     generic_server_object.process_generic_server_tlog(self.prism_daemon_tlog_dict["PRISM_DAEMON_TLOG"])
                 
                 subscriptions_data_dict = tlog_object.get_subscription_details()
