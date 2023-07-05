@@ -31,7 +31,7 @@ class PrismTlogIssueTag(object):
     GENERIC_TASK2 = ["GT2=3,", "GT2=0,", "GT2=8,"]
     GENERIC_TASK3 = ["GT3=3,", "GT3=0,", "GT3=8,"]
     GENERIC_TASK4 = ["GT1=4,", "GT4=0,", "GT4=8,"]
-    GENERAL_FAILURE = ["NHF:NO handler configured for request"]
+    GENERAL_FAILURE = ["NHF:NO handler configured for request", "-#TIMEOUT"]
 
 class PrismGeneralIssueTage(object):
     SUB_TYPE_CHECK = "STCK"

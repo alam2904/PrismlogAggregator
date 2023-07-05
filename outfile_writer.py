@@ -59,7 +59,9 @@ class FileWriter:
         
         if pname == "PRISM_TOMCAT":               
             thread_outfile = "{0}/{1}_{2}_prism_access_tomcat.log".format(folder, http_error_code, thread)
-            
+        elif pname == "GENERIC_SERVER":
+            thread_outfile = "{0}/{1}_{2}_generic_server_access.log".format(folder, http_error_code, thread)
+        
         try:
             with open(thread_outfile, "w") as write_file:
                 write_file.writelines(record)

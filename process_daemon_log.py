@@ -168,7 +168,7 @@ class DaemonLogProcessor:
                 input_date_formatted_month = datetime.strftime(date, "%Y-%m")
 
                 if self.is_backup_file:
-                    if pname == "PRISM_TOMCAT":
+                    if pname == "PRISM_TOMCAT" or pname == "GENERIC_SERVER":
                         self.backup_log_files.append(str(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_backup_log"]).replace("yyyy-MM", "{}".format(input_date_formatted_month)).replace("dd", "{}".format(input_date_formatted)))
 
                     elif pname == "PRISM_DEAMON":
@@ -178,7 +178,7 @@ class DaemonLogProcessor:
                         self.backup_log_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_PRISM_backup_log"].replace("yyyy-MM", "{}".format(input_date_formatted_month)).replace("dd", "{}".format(input_date_formatted)))
                 
                 elif self.is_backup_root_file:
-                    if pname == "PRISM_TOMCAT":
+                    if pname == "PRISM_TOMCAT" or pname == "GENERIC_SERVER":
                         self.backup_log_files.append(str(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_ROOT_backup_log"]).replace("yyyy-MM", "{}".format(input_date_formatted_month)).replace("dd", "{}".format(input_date_formatted)))
 
                     elif pname == "PRISM_DEAMON":
@@ -190,22 +190,26 @@ class DaemonLogProcessor:
         except KeyError as error:
             logging.info(error)
         
-    def fetch_daemon_log(self, tlog_thread, log_files):
+    def fetch_daemon_log(self, tlog_thread, log_files, date_formatted=None):
         #check file for the record for the given thread
         lines = []
         start_line = None
         end_line = None
         
-        try:    
-            if self.is_msisdn_backup_file or self.is_backup_file or self.is_backup_root_file:
-                for file in log_files:
+        if self.is_msisdn_backup_file or self.is_backup_file or self.is_backup_root_file:
+            for file in log_files:
+                try:   
                     bk_files = subprocess.check_output("ls {0}".format(file), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     bk_file_names = bk_files.splitlines()
                     logging.info("BK_FILE_NAMES: %s", bk_file_names)
                     for bkfile in bk_file_names:
                         try:
                             # completed_process = subprocess.run("zcat {0} | grep -l {1}".format(bkfile, tlog_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                            completed_process = subprocess.Popen("zcat {0} | grep -l {1}".format(bkfile, tlog_thread), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            if date_formatted:
+                                completed_process = subprocess.Popen("zcat {0} | grep -a {} | grep -l {1}".format(bkfile, date_formatted, tlog_thread), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            else:
+                                completed_process = subprocess.Popen("zcat {0} | grep -l {1}".format(bkfile, tlog_thread), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            
                             output, error = completed_process.communicate()
                             returncode = completed_process.returncode
                             
@@ -213,25 +217,39 @@ class DaemonLogProcessor:
                                 output = output.strip()
                                 if output == "(standard input)":
                                     logging.info('BACKUP_LOG_FILE: %s', bkfile)
-                            
-                                    with gzip.open(bkfile, 'rt') as file:
-                                        for line_number, line in enumerate(file, start=1):
-                                            if tlog_thread in line:
-                                                # logging.info('MATCHED_BACKUP_LOG_FILE: %s', bkfile)
-                                                if start_line is None:
-                                                    start_line = line_number
-                                                end_line = line_number
-                                                lines.append(line)
-                                            elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
-                                                lines.append(line)
-                                    if lines:
-                                        logging.info("INNER BREAK")
-                                        break
+                                    if date_formatted:
+                                        with gzip.open(bkfile, 'rt') as file:
+                                            for line_number, line in enumerate(file, start=1):
+                                                if date_formatted in line and tlog_thread in line:
+                                                    # logging.info('MATCHED_BACKUP_LOG_FILE: %s', bkfile)
+                                                    if start_line is None:
+                                                        start_line = line_number
+                                                    end_line = line_number
+                                                    lines.append(line)
+                                                elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
+                                                    lines.append(line)
+                                        if lines:
+                                            logging.info("INNER BREAK")
+                                            break
+                                    else:
+                                        with gzip.open(bkfile, 'rt') as file:
+                                            for line_number, line in enumerate(file, start=1):
+                                                if tlog_thread in line:
+                                                    # logging.info('MATCHED_BACKUP_LOG_FILE: %s', bkfile)
+                                                    if start_line is None:
+                                                        start_line = line_number
+                                                    end_line = line_number
+                                                    lines.append(line)
+                                                elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
+                                                    lines.append(line)
+                                        if lines:
+                                            logging.info("INNER BREAK")
+                                            break
+                                        
                                 else:
                                     logging.info("Thread not found in: %s", bkfile)
                             else:
                                 logging.info("An error occurred while running the command.")
-                                logging.info("Error: %s", error.strip())
                             
                         except subprocess.CalledProcessError as e:
                             # An error occurred while running the command
@@ -239,25 +257,39 @@ class DaemonLogProcessor:
                     if lines:
                         logging.info("OUTER BREAK")
                         break
-            else:
-                for file in log_files:
-                    with open(file, 'r') as file:
-                        for line_number, line in enumerate(file, start=1):
-                            if tlog_thread in line:
-                                if start_line is None:
-                                    start_line = line_number
-                                end_line = line_number
-                                lines.append(line)
-                            elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
-                                lines.append(line)
-                    
-            logging.info("START_LINE: %s and END_LINE: %s", start_line, end_line)
-            if lines:
-                self.issue_record = lines
-        except subprocess.CalledProcessError as e:
-            logging.debug("Error executing ls command: %s", e)
-        except Exception as ex:
-            logging.debug(ex)
+                except subprocess.CalledProcessError as e:
+                    logging.debug("Error executing ls command: %s", e)
+                except Exception as ex:
+                    logging.debug(ex)
+        else:
+            for file in log_files:
+                try:
+                    if date_formatted:
+                        with open(file, 'r') as file:
+                            for line_number, line in enumerate(file, start=1):
+                                if date_formatted in line and tlog_thread in line:
+                                    if start_line is None:
+                                        start_line = line_number
+                                    end_line = line_number
+                                    lines.append(line)
+                                elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
+                                    lines.append(line)
+                    else:
+                        with open(file, 'r') as file:
+                            for line_number, line in enumerate(file, start=1):
+                                if tlog_thread in line:
+                                    if start_line is None:
+                                        start_line = line_number
+                                    end_line = line_number
+                                    lines.append(line)
+                                elif start_line is not None and not re.match(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}\]-', line):
+                                    lines.append(line)
+                except Exception as ex:
+                    logging.debug(ex)
+                
+        logging.info("START_LINE: %s and END_LINE: %s", start_line, end_line)
+        if lines:
+            self.issue_record = lines
             
     def process_tomcat_http_log(self, pname, folder, access_dict, issue_access_thread):
         #creating out file writter object for writting log to out file
@@ -270,9 +302,10 @@ class DaemonLogProcessor:
                 try:
                     if not self.issue_record:
                         self.reinitialize_constructor_parameter()
-                        if pname == "PRISM_TOMCAT":
+                        if pname == "PRISM_TOMCAT" or pname == "GENERIC_SERVER":
                             self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_log"])                        
-                            self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.log_files)
+                            # self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.log_files)
+                            self.fetch_daemon_log(thread, self.log_files, date_formatted)
                                 
                     if self.issue_record:
                         fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
@@ -284,9 +317,10 @@ class DaemonLogProcessor:
                 try:
                     if not self.issue_record:
                         self.reinitialize_constructor_parameter()
-                        if pname == "PRISM_TOMCAT":
+                        if pname == "PRISM_TOMCAT" or pname == "GENERIC_SERVER":
                             self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_ROOT_log"])                        
-                            self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.log_files)
+                            # self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.log_files)
+                            self.fetch_daemon_log(thread, self.log_files, date_formatted)
                                 
                     if self.issue_record:
                         fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
@@ -300,7 +334,8 @@ class DaemonLogProcessor:
                         self.reinitialize_constructor_parameter()
                         self.is_backup_file = True
                         self.dated_log_files(pname)
-                        self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.backup_log_files)
+                        # self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.backup_log_files)
+                        self.fetch_daemon_log(thread, self.backup_log_files, date_formatted)
                         
                         if self.issue_record:
                             fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
@@ -315,30 +350,14 @@ class DaemonLogProcessor:
                         self.reinitialize_constructor_parameter()
                         self.is_backup_root_file = True
                         self.dated_log_files(pname)
-                        self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.backup_log_files) 
+                        # self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.backup_log_files)
+                        self.fetch_daemon_log(thread, self.backup_log_files, date_formatted)
                         
                         if self.issue_record:
                             fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
                             
                 except KeyError as error:
                     logging.info(error)
-    
-    def fetch_tomcat_access_daemon_log(self, thread, date_formatted, log_files):
-        #check file for the recod for the given thread and timestamp
-        for file in log_files:
-            try:
-                # logging.info('tlog thread is: %s and log_file is: %s', tlog_thread, file)
-                if self.is_backup_file or self.is_backup_root_file:
-                    thread_log = subprocess.check_output("zcat {0} | grep -a {1} | grep '{2},'".format(file, date_formatted, thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                else:
-                    thread_log = subprocess.check_output("grep -a {0} {1} | grep '{2},'".format(thread, file, date_formatted), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                
-                logging.info("access tomcat log: %s", thread_log)
-                if thread_log:
-                    self.issue_record = thread_log
-            except subprocess.CalledProcessError as error:
-                logging.info('eigther %s does not exists or %s could not be found', file, thread)
-                logging.info(error)
     
     def thread_timestamp_formatting(self, thread_timestamp):
         #date formatter

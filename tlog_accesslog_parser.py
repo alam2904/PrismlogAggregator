@@ -139,11 +139,16 @@ class TlogAccessLogParser:
                 daemonLogProcessor_object.process_tomcat_http_log(pname, folder, value, self.issue_access_threads)
                 
     def check_for_issue_in_accesslog(self, pname, folder, access_dict, error_code):
+        self.issue_access_threads = []
         #issue validation against http error codes
         for error_msg, err_code in error_code.__dict__.items():
             if not error_msg.startswith("__"):
                 if err_code == access_dict["HTTP_STATUS_CODE"]:
-                    self.issue_access_threads.append(access_dict["THREAD"])
+                    if not pname == "GENERIC_SERVER":
+                        self.issue_access_threads.append(access_dict["THREAD"])
+                    else:
+                        logging.info("ISSUE_STATUS_THREAD: %s", str(access_dict["THREAD"]).split("_")[0])
+                        self.issue_access_threads.append(str(access_dict["THREAD"]).split("_")[0])
         
         if self.issue_access_threads:
             #issue thread found hence going to create tomcat access folder
