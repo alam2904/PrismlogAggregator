@@ -1,6 +1,8 @@
 from collections import OrderedDict
 import logging
+import os
 import signal
+import socket
 import subprocess
 from configManager import ConfigManager
 from subscriptions import SubscriptionController
@@ -15,6 +17,9 @@ class GENERIC_SERVER_PROCESSOR:
         self.prism_data_dict_list = prism_data_dict_list
         self.validation_object = validation_object
         self.config = config
+        self.hostname = socket.gethostname()
+        self.web_services = []
+        self.prism_tomcat_conf_path = ""
         self.log_mode = log_mode
         self.oarm_uid = oarm_uid
         self.pname = "GENERIC_SERVER"
@@ -40,6 +45,10 @@ class GENERIC_SERVER_PROCESSOR:
         self.gs_req_resp_record = []
         self.thread_data_dict = OrderedDict()
         self.gs_access_data_dict = OrderedDict()
+        self.gs_req_param_file = None
+        self.gs_callback_response_file = None
+        self.is_macro_required = False
+        self.generic_server_files = []
         
     
     def process_generic_server_tlog(self, process_tlog):
@@ -98,7 +107,7 @@ class GENERIC_SERVER_PROCESSOR:
                 if self.gs_tlog_thread:
                     self.generic_server_access_header_data_map(logfile_object, tlogAccessLogParser_object)
                     self.generic_server_request_response_header_map(configManager_object, tlogAccessLogParser_object)
-                
+                    self.get_generic_server_files(configManager_object)
                     logging.info("All the dated REQUEST_BEAN_RESPONSE have been already parsed so breaking the loop")
                     break              
         except KeyError as err:
@@ -134,13 +143,24 @@ class GENERIC_SERVER_PROCESSOR:
     
     def get_uri_based_url_map(self, configManager_object):
         req_param_file_path = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.site_id, 'REQ_PARAM_FILE_PATH')
-        return self.extract_uri_based(req_param_file_path)
+        extract_string = "URI_BASED="
+        return self.extract_gs_file(req_param_file_path, extract_string)
         
-    def extract_uri_based(self, reverse_map_file_path):
-        with open(reverse_map_file_path, "r") as file:
+    def extract_gs_file(self, gs_file_path, extract_string):
+        with open(gs_file_path, "r") as file:
             for line in file:
-                if line.startswith("URI_BASED=") and not line.startswith("#"):
-                    value = line[len("URI_BASED="):].split(":")[0].strip()
+                if line.startswith(extract_string) and not line.startswith("#"):
+                    if extract_string == "URI_BASED=" or extract_string == "ACTION_BASED=":
+                        value = line[len(extract_string):].split(":")[0].strip()
+                    elif extract_string == "FVstatusFilePath":
+                        value = line.split(":")[1].strip()
+                    elif extract_string == "file.resource.loader.path":
+                        value = line.split("=")[1].strip()
+                    elif extract_string == "velocimacro.library":
+                        value = line.split("=")[1].strip()
+                    elif extract_string == "$$RESP_FILE":
+                        value = line.split("FILE@")[1].strip()
+                        
                     yield value
         
     def condition_based_gs_tlog_fetch(self):
@@ -255,3 +275,77 @@ class GENERIC_SERVER_PROCESSOR:
                 if self.thread_data_dict:
                     tlogAccessLogParser_object.parse_access_req_resp_Log("GENERIC_SERVER_REQ_RESP", self.thread_data_dict)
     
+    def get_generic_server_files(self, configManager_object):
+        is_macro_required = None
+        velocity_file = None
+        
+        if self.validation_object.is_multitenant_system:
+            self.gs_req_param_file = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.site_id, 'REQ_PARAM_FILE_PATH')
+            self.gs_callback_response_file = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.site_id, 'CALLBACK_RESPONSE_FILE')        
+        else:
+            self.gs_req_param_file = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.global_site_id, 'REQ_PARAM_FILE_PATH')
+            self.gs_callback_response_file = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.global_site_id, 'CALLBACK_RESPONSE_FILE')
+        
+        if self.validation_object.is_multitenant_system:
+            is_macro_required = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.site_id, 'IS_MACRO_REQ')
+        else:
+            is_macro_required = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.global_site_id, 'IS_MACRO_REQ')
+            
+        if is_macro_required and self.is_boolean(is_macro_required):
+            self.is_macro_required = is_macro_required.lower() == 'true'
+            
+        if self.is_macro_required:
+            if self.validation_object.is_multitenant_system:
+                velocity_file = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.site_id, 'VEL_PROPS_FILE_NAME')
+            else:
+                velocity_file = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.global_site_id, 'VEL_PROPS_FILE_NAME')
+        
+        if velocity_file:
+            self.get_velocity_and_macro_file_path(velocity_file)
+        
+        if self.gs_req_param_file: 
+            self.generic_server_files.append(self.gs_req_param_file)
+            self.generic_server_files.extend(set(file for file in self.extract_gs_file(self.gs_req_param_file, "FVstatusFilePath") if file.startswith("/")))
+        
+        if self.gs_callback_response_file:
+            self.generic_server_files.append(self.gs_callback_response_file)
+            self.generic_server_files.extend(set(file for file in self.extract_gs_file(self.gs_callback_response_file, "$$RESP_FILE") if file.startswith("/")))
+        
+        if self.generic_server_files:
+            logging.info("GENERIC_SERVER_FILES: %s", self.generic_server_files)
+            
+    def get_velocity_and_macro_file_path(self, velocity_file):
+        try:
+            for webService in self.config[self.hostname]["PRISM"]["PRISM_TOMCAT"]:
+                self.web_services.append(webService)
+                logging.info('tomcat web services: %s', self.web_services)
+        
+                try:
+                    if self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['CONF_PATH'] != "":
+                        self.prism_tomcat_conf_path = self.config[self.hostname]['PRISM']['PRISM_TOMCAT'][webService]['CONF_PATH']
+                        logging.info("TOMCAT_CONF_PATH: %s", self.prism_tomcat_conf_path)
+                        if self.prism_tomcat_conf_path:
+                            path = os.path.join(self.prism_tomcat_conf_path, velocity_file)
+                            if os.path.exists(path):
+                                logging.info("GS_VELOCITY_PROP_FILE: %s", path)
+                                self.generic_server_files.append(path)
+                                value1 = self.extract_gs_file(path, "file.resource.loader.path")
+                                value2 = self.extract_gs_file(path, "velocimacro.library")
+                                macro_file = os.path.join(value1, value2)
+                                
+                                if os.path.exists(macro_file):
+                                    logging.info("GS_MACRO_FILE: %s", macro_file)
+                                    self.generic_server_files.append(macro_file)
+                            break
+                    else:
+                        logging.info('%s conf path not available in %s.json file', webService, self.hostname)
+                except OSError as error:
+                    logging.exception(error)
+        except KeyError as error:
+            logging.error('Hence %s conf path will not be fetched.', webService)
+            logging.exception(error)
+        
+    def is_boolean(self, arg):
+        return arg.lower() in ['true', 'false']
+        
+        

@@ -321,13 +321,13 @@ class DaemonLogProcessor:
                                 self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_log"])                        
                             else:
                                 self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_GENERIC_SERVER_LOGGER_log"])
-                            # self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.log_files)
+
                             logging.info("LOG_FILES: %s", self.log_files)
                             self.fetch_daemon_log(thread, self.log_files, date_formatted)
                                 
                         if self.issue_record:
                             # logging.info("ISSUE_RECORD: %s", self.issue_record)
-                            fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, status_code)
+                            fileWriter_object.write_complete_tomcat_gs_thread_log(pname, folder, thread, self.issue_record, status_code)
                                 
                 except KeyError as error:
                     logging.info(error)
@@ -342,7 +342,7 @@ class DaemonLogProcessor:
                             self.fetch_daemon_log(thread, self.log_files, date_formatted)
                                 
                     if self.issue_record:
-                        fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, status_code)
+                        fileWriter_object.write_complete_tomcat_gs_thread_log(pname, folder, thread, self.issue_record, status_code)
                         
                 except KeyError as error:
                     logging.info(error)
@@ -357,7 +357,7 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(thread, self.backup_log_files, date_formatted)
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, status_code)
+                            fileWriter_object.write_complete_tomcat_gs_thread_log(pname, folder, thread, self.issue_record, status_code)
                         
                 except KeyError as error:
                     logging.info(error)
@@ -373,14 +373,8 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(thread, self.backup_log_files, date_formatted)
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, status_code)
+                            fileWriter_object.write_complete_tomcat_gs_thread_log(pname, folder, thread, self.issue_record, status_code)
                             
-                            if pname == "GENERIC_SERVER_REQ_RESP":
-                                self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_log"])
-                                self.fetch_daemon_log(thread, self.backup_log_files, date_formatted)
-                                
-                                if self.issue_record:
-                                    fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, status_code)
                 except KeyError as error:
                     logging.info(error)
     

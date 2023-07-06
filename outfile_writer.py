@@ -53,7 +53,7 @@ class FileWriter:
         except FileNotFoundError as error:
             logging.info(error)
     
-    def write_complete_access_thread_log(self, pname, folder, thread, record, http_error_code):
+    def write_complete_tomcat_gs_thread_log(self, pname, folder, thread, record, http_error_code):
         #write complete thread log
         thread_outfile = ""
         
