@@ -107,6 +107,18 @@ class HttpErrorCodes(object):
     SM_SBN_NOT_IN_DELAY_DCT = "732"
     SM_VALIDATION_ERROR_BEFORE_ACT = "735"
     
+class GsErrorCodes(object):
+    """
+    Generic Server Constants
+    """
+    DEFAULT_ERROR_CODE = "-1"
+    REQ_MAP_ERROR_CODE = "-2"
+    SBN_NOT_AWAITING_CBCK_CODE = "-3"
+    RECORD_NOT_UPDATED_CODE = "-4"
+    REQ_PARKED = "-5"
+    DEFAULT_FAIL_CODE = "0"
+    SM_USER_LIMIT_EXCEEDED = "609"
+    
 class PrismTasks(object):
     """
     Task type class

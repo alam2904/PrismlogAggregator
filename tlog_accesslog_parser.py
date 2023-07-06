@@ -2,7 +2,7 @@ import logging
 import os
 import socket
 from process_daemon_log import DaemonLogProcessor
-from status_tags import PrismTlogIssueTag, HttpErrorCodes, PrismTlogSmsTag, PrismTasks, PrismGeneralIssueTage
+from status_tags import PrismTlogIssueTag, HttpErrorCodes, GsErrorCodes, PrismTlogSmsTag, PrismTasks, PrismGeneralIssueTage
 from subscriptions import SubscriptionController
 
 class TlogAccessLogParser:
@@ -30,13 +30,14 @@ class TlogAccessLogParser:
         self.prism_smsd_out_folder = False
         self.prism_tomcat_access_out_folder = False
         self.prism_gs_access_out_folder = False
+        self.prism_gs_req_resp_out_folder = False
         
         #prism required parameters
         self.issue_task_types = issue_task_types
         self.task_types = []
         self.stck_sub_type = ""
         self.input_tags = []
-        self.issue_access_threads = []
+        self.issue_access_req_resp_threads = []
         self.is_daemon_log = False
         self.sbn_thread_dict = sbn_thread_dict
         # self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
@@ -121,43 +122,82 @@ class TlogAccessLogParser:
         except KeyError as error:
             logging.exception(error)
     
-    def parse_accessLog(self, pname, accesslog_header_data_dict):
-        if not pname == "GENERIC_SERVER":
-            folder = os.path.join(self.outputDirectory_object, "{}_issue_tomcat_access".format(self.hostname))
-        else:
+    def parse_access_req_resp_Log(self, pname, header_data_dict):
+        folder = ""
+        
+        if pname == "GENERIC_SERVER":
             folder = os.path.join(self.outputDirectory_object, "{}_issue_generic_server_access".format(self.hostname))
+        elif pname == "GENERIC_SERVER_REQ_RESP":
+            folder = os.path.join(self.outputDirectory_object, "{}_issue_generic_server_req_resp".format(self.hostname))
+        else:
+            folder = os.path.join(self.outputDirectory_object, "{}_issue_tomcat_access".format(self.hostname))
+        
+        self.reinitialize_constructor_parameters()
+        
+        for key, value in dict(header_data_dict).items():
+            self.check_for_issue_in_access_req_resp_log(pname, folder, value, HttpErrorCodes, GsErrorCodes)
             
-        for key, value in dict(accesslog_header_data_dict).items():
-            logging.info('access value is: %s', value["HTTP_STATUS_CODE"])
-            self.check_for_issue_in_accesslog(pname, folder, value, HttpErrorCodes)
-            
-            if self.issue_access_threads:
+            if self.issue_access_req_resp_threads:
                 #Daemon log processor object
                 daemonLogProcessor_object = DaemonLogProcessor(self.initializedPath_object, self.outputDirectory_object,\
                                                                 self.validation_object, self.oarm_uid)
                  
-                daemonLogProcessor_object.process_tomcat_http_log(pname, folder, value, self.issue_access_threads)
+                daemonLogProcessor_object.process_tomcat_http_req_resp_log(pname, folder, value, self.issue_access_req_resp_threads)
                 
-    def check_for_issue_in_accesslog(self, pname, folder, access_dict, error_code):
-        self.issue_access_threads = []
+    def check_for_issue_in_access_req_resp_log(self, pname, folder, data_dict, error_code, Gs_ErrorCodes):
+        self.issue_access_req_resp_threads = []
         #issue validation against http error codes
-        for error_msg, err_code in error_code.__dict__.items():
-            if not error_msg.startswith("__"):
-                if err_code == access_dict["HTTP_STATUS_CODE"]:
-                    if not pname == "GENERIC_SERVER":
-                        self.issue_access_threads.append(access_dict["THREAD"])
-                    else:
-                        logging.info("ISSUE_STATUS_THREAD: %s", str(access_dict["THREAD"]).split("_")[0])
-                        self.issue_access_threads.append(str(access_dict["THREAD"]).split("_")[0])
         
-        if self.issue_access_threads:
+        if not pname == "GENERIC_SERVER_REQ_RESP":
+            for error_msg, err_code in error_code.__dict__.items():
+                try:
+                    if not error_msg.startswith("__"):
+                        if err_code == data_dict["HTTP_STATUS_CODE"]:
+                            if not pname == "GENERIC_SERVER":
+                                self.issue_access_req_resp_threads.append(data_dict["THREAD"])
+                            elif pname == "GENERIC_SERVER":
+                                logging.info("ISSUE_STATUS_THREAD: %s", str(data_dict["THREAD"]).split("_")[0])
+                                self.issue_access_req_resp_threads.append(str(data_dict["THREAD"]).split("_")[0])
+                except KeyError as err:
+                    logging.info(err)
+        else:
+            for gs_error_msg, gs_err_code in Gs_ErrorCodes.__dict__.items():
+                try:
+                    if not gs_error_msg.startswith("__"):
+                        for item in data_dict:
+                            logging.info("GS_ERR_CODE: %s AND DATA_DICT_STATUS: %s", gs_err_code, item["STATUS"])
+                            if gs_err_code == item["STATUS"]:
+                                self.issue_access_req_resp_threads.append(item["THREAD_ID"])
+                                break
+                        if self.issue_access_req_resp_threads:
+                            break
+                except KeyError as err:
+                    logging.info(err)
+            else:
+                for error_msg, err_code in error_code.__dict__.items():
+                    try:
+                        if not error_msg.startswith("__"):
+                            for item in data_dict:
+                                if err_code == item["STATUS"]:
+                                    self.issue_access_req_resp_threads.append(item["THREAD_ID"])
+                                    break
+                            break
+                    except KeyError as err:
+                        logging.info(err)
+                
+                    
+        if self.issue_access_req_resp_threads:
             #issue thread found hence going to create tomcat access folder
             if not pname == "GENERIC_SERVER":
                 if not self.prism_tomcat_access_out_folder:
                     self.create_process_folder(pname, folder)
                 return True
-            else:
+            elif pname == "GENERIC_SERVER":
                 if not self.prism_gs_access_out_folder:
+                    self.create_process_folder(pname, folder)
+                return True
+            elif pname == "GENERIC_SERVER_REQ_RESP":
+                if not self.prism_gs_req_resp_out_folder:
                     self.create_process_folder(pname, folder)
                 return True
                 
@@ -266,8 +306,11 @@ class TlogAccessLogParser:
             self.prism_smsd_out_folder = is_true
         elif pname == "GENERIC_SERVER":
             self.prism_gs_access_out_folder = is_true
+        elif pname == "GENERIC_SERVER_REQ_RESP":
+            self.prism_gs_req_resp_out_folder = is_true
 
     def reinitialize_constructor_parameters(self):
         self.task_types = []
         self.input_tags = []
+        self.issue_access_req_resp_threads = []
         self.process_subs_data = True

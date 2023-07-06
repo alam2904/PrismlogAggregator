@@ -617,7 +617,7 @@ class Tlog:
         
         if self.log_mode == "error":
             if self.msisdn_access_data_dict:
-                tlogAccessLogParser_object.parse_accessLog(pname, self.msisdn_access_data_dict)
+                tlogAccessLogParser_object.parse_access_req_resp_Log(pname, self.msisdn_access_data_dict)
     
     def perf_data_mapping(self, tlogAccessLogParser_object, pname, data_list):
         #perf header log mapping

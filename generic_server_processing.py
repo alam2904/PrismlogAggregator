@@ -97,7 +97,7 @@ class GENERIC_SERVER_PROCESSOR:
                             
                 if self.gs_tlog_thread:
                     self.generic_server_access_header_data_map(logfile_object, tlogAccessLogParser_object)
-                    self.generic_server_request_response_header_map(configManager_object)
+                    self.generic_server_request_response_header_map(configManager_object, tlogAccessLogParser_object)
                 
                     logging.info("All the dated REQUEST_BEAN_RESPONSE have been already parsed so breaking the loop")
                     break              
@@ -205,9 +205,9 @@ class GENERIC_SERVER_PROCESSOR:
             
             if self.log_mode == "error":
                 if self.gs_access_data_dict:
-                    tlogAccessLogParser_object.parse_accessLog(self.pname, self.gs_access_data_dict)
+                    tlogAccessLogParser_object.parse_access_req_resp_Log(self.pname, self.gs_access_data_dict)
     
-    def generic_server_request_response_header_map(self, configManager_object):
+    def generic_server_request_response_header_map(self, configManager_object, tlogAccessLogParser_object):
         header = [
                     "TIMESTAMP", "THREAD_ID", "ACTION", "REQUEST", "RESPONSE", "STATUS", "TIME_TAKEN"
                 ]
@@ -247,7 +247,11 @@ class GENERIC_SERVER_PROCESSOR:
             except Exception as ex:
                 logging.info(ex)
         
-        if self.thread_data_dict:    
+        if self.thread_data_dict:
             gs_thread_req_resp_dict = {"GENERIC_SERVER_REQUEST_RESPONSE": self.thread_data_dict}
             self.prism_data_dict_list.append(gs_thread_req_resp_dict)
+            
+            if self.log_mode == "error":
+                if self.thread_data_dict:
+                    tlogAccessLogParser_object.parse_access_req_resp_Log("GENERIC_SERVER_REQ_RESP", self.thread_data_dict)
     

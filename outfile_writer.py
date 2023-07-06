@@ -57,10 +57,14 @@ class FileWriter:
         #write complete thread log
         thread_outfile = ""
         
-        if pname == "PRISM_TOMCAT":               
+        if pname == "PRISM_TOMCAT":           
             thread_outfile = "{0}/{1}_{2}_prism_access_tomcat.log".format(folder, http_error_code, thread)
         elif pname == "GENERIC_SERVER":
             thread_outfile = "{0}/{1}_{2}_generic_server_access.log".format(folder, http_error_code, thread)
+        elif pname == "GENERIC_SERVER_REQ_RESP":
+            thread_outfile = "{0}/{1}_{2}_generic_server_tomcat.log".format(folder, http_error_code, thread)
+        elif pname == "GENERIC_SERVER_REQ_RESP_BACK":
+            thread_outfile = "{0}/{1}_{2}_generic_server.log".format(folder, http_error_code, thread)
         
         try:
             with open(thread_outfile, "w") as write_file:

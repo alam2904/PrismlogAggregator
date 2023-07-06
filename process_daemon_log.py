@@ -170,7 +170,9 @@ class DaemonLogProcessor:
                 if self.is_backup_file:
                     if pname == "PRISM_TOMCAT" or pname == "GENERIC_SERVER":
                         self.backup_log_files.append(str(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_backup_log"]).replace("yyyy-MM", "{}".format(input_date_formatted_month)).replace("dd", "{}".format(input_date_formatted)))
-
+                    elif pname == "GENERIC_SERVER_REQ_RESP_BACK":
+                        self.backup_log_files.append(str(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_GENERIC_SERVER_LOGGER_backup_log"]).replace("yyyy-MM", "{}".format(input_date_formatted_month)).replace("dd", "{}".format(input_date_formatted)))
+                        
                     elif pname == "PRISM_DEAMON":
                         self.backup_log_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_PRISM_backup_log"].replace("yyyy-MM", "{}".format(input_date_formatted_month)).replace("dd", "{}".format(input_date_formatted)))
                     
@@ -291,25 +293,42 @@ class DaemonLogProcessor:
         if lines:
             self.issue_record = lines
             
-    def process_tomcat_http_log(self, pname, folder, access_dict, issue_access_thread):
+    def process_tomcat_http_req_resp_log(self, pname, folder, data_dict, issue_access_thread):
         #creating out file writter object for writting log to out file
         fileWriter_object = FileWriter(self.outputDirectory_object, self.oarm_uid)
         
         for thread in issue_access_thread:
-            if thread == access_dict["THREAD"]:
-                date_formatted = self.thread_timestamp_formatting(access_dict["TIMESTAMP"])
+            if not pname == "GENERIC_SERVER_REQ_RESP":
+                data_thread = data_dict["THREAD"]
+                date_formatted = self.thread_timestamp_formatting(data_dict["TIMESTAMP"])
+                status_code = data_dict["HTTP_STATUS_CODE"]
+            else:
+                for item in data_dict:
+                    data_thread = item["THREAD_ID"]
+                    status_code = item["STATUS"]
+                date_formatted = None
+                
+            if thread == data_thread:
                 logging.info('thread: %s and formatted thread timestamp: %s', thread, date_formatted)
                 try:
                     if not self.issue_record:
                         self.reinitialize_constructor_parameter()
-                        if pname == "PRISM_TOMCAT" or pname == "GENERIC_SERVER":
+                        if pname == "PRISM_TOMCAT" or pname == "GENERIC_SERVER" or pname == "GENERIC_SERVER_REQ_RESP":
                             self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_log"])                        
                             # self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.log_files)
                             self.fetch_daemon_log(thread, self.log_files, date_formatted)
                                 
                     if self.issue_record:
-                        fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
+                        fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, status_code)
                         
+                        if pname == "GENERIC_SERVER_REQ_RESP":
+                            self.reinitialize_constructor_parameter()
+                            self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_GENERIC_SERVER_LOGGER_log"])
+                            self.fetch_daemon_log(thread, self.log_files, date_formatted)
+                            
+                            if self.issue_record:
+                                fileWriter_object.write_complete_access_thread_log("GENERIC_SERVER_REQ_RESP_BACK", folder, thread, self.issue_record, status_code)
+                                
                 except KeyError as error:
                     logging.info(error)
                 
@@ -317,13 +336,13 @@ class DaemonLogProcessor:
                 try:
                     if not self.issue_record:
                         self.reinitialize_constructor_parameter()
-                        if pname == "PRISM_TOMCAT" or pname == "GENERIC_SERVER":
+                        if pname == "PRISM_TOMCAT" or pname == "GENERIC_SERVER" or pname == "GENERIC_SERVER_REQ_RESP":
                             self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_ROOT_log"])                        
                             # self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.log_files)
                             self.fetch_daemon_log(thread, self.log_files, date_formatted)
                                 
                     if self.issue_record:
-                        fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
+                        fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, status_code)
                         
                 except KeyError as error:
                     logging.info(error)
@@ -338,7 +357,16 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(thread, self.backup_log_files, date_formatted)
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
+                            fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, status_code)
+                            
+                            if pname == "GENERIC_SERVER_REQ_RESP":
+                                self.reinitialize_constructor_parameter()
+                                self.is_backup_file = True
+                                self.dated_log_files("GENERIC_SERVER_REQ_RESP_BACK")
+                                self.fetch_daemon_log(thread, self.backup_log_files, date_formatted)
+                                
+                                if self.issue_record:
+                                    fileWriter_object.write_complete_access_thread_log("GENERIC_SERVER_REQ_RESP_BACK", folder, thread, self.issue_record, status_code)
                         
                 except KeyError as error:
                     logging.info(error)
@@ -354,8 +382,14 @@ class DaemonLogProcessor:
                         self.fetch_daemon_log(thread, self.backup_log_files, date_formatted)
                         
                         if self.issue_record:
-                            fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, access_dict["HTTP_STATUS_CODE"])
+                            fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, status_code)
                             
+                            if pname == "GENERIC_SERVER_REQ_RESP":
+                                self.log_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_PRISM_log"])
+                                self.fetch_daemon_log(thread, self.backup_log_files, date_formatted)
+                                
+                                if self.issue_record:
+                                    fileWriter_object.write_complete_access_thread_log(pname, folder, thread, self.issue_record, status_code)
                 except KeyError as error:
                     logging.info(error)
     
