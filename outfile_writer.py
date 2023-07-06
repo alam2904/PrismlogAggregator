@@ -63,15 +63,15 @@ class FileWriter:
             thread_outfile = "{0}/{1}_{2}_generic_server_access.log".format(folder, http_error_code, thread)
         elif pname == "GENERIC_SERVER_REQ_RESP":
             thread_outfile = "{0}/{1}_{2}_generic_server_tomcat.log".format(folder, http_error_code, thread)
-        elif pname == "GENERIC_SERVER_REQ_RESP_BACK":
+        elif pname == "GENERIC_SERVER_REQ_RESP_GS":
             thread_outfile = "{0}/{1}_{2}_generic_server.log".format(folder, http_error_code, thread)
         
         try:
             with open(thread_outfile, "w") as write_file:
                 write_file.writelines(record)
-                if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-                    # self.write_trimmed_thread_log(pname, process_folder, tlog_thread, thread_outfile, ctid, task_type, sub_type, input_tag)
-                    pass
+                # if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
+                #     # self.write_trimmed_thread_log(pname, process_folder, tlog_thread, thread_outfile, ctid, task_type, sub_type, input_tag)
+                #     pass
         except FileNotFoundError as error:
             logging.info(error)
         

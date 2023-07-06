@@ -141,9 +141,12 @@ class TlogAccessLogParser:
                 #Daemon log processor object
                 daemonLogProcessor_object = DaemonLogProcessor(self.initializedPath_object, self.outputDirectory_object,\
                                                                 self.validation_object, self.oarm_uid)
-                 
-                daemonLogProcessor_object.process_tomcat_http_req_resp_log(pname, folder, value, self.issue_access_req_resp_threads)
-                
+                if not pname == "GENERIC_SERVER_REQ_RESP":
+                    daemonLogProcessor_object.process_tomcat_http_req_resp_log(pname, folder, value, self.issue_access_req_resp_threads)
+                else:
+                    daemonLogProcessor_object.process_tomcat_http_req_resp_log("GENERIC_SERVER_REQ_RESP", folder, value, self.issue_access_req_resp_threads)
+                    daemonLogProcessor_object.process_tomcat_http_req_resp_log("GENERIC_SERVER_REQ_RESP_GS", folder, value, self.issue_access_req_resp_threads)
+                    
     def check_for_issue_in_access_req_resp_log(self, pname, folder, data_dict, error_code, Gs_ErrorCodes):
         self.issue_access_req_resp_threads = []
         #issue validation against http error codes
