@@ -327,8 +327,7 @@ class DaemonLogProcessor:
                                 
                         if self.issue_record:
                             # logging.info("ISSUE_RECORD: %s", self.issue_record)
-                            fileWriter_object.write_complete_tomcat_gs_thread_log(pname, folder, thread, self.issue_record, status_code)
-                                
+                            fileWriter_object.write_complete_tomcat_gs_thread_log(pname, folder, thread, self.issue_record, status_code)    
                 except KeyError as error:
                     logging.info(error)
                 
@@ -341,8 +340,8 @@ class DaemonLogProcessor:
                             # self.fetch_tomcat_access_daemon_log(thread, date_formatted, self.log_files)
                             self.fetch_daemon_log(thread, self.log_files, date_formatted)
                                 
-                    if self.issue_record:
-                        fileWriter_object.write_complete_tomcat_gs_thread_log(pname, folder, thread, self.issue_record, status_code)
+                        if self.issue_record:
+                            fileWriter_object.write_complete_tomcat_gs_thread_log(pname, folder, thread, self.issue_record, status_code)
                         
                 except KeyError as error:
                     logging.info(error)

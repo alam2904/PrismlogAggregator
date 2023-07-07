@@ -4,12 +4,20 @@ class logMode(object):
 
 #prism tags
 class Prism_St_SString(object):
-    #griff search string to get initial index
+    #initial index search
     search_string = ["-process handler params for task {} for subType:{}","-Handler not found"]
 
 class Prism_En_SString(object):
-    #griff search string to get initial index
+    #final index search
     search_string = ["-Tlog record added:{}","-Tlog record added:TSK = {}"]
+    
+class Gs_St_SSring(object):
+    #initial index search
+    search_string = ["-COUNTRY_CODE", "-In processRequest API of GenericServerProcessor"]
+
+class Gs_En_SSring(object):
+    #final index search
+    search_string = ["-return fetch size =", "-RESPONSE ="]
 
 class PrismTlogIssueTag(object):
     """

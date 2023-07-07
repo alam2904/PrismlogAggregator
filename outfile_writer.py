@@ -6,7 +6,7 @@ import shutil
 import socket
 from zipfile import ZipFile
 import zipfile
-from status_tags import Prism_St_SString, Prism_En_SString
+from status_tags import Prism_St_SString, Prism_En_SString, Gs_St_SSring, Gs_En_SSring
 # import subprocess
 
 class FileWriter:
@@ -28,9 +28,6 @@ class FileWriter:
         #write complete thread log
         thread_outfile = ""
         process_folder = ""
-        error_code = tlog_thread
-        RequestOrigin = task_types
-        logging.info("INPUT_TAG_OUTFILE: %s", input_tag)
         
         if pname == "PRISM_TOMCAT":
             process_folder = os.path.join(self.outputDirectory_object, "{}_issue_prism_tomcat".format(self.hostname))
@@ -47,8 +44,9 @@ class FileWriter:
         try:
             with open(thread_outfile, "w") as write_file:
                 write_file.writelines(record)
+                
                 if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-                    return self.write_trimmed_thread_log(pname, process_folder, tlog_thread, thread_outfile, ctid, task_types, sub_type, input_tag)
+                    return self.write_trimmed_thread_log(pname, process_folder, tlog_thread, thread_outfile, None, task_types, sub_type, input_tag)
                     
         except FileNotFoundError as error:
             logging.info(error)
@@ -56,6 +54,7 @@ class FileWriter:
     def write_complete_tomcat_gs_thread_log(self, pname, folder, thread, record, http_error_code):
         #write complete thread log
         thread_outfile = ""
+        logging.info("THIS METHOD CALLED: %s", thread)
         
         if pname == "PRISM_TOMCAT":           
             thread_outfile = "{0}/{1}_{2}_prism_access_tomcat.log".format(folder, http_error_code, thread)
@@ -69,64 +68,110 @@ class FileWriter:
         try:
             with open(thread_outfile, "w") as write_file:
                 write_file.writelines(record)
-                # if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-                #     # self.write_trimmed_thread_log(pname, process_folder, tlog_thread, thread_outfile, ctid, task_type, sub_type, input_tag)
-                #     pass
         except FileNotFoundError as error:
             logging.info(error)
+            
+        if pname == "GENERIC_SERVER_REQ_RESP" or pname == "GENERIC_SERVER_REQ_RESP_GS":
+            self.write_trimmed_thread_log(pname, folder, thread, thread_outfile, http_error_code, None, None, None)
         
-    def write_trimmed_thread_log(self, pname, process_folder, tlog_thread, thread_outfile, ctid, task_types, sub_type, input_tag):
-        
-        error_code = tlog_thread
-        RequestOrigin = task_types
+    def write_trimmed_thread_log(self, pname, process_folder, tlog_thread, thread_outfile, error_code, task_types, sub_type, input_tag):
+        #trim the log based on search strings
         trimmed_thread_outfile = ""
         index = 0
         
-        for task_type in task_types:
+        if pname == "GENERIC_SERVER_REQ_RESP" or pname == "GENERIC_SERVER_REQ_RESP_GS":    
+            if pname == "GENERIC_SERVER_REQ_RESP":
+                trimmed_thread_outfile = "{0}/{1}_{2}_generic_server_trimmed_tomcat.log".format(process_folder, error_code, tlog_thread)
+            elif pname == "GENERIC_SERVER_REQ_RESP_GS":
+                trimmed_thread_outfile = "{0}/{1}_{2}_generic_server_trimmed.log".format(process_folder, error_code, tlog_thread)
+            
+            logging.info("THREAD_OUT_FILE: %s", thread_outfile)
             self.reinitialize_index()
-            if pname == "PRISM_TOMCAT":
-                trimmed_thread_outfile = "{0}/{1}_{2}_trimmed_prism_tomcat.log".format(process_folder, task_type, tlog_thread)
-            
-            elif pname == "PRISM_DEAMON":
-                trimmed_thread_outfile = "{0}/{1}_{2}_trimmed_prism_daemon.log".format(process_folder, task_type, tlog_thread)
-            
             try:
-                if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-                    #set initial index based on start of search string
-                    for sm_start_serach_string_name, sm_start_serach_string_value in Prism_St_SString.__dict__.items():
-                        if not sm_start_serach_string_name.startswith("__"):
-                            for ssString in sm_start_serach_string_value:
-                                sm_start_serach_string = str(ssString).format(task_type, sub_type)
-                                with open(thread_outfile, "r") as outFile:
-                                    for i, line in enumerate(outFile):
-                                        if re.search(sm_start_serach_string, line, re.DOTALL):
-                                            self.set_initial_index(i)
-                                            break
-                    
-                    #set final index based on end of search string
-                    for sm_end_serach_string_name, sm_end_serach_string_value in Prism_En_SString.__dict__.items():
-                        if not sm_end_serach_string_name.startswith("__"):
-                            for esString in sm_end_serach_string_value:
-                                sm_end_serach_string = str(esString).format(input_tag[index])
-                                with open(thread_outfile, "r") as outFile:
-                                    for i, line in enumerate(outFile):
-                                        if re.search(sm_end_serach_string, line, re.DOTALL):
-                                            self.set_final_index(i)
-                                            break
-                                    
+                #set initial index based on start of search string
+                s_values = [values for key, values in Gs_St_SSring.__dict__.items() if not key.startswith("__")]
+                for value in s_values[0]:
+                    with open(thread_outfile, "r") as outFile:
+                        for i, line in enumerate(outFile):
+                            if re.search(value, line, re.DOTALL):
+                                self.set_initial_index(i)
+                                break
+                
+                #set final index based on end of search string
+                e_values = [values for key, values in Gs_En_SSring.__dict__.items() if not key.startswith("__")]
+                for value in e_values[0]:
+                    with open(thread_outfile, "r") as outFile:
+                        for i, line in enumerate(outFile):
+                            if re.search(value, line, re.DOTALL):
+                                self.set_final_index(i)
+                                break                  
             except FileNotFoundError as error:
                 logging.info(error)
-                
+            
             logging.info('initial_index: %s and final_index: %s', self.__initial_index, self.__final_index)
+            
             #write trim log
-            if self.__initial_index != self.__final_index != 0:
-                with open(thread_outfile, "r") as read_file:
-                    for i, line in enumerate(read_file):
-                        if self.__initial_index <= i < self.__final_index + 1:
-                            with open(trimmed_thread_outfile, "a") as write_file:
-                                write_file.writelines(line)
-                self.is_trimmed_log = True
-            index += 1
+            try:
+                if self.__initial_index != self.__final_index != 0:
+                    with open(thread_outfile, "r") as read_file:
+                        for i, line in enumerate(read_file):
+                            if self.__initial_index <= i < self.__final_index + 1:
+                                with open(trimmed_thread_outfile, "a") as write_file:
+                                    write_file.writelines(line)
+            except FileNotFoundError as error:
+                logging.info(error)
+
+        else:
+            for task_type in task_types:
+                self.reinitialize_index()
+                if pname == "PRISM_TOMCAT":
+                    trimmed_thread_outfile = "{0}/{1}_{2}_trimmed_prism_tomcat.log".format(process_folder, task_type, tlog_thread)
+                elif pname == "PRISM_DEAMON":
+                    trimmed_thread_outfile = "{0}/{1}_{2}_trimmed_prism_daemon.log".format(process_folder, task_type, tlog_thread)
+
+                
+                if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
+                    try:
+                        #set initial index based on start of search string
+                        s_values = [value for key, value in Prism_St_SString.__dict__.items() if not key.startswith("__")]
+                        # for s_serach_str_name, s_serach_str_values in Prism_St_SString.__dict__.items():
+                        #     if not s_serach_str_name.startswith("__"):
+                        for value in s_values[0]:
+                            replaced_value = str(value).format(task_type, sub_type)
+                            with open(thread_outfile, "r") as outFile:
+                                for i, line in enumerate(outFile):
+                                    if re.search(replaced_value, line, re.DOTALL):
+                                        self.set_initial_index(i)
+                                        break
+                        
+                        #set final index based on end of search string
+                        e_values = [value for key, value in Prism_En_SString.__dict__.items() if not key.startswith("__")]
+                        # for e_serach_str_name, e_serach_str_values in Prism_En_SString.__dict__.items():
+                        #     if not e_serach_str_name.startswith("__"):
+                        for value in e_values[0]:
+                            replaced_value = str(value).format(input_tag[index])
+                            with open(thread_outfile, "r") as outFile:
+                                for i, line in enumerate(outFile):
+                                    if re.search(replaced_value, line, re.DOTALL):
+                                        self.set_final_index(i)
+                                        break           
+                    except FileNotFoundError as error:
+                        logging.info(error)
+                    
+                logging.info('initial_index: %s and final_index: %s', self.__initial_index, self.__final_index)
+                
+                #write trim log
+                try:
+                    if self.__initial_index != self.__final_index != 0:
+                        with open(thread_outfile, "r") as read_file:
+                            for i, line in enumerate(read_file):
+                                if self.__initial_index <= i < self.__final_index + 1:
+                                    with open(trimmed_thread_outfile, "a") as write_file:
+                                        write_file.writelines(line)
+                        self.is_trimmed_log = True
+                    index += 1
+                except FileNotFoundError as error:
+                    logging.info(error)
         
         return self.is_trimmed_log
 
