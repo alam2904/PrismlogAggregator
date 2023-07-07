@@ -130,17 +130,17 @@ class FileWriter:
         
         return self.is_trimmed_log
 
-    def write_handler_files(self, handler_files, macro_name_list, folder):
+    def write_files(self, files, folder):
         # Execute the shell command to copy the file
-        try:
-            for file in handler_files:
+        for file in files:
+            try:
                 if file:
                     filename = os.path.basename(file)
                     destination_file = os.path.join(folder, filename)
                     shutil.copy2(file, destination_file)
                     # shutil.copy2(file, folder)
-        except IOError as error:
-            logging.error(error)
+            except IOError as error:
+                logging.error(error)
         
     def set_initial_index(self, initial_index):
         """

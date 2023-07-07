@@ -5,6 +5,7 @@ import signal
 import socket
 import subprocess
 from configManager import ConfigManager
+from outfile_writer import FileWriter
 from subscriptions import SubscriptionController
 from log_files import LogFileFinder
 from tlog_accesslog_parser import TlogAccessLogParser
@@ -313,6 +314,11 @@ class GENERIC_SERVER_PROCESSOR:
         
         if self.generic_server_files:
             logging.info("GENERIC_SERVER_FILES: %s", self.generic_server_files)
+            folder = os.path.join(self.outputDirectory_object, "{}_generic_server_files".format(self.hostname))
+            self.create_folder(folder)
+            
+            fileWriter_object = FileWriter(self.outputDirectory_object, self.oarm_uid)
+            fileWriter_object.write_files(self.generic_server_files, folder)
             
     def get_velocity_and_macro_file_path(self, velocity_file):
         try:
@@ -331,7 +337,7 @@ class GENERIC_SERVER_PROCESSOR:
                                 self.generic_server_files.append(path)
                                 value1 = self.extract_gs_file(path, "file.resource.loader.path")
                                 value2 = self.extract_gs_file(path, "velocimacro.library")
-                                macro_file = os.path.join(value1, value2)
+                                macro_file = os.path.join(list(value1)[0], list(value2)[0])
                                 
                                 if os.path.exists(macro_file):
                                     logging.info("GS_MACRO_FILE: %s", macro_file)
@@ -347,5 +353,13 @@ class GENERIC_SERVER_PROCESSOR:
         
     def is_boolean(self, arg):
         return arg.lower() in ['true', 'false']
+    
+    def create_folder(self, folder):
+        try:
+            if not os.path.exists(folder):
+                os.mkdir(folder)
+        except os.error as error:
+            logging.info(error)
+            os.mkdir(folder)
         
         

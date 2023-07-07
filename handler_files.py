@@ -100,10 +100,10 @@ class HandlerFileProcessor:
     def copy_handler_files(self):
         fileWriter_object = FileWriter(self.outputDirectory_object, self.oarm_uid)
         
-        folder = os.path.join(self.outputDirectory_object, "{}_issue_handler_files".format(self.hostname))
+        folder = os.path.join(self.outputDirectory_object, "{}_handler_files".format(self.hostname))
         self.create_folder(folder)
         
-        fileWriter_object.write_handler_files(self.handler_files, self.macro_name, folder)
+        fileWriter_object.write_files(self.handler_files, folder)
     
     def find_absolute_velocity_prop_path(self, root, properties):
         path = ""
