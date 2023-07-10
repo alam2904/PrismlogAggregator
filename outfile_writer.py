@@ -134,8 +134,6 @@ class FileWriter:
                     try:
                         #set initial index based on start of search string
                         s_values = [value for key, value in Prism_St_SString.__dict__.items() if not key.startswith("__")]
-                        # for s_serach_str_name, s_serach_str_values in Prism_St_SString.__dict__.items():
-                        #     if not s_serach_str_name.startswith("__"):
                         for value in s_values[0]:
                             replaced_value = str(value).format(task_type, sub_type)
                             with open(thread_outfile, "r") as outFile:
@@ -146,8 +144,6 @@ class FileWriter:
                         
                         #set final index based on end of search string
                         e_values = [value for key, value in Prism_En_SString.__dict__.items() if not key.startswith("__")]
-                        # for e_serach_str_name, e_serach_str_values in Prism_En_SString.__dict__.items():
-                        #     if not e_serach_str_name.startswith("__"):
                         for value in e_values[0]:
                             replaced_value = str(value).format(input_tag[index])
                             with open(thread_outfile, "r") as outFile:

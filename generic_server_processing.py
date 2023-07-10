@@ -72,7 +72,7 @@ class GENERIC_SERVER_PROCESSOR:
                 self.sbn_id = ptlog["SBN_OR_EVT_ID"]
                 
                 for task in self.flow_tasks:
-                    if "-#PUSH" in task.split(","):
+                    if "-#PUSH" in task.split(",") or "-#PROXY SRV-PRECHARGED" in task.split(","):
                         self.is_processed_by_generic_server = True
                         break
                 
