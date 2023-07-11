@@ -78,8 +78,10 @@ class GENERIC_SERVER_PROCESSOR:
                 
                 if self.is_processed_by_generic_server:
                     if self.validation_object.is_multitenant_system:
+                        site_id = self.site_id
                         self.operator_url.extend([url for url in configManager_object.get_operator_url_map(self.validation_object.operator_id) if str(url).startswith("/subscription/PrismServer/")])
                     else:
+                        site_id = self.global_site_id
                         #actionBased
                         self.operator_url.extend([url for url in configManager_object.get_operator_url_from_pcp("GENERIC_SERVLET", self.global_site_id)])
                         #uriBased
@@ -93,7 +95,7 @@ class GENERIC_SERVER_PROCESSOR:
                         logging.info("GS_REQUEST_BEAN_RESPONSE_TLOG_FILES: %s", self.gs_tlog_files)
                         
                         if self.gs_tlog_files:
-                            self.condition_based_gs_tlog_fetch()
+                            self.condition_based_gs_tlog_fetch(site_id)
                             
                         if self.gs_tlog_record:
                             data_list = []
@@ -143,7 +145,11 @@ class GENERIC_SERVER_PROCESSOR:
             )
     
     def get_uri_based_url_map(self, configManager_object):
-        req_param_file_path = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.site_id, 'REQ_PARAM_FILE_PATH')
+        if self.validation_object.is_multitenant_system:
+            req_param_file_path = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.site_id, 'REQ_PARAM_FILE_PATH')
+        else:
+            req_param_file_path = configManager_object.get_prism_config_param_value('GENERIC_SERVLET', self.global_site_id, 'REQ_PARAM_FILE_PATH')
+            
         extract_string = "URI_BASED="
         return self.extract_gs_file(req_param_file_path, extract_string)
         
@@ -164,18 +170,18 @@ class GENERIC_SERVER_PROCESSOR:
                         
                     yield value
         
-    def condition_based_gs_tlog_fetch(self):
+    def condition_based_gs_tlog_fetch(self, site_id):
         for file in self.gs_tlog_files:
             for opUrl in self.operator_url:
                 try:
-                    data = subprocess.check_output("cat {0} | grep -a '|{1}|' | grep -a {2} | grep -a {3}".format(file, self.site_id, opUrl, self.msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                    data = subprocess.check_output("cat {0} | grep -a '|{1}|' | grep -a {2} | grep -a {3}".format(file, site_id, opUrl, self.msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     self.gs_tlog_record.append(data)
                 except Exception as ex:
                     logging.info(ex)
                 
                 if not self.gs_tlog_record:
                     try:
-                        data = subprocess.check_output("cat {0} | grep -a '|{1}|' | grep -a {2} | grep -a {3}".format(file, self.site_id, opUrl, self.charging_ref_id), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                        data = subprocess.check_output("cat {0} | grep -a '|{1}|' | grep -a {2} | grep -a {3}".format(file, site_id, opUrl, self.charging_ref_id), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                         self.gs_tlog_record.append(data)
                     except Exception as ex:
                         logging.info(ex)
