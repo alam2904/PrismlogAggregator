@@ -6,7 +6,7 @@ import socket
 import subprocess
 from configManager import ConfigManager
 from outfile_writer import FileWriter
-from subscriptions import SubscriptionController
+from subscriptions_events import SubscriptionEventController
 from log_files import LogFileFinder
 from tlog_accesslog_parser import TlogAccessLogParser
 
@@ -89,7 +89,7 @@ class GENERIC_SERVER_PROCESSOR:
                         
                     logging.info("OPERATOR_URL: %s", self.operator_url)
                     if self.operator_url:
-                        self.fetch_subscription_data_once(pthread)
+                        self.fetch_subscriptions_events_data_once(pthread)
                     
                         self.gs_tlog_files = logfile_object.get_tlog_files(self.pname)
                         logging.info("GS_REQUEST_BEAN_RESPONSE_TLOG_FILES: %s", self.gs_tlog_files)
@@ -116,24 +116,27 @@ class GENERIC_SERVER_PROCESSOR:
         except KeyError as err:
             logging.info(err)
     
-    def fetch_subscription_data_once(self, pthread):
+    def fetch_subscriptions_events_data_once(self, pthread):
         value = self.is_sbn_processed.get(self.sbn_id)
         if value is not None and value == "processed":
             pass
         else:
             thread_dict = {self.sbn_id: pthread}
-            subscription_object = SubscriptionController(None, self.validation_object, thread_dict, True)
-            subscriptions_data_dict = subscription_object.get_subscription(False)
-            if subscriptions_data_dict:
-                subscriptionRecord = subscription_object.get_subscription_dict()
-                if subscriptionRecord:
+            subscription_event_object = SubscriptionEventController(None, self.validation_object, thread_dict, True)
+            transaction_table_data_dict = subscription_event_object.get_subscription_event("SUBSCRIPTIONS", False)
+            if not transaction_table_data_dict:
+                transaction_table_data_dict = subscription_event_object.get_subscription_event("EVENTS", False)
+                
+            if transaction_table_data_dict:
+                subscriptionEventRecord = subscription_event_object.get_subscription_event_dict()
+                if subscriptionEventRecord:
                     self.is_sbn_processed[self.sbn_id] = "processed"
                     # logging.info("SUBS_RECORD: %s", subscriptionRecord)
-                    self.charging_ref_id = subscriptionRecord["charging_ref_id"]
-                    self.internal_ref_id = subscriptionRecord["internal_ref_id"]
-                    self.requester_ref_id = subscriptionRecord["requester_ref_id"]
-                    self.srv_id = subscriptionRecord["srv_id"]
-                    self.last_modified_time = subscriptionRecord["last_modified_time"]
+                    self.charging_ref_id = subscriptionEventRecord["charging_ref_id"]
+                    self.internal_ref_id = subscriptionEventRecord["internal_ref_id"]
+                    self.requester_ref_id = subscriptionEventRecord["requester_ref_id"]
+                    self.srv_id = subscriptionEventRecord["srv_id"]
+                    self.last_modified_time = subscriptionEventRecord["last_modified_time"]
                     
             logging.info(
                 "SITE_ID=%s, MSISDN=%s, PAYMENT_STATUS=%s, TASK_TYPE=%s, "

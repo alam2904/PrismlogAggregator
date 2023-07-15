@@ -10,7 +10,7 @@ from tlog_accesslog_parser import TlogAccessLogParser
 from collections import OrderedDict
 from configManager import ConfigManager
 from status_tags import PrismTasks
-from subscriptions import SubscriptionController
+from subscriptions_events import SubscriptionEventController
 
 
 class Tlog:
@@ -659,21 +659,37 @@ class Tlog:
             self.prism_data_dict_list.append(self.prism_daemon_perf_log_dict)
             logging.info('prism daemon perf log: %s', self.prism_daemon_perf_log_dict)
     
-    def get_subscription_details(self):
+    def get_subscription_event_details(self):
         #fetch subscriptions
-        try:
-            logging.info("NON_ISSUE_SBN_THREAD_DICT: %s", self.non_issue_sbn_thread_dict)
-            if self.non_issue_sbn_thread_dict:
-                subscription_object = SubscriptionController(None, self.validation_object, self.non_issue_sbn_thread_dict, True)
-                subscriptions_data_dict = subscription_object.get_subscription(False)
-                logging.info("SUBSCRIPTION_DATA: %s", subscriptions_data_dict)
-                prism_subscription_dict = {"PRISM_SUBSCRIPTIONS_ENTRY": subscriptions_data_dict}
-                self.prism_data_dict_list.append(prism_subscription_dict)
-                return subscriptions_data_dict
-        except Exception as ex:
-            logging.info(ex)
+        logging.info("NON_ISSUE_SBN_THREAD_DICT: %s", self.non_issue_sbn_thread_dict)
+        if self.non_issue_sbn_thread_dict:
+            subscription_event_data = []
+            subscription_event_object = SubscriptionEventController(None, self.validation_object, self.non_issue_sbn_thread_dict, True)
+            try:
+                subscriptions_data_dict = subscription_event_object.get_subscription_event("SUBSCRIPTIONS", False)
+                if subscriptions_data_dict:
+                    prism_subscriptions_dict = {"PRISM_SUBSCRIPTIONS_ENTRY": subscriptions_data_dict}
+                    self.prism_data_dict_list.append(prism_subscriptions_dict)
+                else:
+                    logging.info("Subscriptions record could not be found")
+            except Exception as ex:
+                logging.info(ex)
+            
+            try:
+                events_data_dict = subscription_event_object.get_subscription_event("EVENTS", False)
+                if events_data_dict:
+                    prism_events_dict = {"PRISM_EVENTS_ENTRY": events_data_dict}
+                    self.prism_data_dict_list.append(prism_events_dict)
+                else:
+                    logging.info("Events record could not be found")
+                
+            except Exception as ex:
+                logging.info(ex)
         
-    def get_issue_handler_details(self, subscriptions_data_dict):
+        logging.info("SUBSCRIPTIONS_EVENTS_DATA: %s", subscription_event_data)
+        return subscription_event_data
+        
+    def get_issue_handler_details(self, subscription_event_data):
         #handler info and map    
         try:
             logging.info('combined perf data: %s', self.combined_perf_data)
@@ -681,11 +697,11 @@ class Tlog:
             flow_id = []
             srv_id = []
             
-            if subscriptions_data_dict:
-                for subscriptions in subscriptions_data_dict:
-                    for subscription in subscriptions:
-                        flow_id.append(str(subscription["system_info"]).split("flowId:")[1].split("|")[0])
-                        srv_id.append(subscription["srv_id"])
+            if subscription_event_data:
+                for tRecords in subscription_event_data:
+                    for record in tRecords:
+                        flow_id.append(str(record["system_info"]).split("flowId:")[1].split("|")[0])
+                        srv_id.append(record["srv_id"])
                         logging.info('srv_id: %s and sys_info flow_id: %s', srv_id, flow_id)
             
             if self.issue_task_types:

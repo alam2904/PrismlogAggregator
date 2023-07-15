@@ -7,7 +7,7 @@ from datetime import datetime
 from update_query_criteria import UpdateQueryCriteria
 
 
-class SubscriptionController:
+class SubscriptionEventController:
     """
         This is the class responsible for SELECT and UPDATE db query processing
         based on various subscription condition 
@@ -16,10 +16,10 @@ class SubscriptionController:
         self.sbn_thread_dict = sbn_thread_dict
         self.validation_object = validation_object
         self.process_subs_data = process_subs_data
-        self.subscription_data = []
+        self.transaction_table_data = []
         self.pname = pname
         
-    def get_subscription(self, is_reprocessing_required, reprocess_sbnId=None):
+    def get_subscription_event(self, transaction_table, is_reprocessing_required, reprocess_sbnId=None):
         # Create a DatabaseConnection instance
         db_connection = DatabaseConnection(
             host= "172.19.113.108",
@@ -33,17 +33,22 @@ class SubscriptionController:
         
         try:
             if self.process_subs_data:
-                for sbnId, thread in self.sbn_thread_dict.items():
+                for sbn_event_Id, thread in self.sbn_thread_dict.items():
                     # Prepare the SQL statement
-                    Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id = %s"
+                    if transaction_table == "SUBSCRIPTIONS":
+                        Query = "SELECT * FROM SUBSCRIPTIONS WHERE SBN_ID = %s"
+                    elif transaction_table == "EVENTS":
+                        self.transaction_table_data = []
+                        Query = "SELECT * FROM EVENTS WHERE EVENT_ID = %s"
+                        
                     query_type = "SELECT"
-                    logging.info('SELECT_QUERY: %s and params: %s', Query, sbnId)
+                    logging.info('SELECT_QUERY: %s and params: %s', Query, sbn_event_Id)
                     
                     # Create a QueryExecutor instance with the connection object
                     query_executor = QueryExecutor(db_connection)
 
                     # Execute the query
-                    query_executor.execute(query_type, Query, sbnId)
+                    query_executor.execute(query_type, Query, sbn_event_Id)
                     
                     if query_executor.result_set:
                         result_set = query_executor.result_set
@@ -52,20 +57,21 @@ class SubscriptionController:
                         subscription_json_object = json.dumps(result_set)
                         logging.info("subscription json object: %s", subscription_json_object)
                         
-                        self.subscription_data.append(json.loads(subscription_json_object, object_pairs_hook=OrderedDict))
+                        self.transaction_table_data.append(json.loads(subscription_json_object, object_pairs_hook=OrderedDict))
                         
-                        if is_reprocessing_required and self.subscription_data:
-                            subscriptionRecord = self.get_subscription_dict()
+                        if is_reprocessing_required and self.transaction_table_data:
+                            subscriptionRecord = self.get_subscription_event_dict(transaction_table)
                             if subscriptionRecord:
                                 # if self.pname == "PRISM_TOMCAT":
                                 #     current_system_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                                 #     if subscriptionRecord["charge_schedule"] > current_system_datetime:
                                 #         self.execute_update(query_executor, sbnId, subscriptionRecord)
                                 # else:
-                                self.execute_update(query_executor, sbnId, subscriptionRecord)
+                                self.execute_update(query_executor, sbn_event_Id, subscriptionRecord)
                            
             else:
-                Query = "SELECT * FROM SUBSCRIPTIONS WHERE sbn_id = %s"
+                Query = "SELECT * FROM SUBSCRIPTIONS WHERE SBN_ID = %s"
+                
                 query_type = "SELECT"
                 # logging.info('SELECT_QUERY: %s', Query)
                 
@@ -79,13 +85,13 @@ class SubscriptionController:
                     result_set = query_executor.result_set
                     
                     # Convert result_set(ordered dictionary) to JSON object
-                    subscription_json_object = json.dumps(result_set)
-                    logging.info("subscription json object after update: %s", subscription_json_object)
+                    subscription_event_json_object = json.dumps(result_set)
+                    logging.info("subscription json object after update: %s", subscription_event_json_object)
                     
                     self.constructor_parameter_reinitialize()
-                    self.subscription_data.append(json.loads(subscription_json_object, object_pairs_hook=OrderedDict))
+                    self.transaction_table_data.append(json.loads(subscription_event_json_object, object_pairs_hook=OrderedDict))
             
-            return self.subscription_data
+            return self.transaction_table_data
         except Exception as ex:
             logging.exception(ex)
         
@@ -94,14 +100,14 @@ class SubscriptionController:
             logging.info('reached subs finally block')
             db_connection.close()
     
-    def get_subscription_dict(self):
-        for subscriptionRecords in self.subscription_data:
-            logging.info('subscription_data: %s', subscriptionRecords)
-            if subscriptionRecords:
-                for subscriptionRecord in subscriptionRecords:
-                    logging.info('subscription record: %s', subscriptionRecord)
-                    if subscriptionRecord:
-                        return subscriptionRecord
+    def get_subscription_event_dict(self):
+        for subscriptionEventRecords in self.transaction_table_data:
+            logging.info('subscription_data: %s', subscriptionEventRecords)
+            if subscriptionEventRecords:
+                for subscriptionEventRecord in subscriptionEventRecords:
+                    logging.info('subscription record: %s', subscriptionEventRecord)
+                    if subscriptionEventRecord:
+                        return subscriptionEventRecord
         
     def execute_update(self, query_executor, sbnId, subscriptionRecord):
         query_type = "UPDATE"
@@ -129,15 +135,15 @@ class SubscriptionController:
             if query_executor.is_success:
                 logging.info('is update success: %s', query_executor.is_success)
                 self.process_subs_data = False
-                self.get_subscription(False, sbnId)
+                self.get_subscription_event("SUBSCRIPTIONS", False, sbnId)
             else:
-                self.subscription_data = None
+                self.transaction_table_data = None
         else:
-            self.subscription_data = None
+            self.transaction_table_data = None
             
     
     def constructor_parameter_reinitialize(self):
-        self.subscription_data = []
+        self.transaction_table_data = []
             
             
             

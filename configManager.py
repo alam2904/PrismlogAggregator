@@ -173,20 +173,25 @@ class ConfigManager:
         
     def get_handler_info(self, issue_handler_task_type_map):
         # Connect to the database
+        handler_id_list = []
         try:
             for params in issue_handler_task_type_map:
                 task_type, handler_id, sub_type, srv_id, flow_id = params
+                
+                if handler_id and handler_id not in handler_id_list:
+                    handler_id_list.append(handler_id)
+            
+            for handler_id in handler_id_list:
                 # Prepare the SQL statement
-                if handler_id:
-                    Query = "SELECT * FROM HANDLER_INFO WHERE HANDLER_ID = %s"
-                    params = (handler_id,)
-                        
-                    configMap = self.get_db_config_map(Query, params, self.db_connection)
+                Query = "SELECT * FROM HANDLER_INFO WHERE HANDLER_ID = %s"
+                params = (handler_id,)
                     
-                    if configMap:
-                        self.handler_info.append(json.loads(configMap, object_pairs_hook=OrderedDict))
-                    else:
-                        logging.debug("No handler configured for handler_id = %s", handler_id)
+                configMap = self.get_db_config_map(Query, params, self.db_connection)
+                
+                if configMap:
+                    self.handler_info.append(json.loads(configMap, object_pairs_hook=OrderedDict))
+                else:
+                    logging.debug("No handler configured for handler_id = %s", handler_id)
                     
         except Exception as ex:
             logging.info(ex)

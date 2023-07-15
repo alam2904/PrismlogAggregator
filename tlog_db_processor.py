@@ -56,7 +56,7 @@ class TlogProcessor:
         
         self.combined_perf_data = []
         
-    def process_tlog(self, pname):
+    def process_tlog_db_enteries(self, pname):
         
         #tlog object
         tlog_object = Tlog(self.initializedPath_object, self.outputDirectory_object, self.validation_object,\
@@ -72,7 +72,7 @@ class TlogProcessor:
                             self.prism_tomcat_perf_log_dict, self.prism_daemon_perf_log_dict, self.combined_perf_data,\
                             self.prism_handler_info_dict, self.issue_task_types, self.issue_handler_task_type_map,\
                             self.prism_smsd_tlog_dict, self.non_issue_sbn_thread_dict, self.oarm_uid)
-          
+        
         if pname == "PRISM_TOMCAT":
             # fetching prism tomcat access and tlog
             self.prism_tomcat_tlog_dict = tlog_object.get_tlog(pname)
@@ -135,17 +135,19 @@ class TlogProcessor:
                                             self.prism_data_dict_list, self.validation_object, self.config, self.log_mode, self.oarm_uid)
                     generic_server_object.process_generic_server_tlog(self.prism_daemon_tlog_dict["PRISM_DAEMON_TLOG"])
                 
-                subscriptions_data_dict = tlog_object.get_subscription_details()
-                
-                logging.info('issue tasks are: %s', self.issue_task_types)
-                if self.issue_task_types:
-                    handler_info = tlog_object.get_issue_handler_details(subscriptions_data_dict)
-                    
-                    if handler_info:
-                        handlerfile_object = HandlerFileProcessor(self.config, handler_info, self.outputDirectory_object, self.oarm_uid)
-                        handlerfile_object.getHandler_files()
             else:
                 logging.info("NO NON-REALTIME TLOG PRESENT")
+                
+        elif pname == "DATABASE":
+            subscription_event_data = tlog_object.get_subscription_event_details()
+            
+            logging.info('issue tasks are: %s', self.issue_task_types)
+            if self.issue_task_types:
+                handler_info = tlog_object.get_issue_handler_details(subscription_event_data)
+                
+                if handler_info:
+                    handlerfile_object = HandlerFileProcessor(self.config, handler_info, self.outputDirectory_object, self.oarm_uid)
+                    handlerfile_object.getHandler_files()
                     
         elif pname == "PRISM_SMSD":
             tlog_object.get_tlog(pname)

@@ -3,7 +3,7 @@ import os
 import socket
 from process_daemon_log import DaemonLogProcessor
 from status_tags import PrismTlogIssueTag, HttpErrorCodes, GsErrorCodes, PrismTlogSmsTag, PrismTasks, PrismGeneralIssueTage
-from subscriptions import SubscriptionController
+from subscriptions_events import SubscriptionEventController
 
 class TlogAccessLogParser:
     """
@@ -102,8 +102,8 @@ class TlogAccessLogParser:
                     logging.info('IS_SUB_REPROCESS_REQUIRED: %s', self.validation_object.is_sub_reprocess_required)
                     logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
                     
-                    subscription_object = SubscriptionController(pname, self.validation_object, self.sbn_thread_dict, self.process_subs_data)
-                    self.subscriptions_data = subscription_object.get_subscription(self.validation_object.is_sub_reprocess_required)
+                    subscription_object = SubscriptionEventController(pname, self.validation_object, self.sbn_thread_dict, self.process_subs_data)
+                    self.subscriptions_data = subscription_object.get_subscription_event("SUBSCRIPTIONS", self.validation_object.is_sub_reprocess_required)
                     self.validation_object.is_sub_reprocess_required = False
                 
             elif pname == "PRISM_SMSD":

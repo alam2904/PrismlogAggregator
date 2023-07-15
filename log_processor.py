@@ -78,7 +78,7 @@ class PROCESSOR:
                 try:
                     if self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"]:
                         logging.debug('%s tomcat tlog path exists', pname)
-                        if tlogProcessor_object.process_tlog("PRISM_TOMCAT"):
+                        if tlogProcessor_object.process_tlog_db_enteries("PRISM_TOMCAT"):
                             pass
                 except KeyError as error:
                     logging.exception(error)
@@ -86,15 +86,22 @@ class PROCESSOR:
                 try:
                     if self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"]:
                         logging.debug('%s daemon tlog path exists', pname)
-                        if tlogProcessor_object.process_tlog("PRISM_DEAMON"):
+                        if tlogProcessor_object.process_tlog_db_enteries("PRISM_DEAMON"):
                             pass
                 except KeyError as error:
                     logging.exception(error)
+                    
+                try:
+                    if tlogProcessor_object.process_tlog_db_enteries("PRISM_TOMCAT") or \
+                    self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"]:
+                        tlogProcessor_object.process_tlog_db_enteries("DATABASE")
+                except Exception as error:
+                    logging.error(error)
                 
                 try:
                     if self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_tlog_path"]:
                         logging.debug('%s smsd tlog path exists', pname)
-                        if tlogProcessor_object.process_tlog("PRISM_SMSD"):
+                        if tlogProcessor_object.process_tlog_db_enteries("PRISM_SMSD"):
                             pass
                 except KeyError as error:
                     logging.exception(error)
