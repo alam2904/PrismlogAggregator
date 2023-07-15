@@ -31,10 +31,9 @@ class GENERIC_SERVER_PROCESSOR:
         self.task_type = ""
         self.timestamp = ""
         self.flow_tasks = ""
-        self.sbn_id = ""
+        self.sbn_event_id = ""
         self.srv_id = ""
         self.requester_ref_id = ""
-        self.internal_ref_id = ""
         self.charging_ref_id = ""
         self.operator_url = []
         self.last_modified_time = ""
@@ -69,7 +68,7 @@ class GENERIC_SERVER_PROCESSOR:
                 self.task_type = ptlog["TASK_TYPE"]
                 self.timestamp = ptlog["TIMESTAMP"]
                 self.flow_tasks = ptlog["FLOW_TASKS"]
-                self.sbn_id = ptlog["SBN_OR_EVT_ID"]
+                self.sbn_event_id = ptlog["SBN_OR_EVT_ID"]
                 
                 for task in self.flow_tasks:
                     if "-#PUSH" in task.split(",") or "-#PROXY SRV-PRECHARGED" in task.split(","):
@@ -117,11 +116,11 @@ class GENERIC_SERVER_PROCESSOR:
             logging.info(err)
     
     def fetch_subscriptions_events_data_once(self, pthread):
-        value = self.is_sbn_processed.get(self.sbn_id)
+        value = self.is_sbn_processed.get(self.sbn_event_id)
         if value is not None and value == "processed":
             pass
         else:
-            thread_dict = {self.sbn_id: pthread}
+            thread_dict = {self.sbn_event_id: pthread}
             subscription_event_object = SubscriptionEventController(None, self.validation_object, thread_dict, True)
             transaction_table_data_dict = subscription_event_object.get_subscription_event("SUBSCRIPTIONS", False)
             if not transaction_table_data_dict:
@@ -130,20 +129,22 @@ class GENERIC_SERVER_PROCESSOR:
             if transaction_table_data_dict:
                 subscriptionEventRecord = subscription_event_object.get_subscription_event_dict()
                 if subscriptionEventRecord:
-                    self.is_sbn_processed[self.sbn_id] = "processed"
+                    self.is_sbn_processed[self.sbn_event_id] = "processed"
                     # logging.info("SUBS_RECORD: %s", subscriptionRecord)
-                    self.charging_ref_id = subscriptionEventRecord["charging_ref_id"]
-                    self.internal_ref_id = subscriptionEventRecord["internal_ref_id"]
-                    self.requester_ref_id = subscriptionEventRecord["requester_ref_id"]
-                    self.srv_id = subscriptionEventRecord["srv_id"]
-                    self.last_modified_time = subscriptionEventRecord["last_modified_time"]
-                    
+                    try:
+                        self.charging_ref_id = subscriptionEventRecord["charging_ref_id"]
+                        self.requester_ref_id = subscriptionEventRecord["requester_ref_id"]
+                        self.srv_id = subscriptionEventRecord["srv_id"]
+                        self.last_modified_time = subscriptionEventRecord["last_modified_time"]
+                    except KeyError as err:
+                        logging.info(err)
+                        
             logging.info(
                 "SITE_ID=%s, MSISDN=%s, PAYMENT_STATUS=%s, TASK_TYPE=%s, "
-                "TIMESTAMP=%s, CHARGING_REF_ID=%s, INTERNAL_REF_ID=%s, "
+                "TIMESTAMP=%s, CHARGING_REF_ID=%s, "
                 "REQUESTER_REF_ID=%s, SRV_ID=%s, FLOW_TASKS=%s",
                 self.site_id, self.msisdn, self.payment_status, self.task_type,
-                self.timestamp, self.charging_ref_id, self.internal_ref_id,
+                self.timestamp, self.charging_ref_id,
                 self.requester_ref_id, self.srv_id, self.flow_tasks
             )
     

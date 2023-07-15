@@ -668,6 +668,7 @@ class Tlog:
             try:
                 subscriptions_data_dict = subscription_event_object.get_subscription_event("SUBSCRIPTIONS", False)
                 if subscriptions_data_dict:
+                    subscription_event_data.extend(subscriptions_data_dict)
                     prism_subscriptions_dict = {"PRISM_SUBSCRIPTIONS_ENTRY": subscriptions_data_dict}
                     self.prism_data_dict_list.append(prism_subscriptions_dict)
                 else:
@@ -678,6 +679,7 @@ class Tlog:
             try:
                 events_data_dict = subscription_event_object.get_subscription_event("EVENTS", False)
                 if events_data_dict:
+                    subscription_event_data.extend(events_data_dict)
                     prism_events_dict = {"PRISM_EVENTS_ENTRY": events_data_dict}
                     self.prism_data_dict_list.append(prism_events_dict)
                 else:

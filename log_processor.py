@@ -92,9 +92,7 @@ class PROCESSOR:
                     logging.exception(error)
                     
                 try:
-                    if tlogProcessor_object.process_tlog_db_enteries("PRISM_TOMCAT") or \
-                    self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"]:
-                        tlogProcessor_object.process_tlog_db_enteries("DATABASE")
+                    tlogProcessor_object.process_tlog_db_enteries("DATABASE")
                 except Exception as error:
                     logging.error(error)
                 
