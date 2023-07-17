@@ -735,11 +735,17 @@ class Tlog:
                 return handler_info_details
         return None
     
-    def processing_cdr_file(self):
+    def processing_cdr_file(self, subscription):
         configManager_object = ConfigManager(self.validation_object)
         file_info = configManager_object.get_file_info()
         isCdrInOpTimezone = False
         cdrs = []
+        charging_ref_id = []
+        
+        for subscriptionRecords in subscription:
+            for subscriptionRecord in subscriptionRecords:
+                charging_ref_id.append(subscriptionRecord["charging_ref_id"])
+        logging.info("CHARGING_REF_ID: %s", charging_ref_id)
         
         if file_info:
             logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
@@ -763,6 +769,15 @@ class Tlog:
                                 cdrs.append(output.splitlines())
                             except subprocess.CalledProcessError as e:
                                 logging.info("Error: %s", e)
+                        
+                        if not cdrs:
+                            for dated_file_pattern in cdr_dated_file_pattern:
+                                try:
+                                    for chgRefId in charging_ref_id:
+                                        output = subprocess.check_output("grep -a {0} {1}".format(chgRefId, dated_file_pattern), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                                        cdrs.append(output.splitlines())
+                                except subprocess.CalledProcessError as e:
+                                    logging.info("Error: %s", e)
                 except KeyError as err:
                     logging.info(err)
         if cdrs:

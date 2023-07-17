@@ -19,7 +19,7 @@ class TlogProcessor:
                     prism_tomcat_callbackV2_log_dict, prism_daemon_callbackV2_log_dict,\
                     prism_tomcat_perf_log_dict, prism_daemon_perf_log_dict,\
                     prism_handler_info_dict, issue_task_types, issue_handler_task_type_map,\
-                    prism_smsd_tlog_dict, non_issue_sbn_thread_dict, oarm_uid):
+                    prism_smsd_tlog_dict, non_issue_sbn_thread_dict, subscription_event_data, oarm_uid):
         
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
@@ -52,6 +52,7 @@ class TlogProcessor:
         
         self.prism_smsd_tlog_dict = prism_smsd_tlog_dict
         self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
+        self.subscription_event_data = subscription_event_data
         self.oarm_uid = oarm_uid
         
         self.combined_perf_data = []
@@ -139,18 +140,18 @@ class TlogProcessor:
                 logging.info("NO NON-REALTIME TLOG PRESENT")
                 
         elif pname == "DATABASE":
-            subscription_event_data = tlog_object.get_subscription_event_details()
+            self.subscription_event_data = tlog_object.get_subscription_event_details()
             
             logging.info('issue tasks are: %s', self.issue_task_types)
             if self.issue_task_types:
-                handler_info = tlog_object.get_issue_handler_details(subscription_event_data)
+                handler_info = tlog_object.get_issue_handler_details(self.subscription_event_data)
                 
                 if handler_info:
                     handlerfile_object = HandlerFileProcessor(self.config, handler_info, self.outputDirectory_object, self.oarm_uid)
                     handlerfile_object.getHandler_files()
         
         elif pname == "PROCESS_CDR":
-            tlog_object.processing_cdr_file()
+            tlog_object.processing_cdr_file(self.subscription_event_data)
                     
         elif pname == "PRISM_SMSD":
             tlog_object.get_tlog(pname)
