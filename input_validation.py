@@ -28,6 +28,7 @@ class InputValidation:
         self.is_input_valid = False
         self.site_id = ""
         self.time_zone = ""
+        self.file_ids = []
         self.is_multitenant_system = False
 
 
@@ -77,7 +78,7 @@ class InputValidation:
                     self.is_input_valid = True
                 
                 elif is_global_instance and self.operator_id != '-1':
-                    self.site_id, self.time_zone = configManager_object.get_operator_site_map(self.operator_id)
+                    self.site_id, self.time_zone, self.file_ids = configManager_object.get_operator_site_map(self.operator_id)
                     self.start_date = datetime.strftime(self.time_zone_conversion(self.start_date), "%Y-%m-%d")
                     self.end_date = datetime.strftime(self.time_zone_conversion(self.end_date), "%Y-%m-%d")
                     

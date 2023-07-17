@@ -390,7 +390,8 @@ class LogFileFinder:
         
         return self.access_log_files
 
-    def get_generated_cdr_files(self, file_prefix, file_datetime_fmt, file_suffix, file_local_directory):
+    def get_generated_cdr_files(self, file_prefix, file_datetime_fmt, file_suffix,
+                                file_local_directory, isCdrInOpTimezone):
         cdr_files = []
         
         # Define the pattern to match the substring
@@ -400,8 +401,14 @@ class LogFileFinder:
         file_prefix = re.sub(pattern, '*', file_prefix)
         logging.info("FILE_PREFIX: %s", file_prefix)
         
-        self.input_date = self.date_range_list(self.start_date, self.end_date)
-        
+        if isCdrInOpTimezone:
+            # logging.info("LOG_FILE: START_DATE: %s AND END_DATE: %s", self.start_date, self.end_date)
+            self.input_date = self.date_range_list(self.start_date, self.end_date)
+        else:
+            s_date = datetime.strptime(self.validation_object.non_converted_start_date, "%Y-%m-%d")
+            e_date = datetime.strptime(self.validation_object.non_converted_end_date, "%Y-%m-%d")
+            self.input_date = self.date_range_list(s_date, e_date)
+            
         for input_date in self.input_date:
             formatted_date = self.java_datetime_to_python_convertor(input_date, file_datetime_fmt)
             pattern = '{0}{1}*.{2}'.format(file_prefix, formatted_date, file_suffix)

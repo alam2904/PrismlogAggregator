@@ -738,15 +738,23 @@ class Tlog:
     def processing_cdr_file(self):
         configManager_object = ConfigManager(self.validation_object)
         file_info = configManager_object.get_file_info()
+        isCdrInOpTimezone = False
         cdrs = []
         
         if file_info:
             logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
             for item in file_info:
                 try:
+                    if self.validation_object.is_multitenant_system:
+                        file_id_zone = item["FILE_ID"] + "_ZONE"
+                        time_zone = configManager_object.get_prism_config_param_value('SYSTEM', -1, file_id_zone)
+                        
+                        if time_zone and (time_zone == self.validation_object.time_zone):
+                            isCdrInOpTimezone = True
+                    
                     cdr_dated_file_pattern = logfile_object.get_generated_cdr_files(
                                     item["FILE_PREFIX"], item["FILE_DATETIME_FMT"],
-                                    item["FILE_SUFFIX"], item["FILE_LOCAL_DIR"]
+                                    item["FILE_SUFFIX"], item["FILE_LOCAL_DIR"], isCdrInOpTimezone
                                 )
                     if cdr_dated_file_pattern:
                         for dated_file_pattern in cdr_dated_file_pattern:
@@ -761,8 +769,7 @@ class Tlog:
             cdr_data = {}
             cdr_data["CDR_DATA"] = [record for data in cdrs for record in data]
             logging.info("CDRS: %s", cdr_data)
-            self.prism_data_dict_list.append(cdr_data)
-                
+            self.prism_data_dict_list.append(cdr_data)  
     
     def task_perf_handler_mapping(self, srv_id, flow_id):
         for perf_data in self.combined_perf_data: 

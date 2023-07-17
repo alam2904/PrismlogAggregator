@@ -126,7 +126,7 @@ class ConfigManager:
         #initializing prism_config_params subtype boolean parameter
         operator_site_map = None
         try:
-            Query = "SELECT SITE_ID, TIME_ZONE FROM OPERATOR_SITE_MAP WHERE OPERATOR_ID = %s"
+            Query = "SELECT SITE_ID, TIME_ZONE, FILE_IDS FROM OPERATOR_SITE_MAP WHERE OPERATOR_ID = %s"
             params = (operator_id,)
             configMap = self.get_db_config_map(Query, params, self.db_connection)
             
@@ -134,8 +134,8 @@ class ConfigManager:
                 operator_site_map = json.loads(configMap, object_pairs_hook=OrderedDict)
                 if operator_site_map:
                     for row in operator_site_map:
-                        logging.info("SITE_ID: %s AND TIME_ZONE: %s", row["SITE_ID"], row["TIME_ZONE"])
-                        operator_site_map = row["SITE_ID"], row["TIME_ZONE"]    
+                        logging.info("SITE_ID: %s AND TIME_ZONE: %s AND FILE_IDS: %s", row["SITE_ID"], row["TIME_ZONE"], row["FILE_IDS"])
+                        operator_site_map = row["SITE_ID"], row["TIME_ZONE"], row["FILE_IDS"] 
             return operator_site_map
         except KeyError as ex:
             logging.exception("operator_id: %s site map is not found", operator_id, ex)
@@ -233,13 +233,18 @@ class ConfigManager:
     def get_file_info(self):
         file_info = []
         file_ids = []
-        global_file_ids = self.get_prism_config_param_value('SYSTEM', -1, 'GLOBAL_FILE_IDS')
-        realtime_global_file_ids = self.get_prism_config_param_value('SYSTEM', -1, 'REALTIME_GLOBAL_FILE_IDS')
         
-        if global_file_ids:
-            file_ids.extend(str(global_file_ids).split(","))
-        if realtime_global_file_ids:
-            file_ids.extend(str(realtime_global_file_ids).split(","))
+        if not self.validation_object.is_multitenant_system:
+            global_file_ids = self.get_prism_config_param_value('SYSTEM', -1, 'GLOBAL_FILE_IDS')
+            realtime_global_file_ids = self.get_prism_config_param_value('SYSTEM', -1, 'REALTIME_GLOBAL_FILE_IDS')
+            
+            if global_file_ids:
+                file_ids.extend(str(global_file_ids).split(","))
+            if realtime_global_file_ids:
+                file_ids.extend(str(realtime_global_file_ids).split(","))
+        else:
+            logging.info("file ids must be configured in operator_site_map")
+            file_ids.extend(str(self.validation_object.file_ids).split(","))
         
         if file_ids:
             try:
