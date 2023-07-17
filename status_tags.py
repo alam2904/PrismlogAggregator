@@ -195,4 +195,5 @@ class PrismHandlerClass(object):
     GENERIC_HTTP = "com.onmobile.prism.interfaceHandler.GenericHTTPHandlerV2"
     GENERIC_SOAP = "com.onmobile.prism.interfaceHandler.GenericSoapHandler"
     GENERIC_CDR = "com.onmobile.prism.interfaceHandler.universal.cdr.GenericCDRWriter"
+    GENERIC_AUTH = "com.onmobile.prism.interfaceHandler.auth.GenericHTTPAuthenticationHandlerV2"
     

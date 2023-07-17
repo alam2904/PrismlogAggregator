@@ -148,6 +148,9 @@ class TlogProcessor:
                 if handler_info:
                     handlerfile_object = HandlerFileProcessor(self.config, handler_info, self.outputDirectory_object, self.oarm_uid)
                     handlerfile_object.getHandler_files()
+        
+        elif pname == "PROCESS_CDR":
+            tlog_object.processing_cdr_file()
                     
         elif pname == "PRISM_SMSD":
             tlog_object.get_tlog(pname)

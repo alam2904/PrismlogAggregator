@@ -94,8 +94,7 @@ class SubscriptionEventController:
             return self.transaction_table_data
         except Exception as ex:
             logging.exception(ex)
-        
-        
+                   
         finally:
             logging.info('reached subs finally block')
             db_connection.close()

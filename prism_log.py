@@ -1,3 +1,4 @@
+import shutil
 import sys
 sys.dont_write_bytecode = True
 from datetime import datetime
@@ -29,6 +30,18 @@ class Main:
         # create the output directory if it doesn't exist
         if not os.path.exists(output_directory_path):
             os.makedirs(output_directory_path)
+        else:
+            # Iterate over the directory and its subdirectories
+            for root, dirs, files in os.walk(output_directory_path, topdown=False):
+                # Remove all files in the current directory
+                for file_name in files:
+                    file_path = os.path.join(root, file_name)
+                    os.remove(file_path)
+                # Remove all subdirectories
+                for dir_name in dirs:
+                    dir_path = os.path.join(root, dir_name)
+                    shutil.rmtree(dir_path)
+
 
         # set the output directory object
         outputDirectory_object = output_directory_path

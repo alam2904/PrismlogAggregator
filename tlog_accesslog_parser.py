@@ -128,7 +128,7 @@ class TlogAccessLogParser:
         if pname == "GENERIC_SERVER":
             folder = os.path.join(self.outputDirectory_object, "{}_issue_generic_server_access".format(self.hostname))
         elif pname == "GENERIC_SERVER_REQ_RESP":
-            folder = os.path.join(self.outputDirectory_object, "{}_issue_generic_server_req_resp".format(self.hostname))
+            folder = os.path.join(self.outputDirectory_object, "{}_issue_generic_server_log".format(self.hostname))
         else:
             folder = os.path.join(self.outputDirectory_object, "{}_issue_tomcat_access".format(self.hostname))
         

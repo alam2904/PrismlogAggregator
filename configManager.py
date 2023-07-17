@@ -172,7 +172,6 @@ class ConfigManager:
         return urls
         
     def get_handler_info(self, issue_handler_task_type_map):
-        # Connect to the database
         handler_id_list = []
         try:
             for params in issue_handler_task_type_map:
@@ -231,21 +230,59 @@ class ConfigManager:
         
         logging.info("HANDLER_MAP: %s", self.handler_map)
     
+    def get_file_info(self):
+        file_info = []
+        file_ids = []
+        global_file_ids = self.get_prism_config_param_value('SYSTEM', -1, 'GLOBAL_FILE_IDS')
+        realtime_global_file_ids = self.get_prism_config_param_value('SYSTEM', -1, 'REALTIME_GLOBAL_FILE_IDS')
+        
+        if global_file_ids:
+            file_ids.extend(str(global_file_ids).split(","))
+        if realtime_global_file_ids:
+            file_ids.extend(str(realtime_global_file_ids).split(","))
+        
+        if file_ids:
+            try:
+                # Prepare the SQL statement
+                Query = "SELECT FILE_ID, FILE_PREFIX, FILE_DATETIME_FMT, FILE_SUFFIX, FILE_LOCAL_DIR FROM FILE_INFO WHERE FILE_ID in %s AND FILE_TYPE = %s"
+                
+                params = (tuple(file_ids), 'PUSH')
+                    
+                configMap = self.get_db_config_map(Query, params, self.db_connection)
+                
+                if configMap:
+                    file_info.extend(json.loads(configMap, object_pairs_hook=OrderedDict))
+                else:
+                    logging.debug("No file_info configured for file_ids = %s", file_ids)
+                        
+            except Exception as ex:
+                logging.info(ex)
+        if file_info:
+            return file_info
+        # logging.info("FILE_INFO: %s", file_info)
+    
     def get_db_config_map(self, query, params, conn):
         configMap = None
         logging.info('SELECT_QUERY: %s AND PARAMS: %s', query, params)
         
-        # Create a QueryExecutor instance with the connection object
-        query_executor = QueryExecutor(conn)
+        try:
+            # Create a QueryExecutor instance with the connection object
+            query_executor = QueryExecutor(conn)
 
-        # Execute the query
-        query_executor.execute(self.select(), query, params)
-            
-        if query_executor.result_set:
-            result_set = query_executor.result_set
-            
-            # Convert result_set(ordered dictionary) to JSON object
-            configMap = json.dumps(result_set)
+            # Execute the query
+            query_executor.execute(self.select(), query, params)
+
+            if query_executor.result_set:
+                result_set = query_executor.result_set
+                
+                # Convert result_set(ordered dictionary) to JSON object
+                configMap = json.dumps(result_set)
+        except Exception as e:
+            logging.error('Error occurred: %s', e)
+    
+        # finally:
+        #     logging.info('reached subs finally block')
+        #     self.db_connection.close()
         
         return configMap
     

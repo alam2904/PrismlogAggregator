@@ -1,3 +1,4 @@
+from collections import defaultdict
 import logging
 import os
 import re
@@ -14,12 +15,13 @@ class HandlerFileProcessor:
         self.oarm_uid = oarm_uid
         
         self.hostname = socket.gethostname()
-        self.params = []
+        self.params = defaultdict(list)
         self.handler_files = []
         self.web_services = []
         self.prism_deamon_conf_path = ""
         self.prism_tomcat_conf_path = ""
         self.macro_name = []
+        self.cdr_file_id = ""
     
     def getHandler_files(self):
         try:
@@ -29,7 +31,8 @@ class HandlerFileProcessor:
                         if not h_name.startswith("__"):
                             if handler["handler_name"] == h_class: 
                                 # logging.info('handler params: %s', handler["params"])
-                                self.params.append(handler["params"])
+                                # self.params.append(handler["params"])
+                                self.params[h_name].append(handler["params"])
         except Exception as ex:
             logging.info(ex)
             
@@ -60,37 +63,45 @@ class HandlerFileProcessor:
             logging.exception(error)
             
         try:
-            for param in self.params:
-                root = ET.fromstring(param)
-                # Retrieve the value of the XML_PATH attribute
-                if root.find('params').get('XML_PATH') != None:
-                    self.handler_files.append(root.find('params').get('XML_PATH'))
-                
-                self.find_absolute_velocity_prop_path(root, 'VELOCITY_PROP_FILE_PATH')
+            for h_name, params in self.params.items():
+                for param in params:
+                    root = ET.fromstring(param)
+                    # Retrieve the value of the path attributes
                     
-                if ( root.find('params').get('RESPONSE_FILE') != None 
-                    and root.find('params').get('RESPONSE_FILE') not in self.handler_files):
-                    self.handler_files.append(root.find('params').get('RESPONSE_FILE'))
+                    if h_name == "GENERIC_HTTP" or h_name == "GENERIC_AUTH":
+                        if root.find('params').get('XML_PATH') != None:
+                            self.handler_files.append(root.find('params').get('XML_PATH'))
+                        
+                        self.find_absolute_velocity_prop_path(root, 'VELOCITY_PROP_FILE_PATH')
+                            
+                        if ( root.find('params').get('RESPONSE_FILE') != None 
+                            and root.find('params').get('RESPONSE_FILE') not in self.handler_files):
+                            self.handler_files.append(root.find('params').get('RESPONSE_FILE'))
                     
-                if root.find('params').get('REQUEST_FILE') != None:
-                    self.handler_files.append(root.find('params').get('REQUEST_FILE'))
-                
-                if root.find('params').get('CONF_FILE') != None:
-                    self.handler_files.append(root.find('params').get('CONF_FILE'))
-                
-                if ( root.find('params').get('RESPONSE_FILE') != None 
-                    and root.find('params').get('RESPONSE_FILE') not in self.handler_files):
-                    self.handler_files.append(root.find('params').get('RESPONSE_FILE'))
-                
-                if root.find('params').get('DYN_EXEC_FILE') != None:
-                    self.handler_files.append(root.find('params').get('DYN_EXEC_FILE'))
-                
-                if root.find('params').get('TEMPLATE_XML_PATH') != None:
-                    self.handler_files.append(root.find('params').get('TEMPLATE_XML_PATH'))
-                
-                self.find_absolute_velocity_prop_path(root, 'VELOCITY_PROP_FILE')
-                
-                logging.info("HANDLER_FILES: %s", self.handler_files)
+                    elif h_name == "GENERIC_SOAP":
+                        if root.find('params').get('REQUEST_FILE') != None:
+                            self.handler_files.append(root.find('params').get('REQUEST_FILE'))
+                        
+                        if root.find('params').get('CONF_FILE') != None:
+                            self.handler_files.append(root.find('params').get('CONF_FILE'))
+                        
+                        if ( root.find('params').get('RESPONSE_FILE') != None 
+                            and root.find('params').get('RESPONSE_FILE') not in self.handler_files):
+                            self.handler_files.append(root.find('params').get('RESPONSE_FILE'))
+                        
+                        if root.find('params').get('DYN_EXEC_FILE') != None:
+                            self.handler_files.append(root.find('params').get('DYN_EXEC_FILE'))
+                    
+                    elif h_name == "GENERIC_CDR":
+                        if root.find('params').get('TEMPLATE_XML_PATH') != None:
+                            self.handler_files.append(root.find('params').get('TEMPLATE_XML_PATH'))
+                        
+                        if root.find('params').get('FILE_ID') != None:
+                            self.cdr_file_id = root.find('params').get('FILE_ID')
+                        
+                        self.find_absolute_velocity_prop_path(root, 'VELOCITY_PROP_FILE')
+                    
+            logging.info("HANDLER_FILES: %s", self.handler_files)
         except ET.ParseError as ex:
             logging.debug(ex)
         

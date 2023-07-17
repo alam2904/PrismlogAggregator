@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import socket
+from configManager import ConfigManager
 from tlog_db_processor import TlogProcessor
 from outfile_writer import FileWriter
 
@@ -93,6 +94,11 @@ class PROCESSOR:
                     
                 try:
                     tlogProcessor_object.process_tlog_db_enteries("DATABASE")
+                except Exception as error:
+                    logging.error(error)
+                
+                try:
+                    tlogProcessor_object.process_tlog_db_enteries("PROCESS_CDR")
                 except Exception as error:
                     logging.error(error)
                 

@@ -12,12 +12,11 @@ from configManager import ConfigManager
 from status_tags import PrismTasks
 from subscriptions_events import SubscriptionEventController
 
-
 class Tlog:
     """
     tlog mapping class
-    for creating tlog data mapping based on ctid, 
-    access log data included
+    for creating tlog data mapping, 
+    access log data included, cdr data included
     """
     def __init__(self, initializedPath_object, outputDirectory_object, validation_object, log_mode,\
                     prism_data_dict_list, prism_data_dict, config,\
@@ -735,6 +734,35 @@ class Tlog:
     
                 return handler_info_details
         return None
+    
+    def processing_cdr_file(self):
+        configManager_object = ConfigManager(self.validation_object)
+        file_info = configManager_object.get_file_info()
+        cdrs = []
+        
+        if file_info:
+            logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
+            for item in file_info:
+                try:
+                    cdr_dated_file_pattern = logfile_object.get_generated_cdr_files(
+                                    item["FILE_PREFIX"], item["FILE_DATETIME_FMT"],
+                                    item["FILE_SUFFIX"], item["FILE_LOCAL_DIR"]
+                                )
+                    if cdr_dated_file_pattern:
+                        for dated_file_pattern in cdr_dated_file_pattern:
+                            try:
+                                output = subprocess.check_output("grep -a {0} {1}".format(self.validation_object.fmsisdn, dated_file_pattern), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                                cdrs.append(output.splitlines())
+                            except subprocess.CalledProcessError as e:
+                                logging.info("Error: %s", e)
+                except KeyError as err:
+                    logging.info(err)
+        if cdrs:
+            cdr_data = {}
+            cdr_data["CDR_DATA"] = [record for data in cdrs for record in data]
+            logging.info("CDRS: %s", cdr_data)
+            self.prism_data_dict_list.append(cdr_data)
+                
     
     def task_perf_handler_mapping(self, srv_id, flow_id):
         for perf_data in self.combined_perf_data: 

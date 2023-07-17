@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
+import glob
 import logging
 import os
+import re
 import socket
 from sys import prefix
 
@@ -387,7 +389,32 @@ class LogFileFinder:
                 self.access_log_files.append(str(files))
         
         return self.access_log_files
-    
+
+    def get_generated_cdr_files(self, file_prefix, file_datetime_fmt, file_suffix, file_local_directory):
+        cdr_files = []
+        
+        # Define the pattern to match the substring
+        pattern = r'\$.*?\$'
+
+        # Replace the matched substring with an empty string
+        file_prefix = re.sub(pattern, '*', file_prefix)
+        logging.info("FILE_PREFIX: %s", file_prefix)
+        
+        self.input_date = self.date_range_list(self.start_date, self.end_date)
+        
+        for input_date in self.input_date:
+            formatted_date = self.java_datetime_to_python_convertor(input_date, file_datetime_fmt)
+            pattern = '{0}{1}*.{2}'.format(file_prefix, formatted_date, file_suffix)
+
+            # Construct the full file path pattern
+            file_pattern = os.path.join(file_local_directory, pattern)
+            cdr_files.append(file_pattern)
+        
+        cdr_files.append('{0}/{1}*.tmp'.format(file_local_directory, file_prefix))
+        logging.info("CDR_FILES: %s", cdr_files)
+        
+        return cdr_files
+
     def get_sorted_dated_tlog_files(self, path, fname_prefix, fname_suffix):
         return sorted(
                 [ os.path.join(path, p) for p in os.listdir(path) 
@@ -404,6 +431,34 @@ class LogFileFinder:
             curr_date += timedelta(days=1)
         return date_list
         
+    def java_datetime_to_python_convertor(self, date_string, java_datetime_fmt):
+        # Define a mapping of format specifiers between Java and Python
+        java_to_python_mapping = {
+            'yyyy': '%Y',
+            'yy': '%y',
+            'MM': '%m',
+            'dd': '%d',
+            'HH': '%H',
+            'mm': '%M',
+            'ss': '%S'
+        }
+
+        # Replace Java format specifiers with Python format specifiers
+        python_format = java_datetime_fmt
+        for java_specifier, python_specifier in java_to_python_mapping.items():
+            python_format = python_format.replace(java_specifier, python_specifier)
+        # logging.info('PYTHON_FORMAT: %s', python_format[0:6])
+
+        # Parse the Java datetime string using the Python format
+        try:
+            parsed_datetime = datetime.strftime(date_string, python_format[0:6])
+            # logging.info("PARSED_DATETIME: %s", parsed_datetime)
+            return parsed_datetime
+        except Exception as ex:
+            logging.info(ex)
+
+            
+
     def constructor_paramter_reinitialize(self):
         self.access_log_files = []
         self.tlog_files = []
