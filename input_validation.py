@@ -38,8 +38,6 @@ class InputValidation:
         if self.num_argv == 3:
             if self.validate_msisdn():
                 if self.validate_operator_site_map():
-                    if self.is_input_valid:
-                        self.is_multitenant_system = True
                     if self.validate_date():
                         logging.info("IS_INPUT_DATE_VALID: %s", self.is_input_valid)
                         if self.validate_log_mode():
@@ -78,6 +76,7 @@ class InputValidation:
                     self.is_input_valid = True
                 
                 elif is_global_instance and self.operator_id != '-1':
+                    self.is_multitenant_system = True
                     self.site_id, self.time_zone, self.file_ids = configManager_object.get_operator_site_map(self.operator_id)
                     self.start_date = datetime.strftime(self.time_zone_conversion(self.start_date), "%Y-%m-%d")
                     self.end_date = datetime.strftime(self.time_zone_conversion(self.end_date), "%Y-%m-%d")

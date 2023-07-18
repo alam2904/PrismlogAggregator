@@ -29,65 +29,74 @@ class ConfigManager:
     
     def initialize_subtype_parameter(self):
         #initializing prism_config_params subtype boolean parameter
-        if self.validation_object.is_multitenant_system:
-            Query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE SITE_ID = %s AND PARAM_NAME LIKE '%%SUBTYPE%%'"
-            params = (self.validation_object.site_id,)
-        else:
-            Query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE PARAM_NAME LIKE '%SUBTYPE%'"
-            params = (-1,)
-        logging.info("PARAMS: %s", params)
-        configMap = self.get_db_config_map(Query, params, self.db_connection)
-        
-        if configMap:
-            self.subtype_parameter.append(json.loads(configMap, object_pairs_hook=OrderedDict))
+        try:
+            if self.validation_object.is_multitenant_system:
+                Query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE SITE_ID = %s AND PARAM_NAME LIKE '%%SUBTYPE%%'"
+                params = (self.validation_object.site_id,)
+            else:
+                Query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE PARAM_NAME LIKE '%SUBTYPE%'"
+                params = (-1,)
+            logging.info("PARAMS: %s", params)
+            configMap = self.get_db_config_map(Query, params, self.db_connection)
+            
+            if configMap:
+                self.subtype_parameter.append(json.loads(configMap, object_pairs_hook=OrderedDict))
+        except Exception as ex:
+            logging.error(ex)
     
     def get_prism_config_param_value(self, module_name, site_id, param_name):
         #get prism_config_param value
         param_value = None
-
-        Query = "SELECT PARAM_VALUE FROM PRISM_CONFIG_PARAMS WHERE MODULE_NAME = %s AND SITE_ID = %s AND PARAM_NAME = %s"
-        params = (module_name, site_id, param_name)
+        try:
+            Query = "SELECT PARAM_VALUE FROM PRISM_CONFIG_PARAMS WHERE MODULE_NAME = %s AND SITE_ID = %s AND PARAM_NAME = %s"
+            params = (module_name, site_id, param_name)
+                
+            configMap = self.get_db_config_map(Query, params, self.db_connection)
             
-        configMap = self.get_db_config_map(Query, params, self.db_connection)
-        
-        if configMap:
-            pcp_value_row = json.loads(configMap, object_pairs_hook=OrderedDict)
-            if pcp_value_row:
-                for row in pcp_value_row:
-                    param_value = row["PARAM_VALUE"]
-        return param_value
-    
+            if configMap:
+                pcp_value_row = json.loads(configMap, object_pairs_hook=OrderedDict)
+                if pcp_value_row:
+                    for row in pcp_value_row:
+                        param_value = row["PARAM_VALUE"]
+            return param_value
+        except Exception as ex:
+            logging.error(ex)
+            
     def get_services_ref_param_value(self, service_id, site_id, param_name):
         #get prism_config_param value
         param_value = None
-
-        Query = "SELECT PARAM_VALUE FROM SERVICES_REF WHERE SERVICE_ID = %s AND SITE_ID = %s AND PARAM_NAME = %s"
-        params = (service_id, site_id, param_name)
+        try:
+            Query = "SELECT PARAM_VALUE FROM SERVICES_REF WHERE SERVICE_ID = %s AND SITE_ID = %s AND PARAM_NAME = %s"
+            params = (service_id, site_id, param_name)
+                
+            configMap = self.get_db_config_map(Query, params, self.db_connection)
             
-        configMap = self.get_db_config_map(Query, params, self.db_connection)
-        
-        if configMap:
-            sr_value_row = json.loads(configMap, object_pairs_hook=OrderedDict)
-            if sr_value_row:
-                for row in sr_value_row:
-                    param_value = row["PARAM_VALUE"]
-        return param_value
+            if configMap:
+                sr_value_row = json.loads(configMap, object_pairs_hook=OrderedDict)
+                if sr_value_row:
+                    for row in sr_value_row:
+                        param_value = row["PARAM_VALUE"]
+            return param_value
+        except Exception as ex:
+            logging.error(ex)
     
     def get_service_charges_ref_param_value(self, sc_id, site_id, param_name):
         #get prism_config_param value
         param_value = None
+        try:
+            Query = "SELECT PARAM_VALUE FROM SERVICE_CHARGES_REF WHERE SC_ID = %s AND SITE_ID = %s AND PARAM_NAME = %s"
+            params = (sc_id, site_id, param_name)
 
-        Query = "SELECT PARAM_VALUE FROM SERVICE_CHARGES_REF WHERE SC_ID = %s AND SITE_ID = %s AND PARAM_NAME = %s"
-        params = (sc_id, site_id, param_name)
-
-        configMap = self.get_db_config_map(Query, params, self.db_connection)
-        
-        if configMap:
-            scr_value_row = json.loads(configMap, object_pairs_hook=OrderedDict)
-            if scr_value_row:
-                for row in scr_value_row:
-                    param_value = row["PARAM_VALUE"]
-        return param_value
+            configMap = self.get_db_config_map(Query, params, self.db_connection)
+            
+            if configMap:
+                scr_value_row = json.loads(configMap, object_pairs_hook=OrderedDict)
+                if scr_value_row:
+                    for row in scr_value_row:
+                        param_value = row["PARAM_VALUE"]
+            return param_value
+        except Exception as ex:
+            logging.error(ex)
     
     def is_multitenant_system(self):
         is_global_instance = False
@@ -109,18 +118,21 @@ class ConfigManager:
                     
     def get_flow_handler_mapping(self):
         #generic flow handler mapping
-        if self.validation_object.is_multitenant_system:
-            Query = "SELECT hm.TRANSACTION_TYPE, hi.PARAMS FROM HANDLER_PROCESSOR_INFO hi INNER JOIN HANDLER_PROCESSOR_MAP hm ON hi.HANDLER_ID = hm.HANDLER_ID WHERE hi.HANDLER_NAME = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler' AND hm.SITE_ID = %s GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE"
-            params = (self.validation_object.site_id,)
-        else:
-            Query = "SELECT hm.TRANSACTION_TYPE, hi.PARAMS FROM HANDLER_PROCESSOR_INFO hi INNER JOIN HANDLER_PROCESSOR_MAP hm ON hi.HANDLER_ID = hm.HANDLER_ID WHERE hi.HANDLER_NAME = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler' AND hm.SITE_ID = %s GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE"
-            params = (-1,)
+        try:
+            if self.validation_object.is_multitenant_system:
+                Query = "SELECT hm.TRANSACTION_TYPE, hi.PARAMS FROM HANDLER_PROCESSOR_INFO hi INNER JOIN HANDLER_PROCESSOR_MAP hm ON hi.HANDLER_ID = hm.HANDLER_ID WHERE hi.HANDLER_NAME = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler' AND hm.SITE_ID = %s GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE"
+                params = (self.validation_object.site_id,)
+            else:
+                Query = "SELECT hm.TRANSACTION_TYPE, hi.PARAMS FROM HANDLER_PROCESSOR_INFO hi INNER JOIN HANDLER_PROCESSOR_MAP hm ON hi.HANDLER_ID = hm.HANDLER_ID WHERE hi.HANDLER_NAME = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler' AND hm.SITE_ID = %s GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE"
+                params = (-1,)
+                
+            configMap = self.get_db_config_map(Query, params, self.db_connection)
             
-        configMap = self.get_db_config_map(Query, params, self.db_connection)
-        
-        if configMap:
-            return json.loads(configMap, object_pairs_hook=OrderedDict)
-        return None
+            if configMap:
+                return json.loads(configMap, object_pairs_hook=OrderedDict)
+            return None
+        except Exception as ex:
+            logging.error(ex)
     
     def get_operator_site_map(self, operator_id):
         #initializing prism_config_params subtype boolean parameter
@@ -157,19 +169,22 @@ class ConfigManager:
     
     def get_operator_url_from_pcp(self, module_name, site_id):
         #get prism_config_param value
-        urls = []
+        try:
+            urls = []
 
-        Query = "SELECT PARAM_NAME FROM PRISM_CONFIG_PARAMS WHERE MODULE_NAME = %s AND SITE_ID = %s AND PARAM_NAME LIKE '%%:action'"
-        params = (module_name, site_id)
+            Query = "SELECT PARAM_NAME FROM PRISM_CONFIG_PARAMS WHERE MODULE_NAME = %s AND SITE_ID = %s AND PARAM_NAME LIKE '%%:action'"
+            params = (module_name, site_id)
+                
+            configMap = self.get_db_config_map(Query, params, self.db_connection)
             
-        configMap = self.get_db_config_map(Query, params, self.db_connection)
-        
-        if configMap:
-            param_rows = json.loads(configMap, object_pairs_hook=OrderedDict)
-            if param_rows:
-                for row in param_rows:
-                    urls.append(str(row["PARAM_NAME"]).split(":")[0])
-        return urls
+            if configMap:
+                param_rows = json.loads(configMap, object_pairs_hook=OrderedDict)
+                if param_rows:
+                    for row in param_rows:
+                        urls.append(str(row["PARAM_NAME"]).split(":")[0])
+            return urls
+        except Exception as ex:
+            logging.error(ex)
         
     def get_handler_info(self, issue_handler_task_type_map):
         handler_id_list = []
@@ -181,17 +196,20 @@ class ConfigManager:
                     handler_id_list.append(handler_id)
             
             for handler_id in handler_id_list:
-                # Prepare the SQL statement
-                Query = "SELECT * FROM HANDLER_INFO WHERE HANDLER_ID = %s"
-                params = (handler_id,)
+                try:
+                    # Prepare the SQL statement
+                    Query = "SELECT * FROM HANDLER_INFO WHERE HANDLER_ID = %s"
+                    params = (handler_id,)
+                        
+                    configMap = self.get_db_config_map(Query, params, self.db_connection)
                     
-                configMap = self.get_db_config_map(Query, params, self.db_connection)
-                
-                if configMap:
-                    self.handler_info.append(json.loads(configMap, object_pairs_hook=OrderedDict))
-                else:
-                    logging.debug("No handler configured for handler_id = %s", handler_id)
+                    if configMap:
+                        self.handler_info.append(json.loads(configMap, object_pairs_hook=OrderedDict))
+                    else:
+                        logging.debug("No handler configured for handler_id = %s", handler_id)
                     
+                except Exception as ex:
+                    logging.info(ex)
         except Exception as ex:
             logging.info(ex)
         
@@ -199,22 +217,24 @@ class ConfigManager:
     
     def get_handler_map(self, issue_handler_task_type_map):
         
-        try:
-            for params in issue_handler_task_type_map:
-                # Prepare the SQL statement
+        for params in issue_handler_task_type_map:
+            try:
                 task_type, handler_id, sub_type, srv_id, flow_id = params
-                
-                if self.validation_object.is_multitenant_system:
-                    sparam = (self.validation_object.site_id, task_type, handler_id, sub_type, srv_id)
-                    wsparam = (self.validation_object.site_id, task_type, handler_id, sub_type, flow_id)
-                else:
-                    sparam = (-1, task_type, handler_id, sub_type, srv_id)
-                    wsparam = (-1, task_type, handler_id, sub_type, flow_id)
-                    
                 if handler_id:
-                    Query_srv = "SELECT * FROM HANDLER_MAP WHERE SITE_ID = %s AND TASK_TYPE = %s AND HANDLER_ID = %s AND SUB_TYPE = %s AND SRV_ID in %s"
+                    handler_id = '%' + handler_id + '%'
+                    # logging.info("CONF_HANDLER_ID: %s", handler_id)
+                
+                    if self.validation_object.is_multitenant_system:
+                        sparam = (self.validation_object.site_id, task_type, handler_id, sub_type, srv_id)
+                        wsparam = (self.validation_object.site_id, task_type, handler_id, sub_type, flow_id)
+                    else:
+                        sparam = (-1, task_type, handler_id, sub_type, srv_id)
+                        wsparam = (-1, task_type, handler_id, sub_type, flow_id)
                     
-                    Query = "SELECT * FROM HANDLER_MAP WHERE SITE_ID = %s AND TASK_TYPE = %s AND HANDLER_ID = %s AND SUB_TYPE = %s AND (FLOW_ID in %s OR FLOW_ID = '-1')"
+                    # Prepare the SQL statement
+                    Query_srv = "SELECT * FROM HANDLER_MAP WHERE SITE_ID = %s AND TASK_TYPE = %s AND HANDLER_ID LIKE %s AND SUB_TYPE = %s AND SRV_ID in %s"
+                    
+                    Query = "SELECT * FROM HANDLER_MAP WHERE SITE_ID = %s AND TASK_TYPE = %s AND HANDLER_ID LIKE %s AND SUB_TYPE = %s AND (FLOW_ID in %s OR FLOW_ID = '-1')"
 
                     configMap = self.get_db_config_map(Query_srv, sparam, self.db_connection)
                     
@@ -225,8 +245,8 @@ class ConfigManager:
                     
                     self.handler_map.append(json.loads(configMap, object_pairs_hook=OrderedDict))
                     
-        except Exception as ex:
-            logging.info(ex)
+            except Exception as ex:
+                logging.info(ex)
         
         logging.info("HANDLER_MAP: %s", self.handler_map)
     
