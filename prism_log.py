@@ -18,7 +18,7 @@ class Main:
         logging.basicConfig(filename='aggregator.log', filemode='w', format='[%(asctime)s,%(msecs)d]%(pathname)s:(%(lineno)d)-%(levelname)s - %(message)s', datefmt='%y-%m-%d %H:%M:%S', level=logging.DEBUG)
         
         start = datetime.now()
-        logging.debug('start of execution time: %s', start)
+        logging.debug('start of execution time for QA: %s', start)
         
         num_argv = len(sys.argv)
         uid = sys.argv[len(sys.argv) - 1]
