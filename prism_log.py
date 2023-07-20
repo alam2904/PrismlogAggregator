@@ -48,9 +48,9 @@ class Main:
         fileWriter_object = FileWriter(outputDirectory_object, uid)
         
         try:
-            msisdn, operator_id, start_date, end_date, log_mode, is_sub_reprocessing = sys.argv[1].split("|")
+            msisdn, operator_id, start_date, end_date, log_mode = sys.argv[1].split("|")
             
-            validation_object = InputValidation(num_argv, msisdn, operator_id, start_date, end_date, log_mode, is_sub_reprocessing)
+            validation_object = InputValidation(num_argv, msisdn, operator_id, start_date, end_date, log_mode)
             validation_object.validate_argument()        
             
             if validation_object.is_input_valid:
@@ -62,9 +62,9 @@ class Main:
                     logging.info('removing old modified_nlog.config')
                     os.remove('modified_nlog.config')
                 
-                if os.path.exists('out/{}_paymentTransactionData.json'.format(hostname)):
-                    logging.info('out/{}_paymentTransactionData.json'.format(hostname))
-                    os.remove('out/{}_paymentTransactionData.json'.format(hostname))
+                if os.path.exists('out/{}_prismTransactionData.json'.format(hostname)):
+                    logging.info('out/{}_prismTransactionData.json'.format(hostname))
+                    os.remove('out/{}_prismTransactionData.json'.format(hostname))
                 
                 file_path = "{}.json".format(hostname)
 

@@ -1,6 +1,8 @@
 class logMode(object):
-    IS_DEBUG_DATA = "txn"
-    IS_DEBUG_ERROR = "error"
+    ACCESS_DATA = "access"
+    PERF_DATA = "perf"
+    TLOG_DATA = "tlog"
+    ALL_DATA = "all"
 
 #prism tags
 class Prism_St_SString(object):
