@@ -48,24 +48,11 @@ class Main:
         fileWriter_object = FileWriter(outputDirectory_object, uid)
         
         try:
-            msisdn, operator_id, start_date, end_date, log_mode = sys.argv[1].split("|")
-            
-            validation_object = InputValidation(num_argv, msisdn, operator_id, start_date, end_date, log_mode)
-            validation_object.validate_argument()        
+            msisdn, operator_id, time_delta_in_mins = sys.argv[1].split("|")
+            validation_object = InputValidation(num_argv, msisdn, operator_id)
+            validation_object.validate_argument(time_delta_in_mins)
             
             if validation_object.is_input_valid:
-                if os.path.exists('modified_log4j2.xml'):
-                    logging.info('removing old modified_log4j2.xml')
-                    os.remove('modified_log4j2.xml')
-                
-                if os.path.exists('modified_nlog.config'):
-                    logging.info('removing old modified_nlog.config')
-                    os.remove('modified_nlog.config')
-                
-                if os.path.exists('out/{}_prismTransactionData.json'.format(hostname)):
-                    logging.info('out/{}_prismTransactionData.json'.format(hostname))
-                    os.remove('out/{}_prismTransactionData.json'.format(hostname))
-                
                 file_path = "{}.json".format(hostname)
 
                 # read the file contents
@@ -80,7 +67,7 @@ class Main:
                     logging.info("*******************************************")                    
                     logging.info('\n')
                     
-                    initializer_object = Initializer(hostname, outputDirectory_object, config, validation_object, validation_object.log_mode, uid)
+                    initializer_object = Initializer(hostname, outputDirectory_object, config, validation_object, uid)
                     initializer_object.initialize_process()
             else:
                 logging.error('input validation failed. Hence log fetch could not happen.')

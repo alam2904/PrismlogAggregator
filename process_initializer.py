@@ -4,12 +4,11 @@ from log_processor import PROCESSOR
 
 
 class Initializer:
-    def __init__(self, hostname, outputDirectory_object, config, validation_object, log_mode, uid):
+    def __init__(self, hostname, outputDirectory_object, config, validation_object, uid):
         self.hostname = hostname
         self.outputDirectory_object = outputDirectory_object
         self.config =  config
         self.validation_object = validation_object
-        self.log_mode = log_mode
         self.oarm_uid = uid
     
     def initialize_process(self):
@@ -76,10 +75,9 @@ class Initializer:
                     logging.warning(error)
                     
             logging.info('\n')
-            logging.info('log mode: %s', self.log_mode)
             
             #processor is called
-            processor_object = PROCESSOR(initializedPath_object, self.outputDirectory_object, self.validation_object, self.log_mode, self.oarm_uid, self.config)
+            processor_object = PROCESSOR(initializedPath_object, self.outputDirectory_object, self.validation_object, self.oarm_uid, self.config)
             processor_object.process()
                 
         except KeyError as error:

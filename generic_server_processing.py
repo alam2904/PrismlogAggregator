@@ -6,9 +6,9 @@ import socket
 import subprocess
 from configManager import ConfigManager
 from outfile_writer import FileWriter
-from subscriptions_events import SubscriptionEventController
 from log_files import LogFileFinder
-from tlog_accesslog_parser import TlogAccessLogParser
+# from subscriptions_events import SubscriptionEventController
+# from tlog_accesslog_parser import TlogAccessLogParser
 
 class GENERIC_SERVER_PROCESSOR:
     def __init__(self, initializedPath_object, outputDirectory_object, prism_data_dict_list,\

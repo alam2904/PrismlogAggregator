@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import json
 import socket
 import traceback
-from status_tags import logMode
+from status_tags import TimeZoneGmtOffsetValue
 import logging
 from configManager import ConfigManager
 from status_tags import TimeZoneGmtOffsetValue
@@ -13,17 +13,15 @@ class InputValidation:
     input data validation class
     """
     
-    def __init__(self, num_argv, msisdn, operator_id, start_date, end_date, input_mode):
+    def __init__(self, num_argv, msisdn, operator_id):
         self.num_argv = num_argv
         self.msisdn = msisdn
         self.operator_id = operator_id
         self.fmsisdn = ""
-        self.non_converted_start_date = start_date
-        self.non_converted_end_date = end_date 
-        self.start_date = start_date
-        self.end_date = end_date
-        self.input_mode = input_mode 
-        self.log_mode = "all"
+        self.non_converted_start_date = None
+        self.non_converted_end_date = None 
+        self.start_date = None
+        self.end_date = None
         self.is_input_valid = False
         self.site_id = ""
         self.time_zone = ""
@@ -31,20 +29,18 @@ class InputValidation:
         self.is_multitenant_system = False
 
 
-    def validate_argument(self):
+    def validate_argument(self, time_delta):
         #Input argument validation
         logging.debug('Number of arguments passed is: %s', self.num_argv - 2)
         if self.num_argv == 3:
             if self.validate_msisdn():
-                if self.validate_operator_site_map():
-                    if self.validate_date():
-                        logging.info("IS_INPUT_DATE_VALID: %s", self.is_input_valid)
-                        if self.validate_log_mode():
-                            logging.info("IS_LOG_MODE_VALID: %s", self.is_input_valid)
+                if self.validate_operator_site_map(time_delta):
+                    logging.info("input validation successfully done")
+                        
             logging.info("IS_INPUT_VALID: %s", self.is_input_valid)
             logging.info("IS_MULTITENANT_SYSTEM: %s", self.is_multitenant_system)
         
-        logging.debug('Arguments passed are :- msisdn:%s, operator_id: %s, start_date:%s, end_date:%s and log_mode:%s', self.msisdn, self.operator_id, self.start_date, self.end_date, self.log_mode)
+        logging.debug('Arguments passed are :- msisdn:%s, operator_id: %s, time_delta_in_mins:%s', self.msisdn, self.operator_id, time_delta)
         logging.info("OPERATOR_ID: %s AND SITE_ID: %s AND TIME_ZONE: %s", self.operator_id, self.site_id, self.time_zone)
     
     def validate_msisdn(self):
@@ -60,23 +56,31 @@ class InputValidation:
         except Exception as error:
             logging.error(error)
         
-    def validate_operator_site_map(self):
+    def validate_operator_site_map(self, time_delta):
         #operator site map validation
         configManager_object = ConfigManager()
+        
+        td = int(time_delta)
+        cur_date_time = datetime.now()
+        end_date = datetime.strptime(datetime.strftime(cur_date_time, "%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
+        
         try:
             if self.is_digit():
                 is_global_instance = configManager_object.is_multitenant_system()
                 logging.info("OPERATOR_ID: %s AND IS_GLOBAL_INSTANCE: %s", self.operator_id, is_global_instance)
                 
                 if not is_global_instance and self.operator_id == '-1':
+                    self.non_converted_start_date = self.form_start_date(end_date)
+                    self.non_converted_end_date = end_date
+                    logging.info('NON_CONVERTED_START_DATE: %s - TIME_DELTA: %s = NON_CONVERTED_END_DATE: %s ', self.non_converted_start_date, td, self.non_converted_end_date)
                     self.site_id = -1
                     self.is_input_valid = True
                 
                 elif is_global_instance and self.operator_id != '-1':
                     self.is_multitenant_system = True
                     self.site_id, self.time_zone, self.file_ids = configManager_object.get_operator_site_map(self.operator_id)
-                    self.start_date = datetime.strftime(self.time_zone_conversion(self.start_date), "%Y-%m-%d")
-                    self.end_date = datetime.strftime(self.time_zone_conversion(self.end_date), "%Y-%m-%d")
+                    self.end_date = self.time_zone_conversion(end_date)
+                    self.start_date = self.form_start_date(self.end_date, td)
                     
                     logging.info("CONVERTED_START_DATE: %s AND CONVERTED_END_DATE: %s", self.start_date, self.end_date)
             
@@ -94,34 +98,13 @@ class InputValidation:
         except Exception as ex:
             logging.error(traceback.format_exc())
             
-    def validate_date(self):
+    def form_start_date(self, end_date, td):
         """
         Validate date.
         """
-        try:
-            self.start_date = datetime.strptime(str(self.start_date), "%Y-%m-%d")
-            self.end_date = datetime.strptime(str(self.end_date), "%Y-%m-%d")
-            self.is_input_valid = True
-            logging.debug('start date: %s and end date: %s entered is valid', datetime.strftime(self.start_date, "%d-%m-%Y"), datetime.strftime(self.end_date, "%d-%m-%Y"))
-            return self.is_input_valid
-        except Exception as error:
-            logging.error(traceback.format_exc())
-            self.is_input_valid = False
-            return self.is_input_valid
+        return end_date - timedelta(minutes=td)
         
-    def validate_log_mode(self):
-        for var_name, var_value in logMode.__dict__.items():
-            if not var_name.startswith("__"):
-                if var_value == self.input_mode:
-                    self.log_mode = var_value
-                    self.is_input_valid = True
-                    break
-        else:
-            self.is_input_valid = True
-            logging.error('%s passed can eigther be "txn/error", default value is %s', self.input_mode, self.log_mode)
-        return self.is_input_valid
-    
-    def time_zone_conversion(self, input_date):
+    def time_zone_conversion(self, end_date):
         hostname = socket.gethostname()
         file_path = "{}.json".format(hostname)
 
@@ -145,21 +128,13 @@ class InputValidation:
                             break
             else:
                 logging.info("operator time zone not resolved")
-            
-            try:
-                start_date = datetime.strptime(input_date, "%Y-%m-%d")
-            except ValueError as err:
-                start_date = datetime.strptime(input_date, "%Y-%m-%d %H:%M:%S")
-            
-            converted_date = start_date - (timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[3:6])) -\
+
+            converted_date = end_date - (timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[3:6])) -\
                         timedelta(hours=int(op_time_zone_offset[0:3]), minutes=int(op_time_zone_offset[3:6])))
             
             return converted_date
         except KeyError as err:
             logging.error(err)
-        
-    def is_boolean(self, arg):
-        return arg.lower() in ['true', 'false']
     
     def is_digit(self):
         # Check if the operator id argument is an integer
