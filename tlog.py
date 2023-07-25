@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 import signal
 import subprocess
+from configManager import ConfigManager
 from log_files import LogFileFinder
 from collections import defaultdict
 
@@ -21,8 +22,10 @@ class Tlog:
         self.prism_data_dict_list = prism_data_dict_list
         self.prism_data_dict = defaultdict(list)
         self.config = config
+        self.global_site_id = -1
         self.thread_list = []
         self.is_tlog_processed = False
+        self.access_data = []
     
     def get_tlog(self, pname):
         """
@@ -37,7 +40,7 @@ class Tlog:
                 access_files = logfile_object.get_tomcat_access_files(pname)
             
             if access_files:
-                self.msisdn_based_accesslog_fetch(access_files)
+                self.accesslog_fetch(access_files)
                 
         tlog_files = logfile_object.get_tlog_files(pname)
         
@@ -49,14 +52,24 @@ class Tlog:
         
         return self.is_tlog_processed
     
-    def msisdn_based_accesslog_fetch(self, files):
-        #keeping prism out of ctid flow
-        access_data = []
+    def accesslog_fetch(self, files):
         msisdn = self.validation_object.fmsisdn
-
+        operator_urls = self.get_operator_url()
+        
         for file in files:
-            try:
-                records = subprocess.check_output("cat {0} | grep -a {1}".format(file, msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+            self.msisdn_opurl_based_extract_access_data(file, msisdn)
+        
+        for url in operator_urls:
+            for file in files:
+                self.msisdn_opurl_based_extract_access_data(file, url)
+        
+        if self.access_data:
+            self.prism_data_dict["TOMCAT_ACCESS_LOG"].append(self.access_data)
+            self.prism_data_dict_list["PRISM_DATA"].append(self.prism_data_dict)
+    
+    def msisdn_opurl_based_extract_access_data(self, file, fetch_value):
+        try:
+                records = subprocess.check_output("cat {0} | grep -a {1}".format(file, fetch_value), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                 if records:
                     logging.info("RECORDS: %s", records)
                     data_list = records.splitlines()
@@ -64,15 +77,11 @@ class Tlog:
                         for data in data_list:
                             access_timestamp = datetime.strptime(data.split(']')[0].split("[")[1].split(" ")[0], "%d/%b/%Y:%H:%M:%S")
                             if self.is_between_timestamp_logs(access_timestamp):
-                                access_data.append(data)
+                                self.access_data.append(data)
                 else:
                     logging.info("No access record found in %s", file)
-            except Exception as ex:
-                logging.info(ex)
-        
-        if access_data:
-            self.prism_data_dict["TOMCAT_ACCESS_LOG"].append(access_data)
-            self.prism_data_dict_list["PRISM_DATA"].append(self.prism_data_dict)
+        except Exception as ex:
+            logging.info(ex)
     
     def tlog_fetch(self, pname, files):
         tlog_data = []
@@ -163,5 +172,22 @@ class Tlog:
                         logging.info("No perf log data found in %s", file)
                 except Exception as ex:
                     logging.info(ex)
+    
+    def get_operator_url(self):
+        configManager_object = ConfigManager(self.validation_object)
+        operator_url = []
+        try:
+
+            if self.validation_object.is_multitenant_system:
+                operator_url.extend([url for url in configManager_object.get_operator_url_map(self.validation_object.operator_id) if str(url).startswith("/subscription/PrismServer/")])
+            else:
+                #actionBased
+                operator_url.extend([url for url in configManager_object.get_operator_url_from_pcp("GENERIC_SERVLET", self.global_site_id)])
+                #uriBased
+                operator_url.extend([url for url in self.get_uri_based_url_map(configManager_object)])
+            
+            return operator_url
+        except Exception as ex:
+            logging.debug(ex)
     
             

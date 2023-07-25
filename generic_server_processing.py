@@ -51,67 +51,30 @@ class GENERIC_SERVER_PROCESSOR:
         self.generic_server_files = []
         
     
-    def process_generic_server_tlog(self, process_tlog):
+    def process_generic_server_tlog(self):
         logging.info("GENERIC SERVER LOG PROCESSING STARTED")
         configManager_object = ConfigManager(self.validation_object)
         logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
-        tlogAccessLogParser_object = TlogAccessLogParser(self.initializedPath_object, self.outputDirectory_object,\
-                                        self.validation_object, self.log_mode, self.oarm_uid,\
-                                        None, None, None, None)
         
         try:
-            for pthread, ptlog in process_tlog.items():
-                self.is_processed_by_generic_server = False
-                self.site_id = ptlog["SITE_ID"]
-                self.msisdn = ptlog["MSISDN"]
-                self.payment_status = ptlog["PAYMENT_STATUS"]
-                self.task_type = ptlog["TASK_TYPE"]
-                self.timestamp = ptlog["TIMESTAMP"]
-                self.flow_tasks = ptlog["FLOW_TASKS"]
-                self.sbn_event_id = ptlog["SBN_OR_EVT_ID"]
+
+            if self.validation_object.is_multitenant_system:
+                site_id = self.site_id
+                self.operator_url.extend([url for url in configManager_object.get_operator_url_map(self.validation_object.operator_id) if str(url).startswith("/subscription/PrismServer/")])
+            else:
+                site_id = self.global_site_id
+                #actionBased
+                self.operator_url.extend([url for url in configManager_object.get_operator_url_from_pcp("GENERIC_SERVLET", self.global_site_id)])
+                #uriBased
+                self.operator_url.extend([url for url in self.get_uri_based_url_map(configManager_object)])
                 
-                for task in self.flow_tasks:
-                    if "-#PUSH" in task.split(",") or "-#PROXY SRV-PRECHARGED" in task.split(","):
-                        self.is_processed_by_generic_server = True
-                        break
-                
-                if self.is_processed_by_generic_server:
-                    if self.validation_object.is_multitenant_system:
-                        site_id = self.site_id
-                        self.operator_url.extend([url for url in configManager_object.get_operator_url_map(self.validation_object.operator_id) if str(url).startswith("/subscription/PrismServer/")])
-                    else:
-                        site_id = self.global_site_id
-                        #actionBased
-                        self.operator_url.extend([url for url in configManager_object.get_operator_url_from_pcp("GENERIC_SERVLET", self.global_site_id)])
-                        #uriBased
-                        self.operator_url.extend([url for url in self.get_uri_based_url_map(configManager_object)])
-                        
-                    logging.info("OPERATOR_URL: %s", self.operator_url)
-                    if self.operator_url:
-                        self.fetch_subscriptions_events_data_once(pthread)
-                    
-                        self.gs_tlog_files = logfile_object.get_tlog_files(self.pname)
-                        logging.info("GS_REQUEST_BEAN_RESPONSE_TLOG_FILES: %s", self.gs_tlog_files)
-                        
-                        if self.gs_tlog_files:
-                            self.condition_based_gs_tlog_fetch(site_id)
-                            
-                        if self.gs_tlog_record:
-                            data_list = []
-                            for data in self.gs_tlog_record:
-                                for record in str(data).splitlines():
-                                    if record not in data_list:
-                                        self.gs_tlog_thread.append(record.split("|")[1])
-                                        data_list.append(record)
-                            logging.info("GENERIC_REQUEST_BEAN_RESPONSE_RECORD: %s", data_list)
-                            logging.info("GENERIC_REQUEST_BEAN_RESPONSE_THREAD: %s", self.gs_tlog_thread)
-                            
-                if self.gs_tlog_thread:
-                    self.generic_server_access_header_data_map(logfile_object, tlogAccessLogParser_object)
-                    self.generic_server_request_response_header_map(configManager_object, tlogAccessLogParser_object)
-                    self.get_generic_server_files(configManager_object)
-                    logging.info("All the dated REQUEST_BEAN_RESPONSE have been already parsed so breaking the loop")
-                    break              
+            logging.info("OPERATOR_URL: %s", self.operator_url)
+            if self.operator_url:
+                self.generic_server_access_header_data_map(logfile_object, tlogAccessLogParser_object)
+                self.generic_server_request_response_header_map(configManager_object, tlogAccessLogParser_object)
+                self.get_generic_server_files(configManager_object)
+                logging.info("All the dated REQUEST_BEAN_RESPONSE have been already parsed so breaking the loop")
+                              
         except KeyError as err:
             logging.info(err)
     
