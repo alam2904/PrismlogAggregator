@@ -10,10 +10,11 @@ class TlogAccessLogParser:
         Tlog parser class
         for parsing tlog for any issue
     """
-    def __init__(self, initializedPath_object, outputDirectory_object, validation_object, log_mode, oarm_uid,\
+    def __init__(self, config, initializedPath_object, outputDirectory_object, validation_object, log_mode, oarm_uid,\
                     prism_daemon_tlog_thread_dict, prism_tomcat_tlog_thread_dict, issue_task_types,\
                     sbn_thread_dict):
         
+        self.config = config
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
         self.validation_object = validation_object
@@ -102,7 +103,7 @@ class TlogAccessLogParser:
                     logging.info('IS_SUB_REPROCESS_REQUIRED: %s', self.validation_object.is_sub_reprocess_required)
                     logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
                     
-                    subscription_object = SubscriptionEventController(pname, self.validation_object, self.sbn_thread_dict, self.process_subs_data)
+                    subscription_object = SubscriptionEventController(self.config, pname, self.validation_object, self.sbn_thread_dict, self.process_subs_data)
                     self.subscriptions_data = subscription_object.get_subscription_event("SUBSCRIPTIONS", self.validation_object.is_sub_reprocess_required)
                     self.validation_object.is_sub_reprocess_required = False
                 

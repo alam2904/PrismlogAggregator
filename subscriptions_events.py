@@ -12,11 +12,12 @@ class SubscriptionEventController:
         This is the class responsible for SELECT and UPDATE db query processing
         based on various subscription condition 
     """
-    def __init__(self, pname, validation_object, sbn_thread_dict, process_subs_data):
+    def __init__(self, config, pname, validation_object, sbn_thread_dict, process_subs_data):
         self.sbn_thread_dict = sbn_thread_dict
         self.validation_object = validation_object
         self.process_subs_data = process_subs_data
         self.transaction_table_data = []
+        self.config = config
         self.pname = pname
         
     def get_subscription_event(self, transaction_table, is_reprocessing_required, reprocess_sbnId=None):
@@ -112,7 +113,7 @@ class SubscriptionEventController:
         query_type = "UPDATE"
         Query = ""
         params = sbnId
-        updateCriteria_object = UpdateQueryCriteria(self.validation_object, subscriptionRecord)
+        updateCriteria_object = UpdateQueryCriteria(self.config, self.validation_object, subscriptionRecord)
         logging.info("SUBSCRIPTIONS_SUB_STATUS: %s", subscriptionRecord["sub_status"])
         try:
             if (subscriptionRecord["sub_status"] not in ('E', 'F') and subscriptionRecord["task_type"] != 'N'

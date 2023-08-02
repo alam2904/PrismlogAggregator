@@ -1,24 +1,28 @@
 from collections import OrderedDict
 import json
 import logging
-from database_connection import DatabaseConnection
-from query_executor import QueryExecutor
+import oarm_modules
+import socket
+import os
+# from query_executor import QueryExecutor
+# from database_connection import DatabaseConnection
 
 class ConfigManager:
     """
         This is the class responsible for db config fetch
     """
     
-    def __init__(self, validation_object=None):
+    def __init__(self, config, validation_object=None):
         # Create a DatabaseConnection instance
-        self.db_connection = DatabaseConnection(
-            host= "172.19.113.108",
-            user="root",
-            passwd="Onm0bile",
-            db="safaricom"
-        )
+        # self.db_connection = DatabaseConnection(
+        #     host= "172.19.113.108",
+        #     user="root",
+        #     passwd="Onm0bile",
+        #     db="safaricom"
+        # )
         # Connect to the database
-        self.db_connection.create_connection()
+        # self.db_connection.create_connection()
+        self.config = config
         self.validation_object = validation_object
         self.handler_info = []
         self.handler_map = []
@@ -31,13 +35,17 @@ class ConfigManager:
         #initializing prism_config_params subtype boolean parameter
         try:
             if self.validation_object.is_multitenant_system:
-                Query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE SITE_ID = %s AND PARAM_NAME LIKE '%%SUBTYPE%%'"
-                params = (self.validation_object.site_id,)
+                query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE SITE_ID = %s AND PARAM_NAME LIKE '%%SUBTYPE%%'" % (self.validation_object.site_id)
+                # params = (self.validation_object.site_id,)
             else:
-                Query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE PARAM_NAME LIKE '%SUBTYPE%'"
-                params = (-1,)
-            logging.info("PARAMS: %s", params)
-            configMap = self.get_db_config_map(Query, params, self.db_connection)
+                query = "SELECT * FROM PRISM_CONFIG_PARAMS WHERE SITE_ID = %s AND PARAM_NAME LIKE '%%SUBTYPE%%'" % ("-1")
+                # params = (-1,)
+            # logging.info("PARAMS: %s", params)
+            # configMap = self.get_db_config_map(Query, params, self.db_connection)
+            db_name, db_host = self.get_db_parameters()
+            
+            if db_name and db_host:
+                configMap = oarm_modules.oarm_database_select(db_name, db_host, query)
             
             if configMap:
                 self.subtype_parameter.append(json.loads(configMap, object_pairs_hook=OrderedDict))
@@ -310,7 +318,40 @@ class ConfigManager:
         #     self.db_connection.close()
         
         return configMap
-    
+
+    def get_db_parameters(self):
+        db_name = None
+        db_host = None
+        hostname = socket.gethostname()
+        
+        try:
+            db_name = self.config[hostname]["PRISM"]["PRISM_DEAMON"]["PRISM_DEAMON"]["DB_NAME"]
+        except KeyError as err:
+            logging.info(err)
+            try:
+                web_services = [webService for webService in self.config[self.hostname]["PRISM"]["PRISM_TOMCAT"]]
+                for web_service in web_services:
+                    db_name = self.config[hostname]["PRISM"]["PRISM_TOMCAT"][web_service]["DB_NAME"]
+                    if db_name:
+                        break
+            except KeyError as err:
+                logging.info(err)
+        
+        try:  
+            self.config[hostname]["PRISM"]["PRISM_DEAMON"]["PRISM_DEAMON"]["DB_IP"]
+        except KeyError as err:
+            logging.info(err)
+            try:
+                web_services = [webService for webService in self.config[self.hostname]["PRISM"]["PRISM_TOMCAT"]]
+                for web_service in web_services:
+                    db_host = self.config[hostname]["PRISM"]["PRISM_TOMCAT"][web_service]["DB_IP"]
+                    if db_host:
+                        break
+            except KeyError as err:
+                logging.info(err)
+        
+        return db_name, db_host
+                    
     def is_boolean(self, arg):
         return arg.lower() in ['true', 'false']
     

@@ -53,9 +53,9 @@ class GENERIC_SERVER_PROCESSOR:
     
     def process_generic_server_tlog(self, process_tlog):
         logging.info("GENERIC SERVER LOG PROCESSING STARTED")
-        configManager_object = ConfigManager(self.validation_object)
+        configManager_object = ConfigManager(self.config, self.validation_object)
         logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
-        tlogAccessLogParser_object = TlogAccessLogParser(self.initializedPath_object, self.outputDirectory_object,\
+        tlogAccessLogParser_object = TlogAccessLogParser(self.config, self.initializedPath_object, self.outputDirectory_object,\
                                         self.validation_object, self.log_mode, self.oarm_uid,\
                                         None, None, None, None)
         
@@ -121,7 +121,7 @@ class GENERIC_SERVER_PROCESSOR:
             pass
         else:
             thread_dict = {self.sbn_event_id: pthread}
-            subscription_event_object = SubscriptionEventController(None, self.validation_object, thread_dict, True)
+            subscription_event_object = SubscriptionEventController(self.config, None, self.validation_object, thread_dict, True)
             transaction_table_data_dict = subscription_event_object.get_subscription_event("SUBSCRIPTIONS", False)
             if not transaction_table_data_dict:
                 transaction_table_data_dict = subscription_event_object.get_subscription_event("EVENTS", False)

@@ -13,7 +13,7 @@ class InputValidation:
     input data validation class
     """
     
-    def __init__(self, num_argv, msisdn, operator_id, start_date, end_date, input_mode, reprocess):
+    def __init__(self, num_argv, msisdn, operator_id, start_date, end_date, input_mode, reprocess, config):
         self.num_argv = num_argv
         self.msisdn = msisdn
         self.operator_id = operator_id
@@ -25,6 +25,7 @@ class InputValidation:
         self.input_mode = input_mode 
         self.log_mode = "txn"
         self.is_sub_reprocess_required = reprocess
+        self.config = config
         self.is_input_valid = False
         self.site_id = ""
         self.time_zone = ""
@@ -65,7 +66,7 @@ class InputValidation:
         
     def validate_operator_site_map(self):
         #operator site map validation
-        configManager_object = ConfigManager()
+        configManager_object = ConfigManager(self.config)
         try:
             if self.is_digit():
                 is_global_instance = configManager_object.is_multitenant_system()

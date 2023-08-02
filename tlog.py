@@ -113,7 +113,7 @@ class Tlog:
         
         logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
         
-        tlogAccessLogParser_object = TlogAccessLogParser(self.initializedPath_object, self.outputDirectory_object,\
+        tlogAccessLogParser_object = TlogAccessLogParser(self.config, self.initializedPath_object, self.outputDirectory_object,\
                                         self.validation_object, self.log_mode, self.oarm_uid,\
                                         self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict,\
                                         self.issue_task_types, self.sbn_thread_dict)
@@ -663,7 +663,7 @@ class Tlog:
         logging.info("NON_ISSUE_SBN_THREAD_DICT: %s", self.non_issue_sbn_thread_dict)
         if self.non_issue_sbn_thread_dict:
             subscription_event_data = []
-            subscription_event_object = SubscriptionEventController(None, self.validation_object, self.non_issue_sbn_thread_dict, True)
+            subscription_event_object = SubscriptionEventController(self.config, None, self.validation_object, self.non_issue_sbn_thread_dict, True)
             try:
                 subscriptions_data_dict = subscription_event_object.get_subscription_event("SUBSCRIPTIONS", False)
                 if subscriptions_data_dict:
@@ -715,7 +715,7 @@ class Tlog:
             handler_map_details = {}
             handler_details = []
             
-            configManager_object = ConfigManager(self.validation_object)
+            configManager_object = ConfigManager(self.config, self.validation_object)
             configManager_object.get_handler_info(self.issue_handler_task_type_map)
             if configManager_object.handler_info:
                 logging.info('handler info details: %s', configManager_object.handler_info)
@@ -736,7 +736,7 @@ class Tlog:
         return None
     
     def processing_cdr_file(self, subscription):
-        configManager_object = ConfigManager(self.validation_object)
+        configManager_object = ConfigManager(self.config, self.validation_object)
         file_info = configManager_object.get_file_info()
         isCdrInOpTimezone = False
         cdrs = []

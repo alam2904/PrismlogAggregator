@@ -49,8 +49,15 @@ class Main:
         
         try:
             msisdn, operator_id, start_date, end_date, log_mode, is_sub_reprocessing = sys.argv[1].split("|")
+            file_path = "{}.json".format(hostname)
+
+            # read the file contents
+            with open(file_path, 'r') as f:
+                data = f.read()
             
-            validation_object = InputValidation(num_argv, msisdn, operator_id, start_date, end_date, log_mode, is_sub_reprocessing)
+            config = json.loads(data, object_pairs_hook=OrderedDict)
+            
+            validation_object = InputValidation(num_argv, msisdn, operator_id, start_date, end_date, log_mode, is_sub_reprocessing, config)
             validation_object.validate_argument()        
             
             if validation_object.is_input_valid:
@@ -66,13 +73,6 @@ class Main:
                     logging.info('out/{}_paymentTransactionData.json'.format(hostname))
                     os.remove('out/{}_paymentTransactionData.json'.format(hostname))
                 
-                file_path = "{}.json".format(hostname)
-
-                # read the file contents
-                with open(file_path, 'r') as f:
-                    data = f.read()
-                
-                config = json.loads(data, object_pairs_hook=OrderedDict)
                 
                 if config:
                     logging.info('\n')
