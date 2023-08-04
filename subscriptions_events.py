@@ -1,9 +1,10 @@
 from collections import OrderedDict
 import logging
 import json
-from database_connection import DatabaseConnection
-from query_executor import QueryExecutor
+# from database_connection import DatabaseConnection
+# from query_executor import QueryExecutor
 from datetime import datetime
+import socket
 from update_query_criteria import UpdateQueryCriteria
 
 
@@ -19,18 +20,19 @@ class SubscriptionEventController:
         self.transaction_table_data = []
         self.config = config
         self.pname = pname
+        self.db_name, self.db_host = self.get_db_parameters()
         
     def get_subscription_event(self, transaction_table, is_reprocessing_required, reprocess_sbnId=None):
         # Create a DatabaseConnection instance
-        db_connection = DatabaseConnection(
-            host= "172.19.113.108",
-            user="root",
-            passwd="Onm0bile",
-            db="safaricom"
-        )
+        # db_connection = DatabaseConnection(
+        #     host= "172.19.113.108",
+        #     user="root",
+        #     passwd="Onm0bile",
+        #     db="safaricom"
+        # )
 
-        # Connect to the database
-        db_connection.create_connection()
+        # # Connect to the database
+        # db_connection.create_connection()
         
         try:
             if self.process_subs_data:

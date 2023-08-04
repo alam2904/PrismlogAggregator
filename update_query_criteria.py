@@ -21,38 +21,39 @@ class UpdateQueryCriteria:
         self.generic_flow_handler_files = []
         self.next_task_type = ""
     
-    def get_nested_dictionaries(self, nested_list):
-        dictionaries = []
+    # def get_nested_dictionaries(self, nested_list):
+    #     dictionaries = []
 
-        for item in nested_list:
-            if isinstance(item, dict):
-                dictionaries.append(item)
-            elif isinstance(item, list):
-                dictionaries.extend(self.get_nested_dictionaries(item))
+    #     for item in nested_list:
+    #         if isinstance(item, dict):
+    #             dictionaries.append(item)
+    #         elif isinstance(item, list):
+    #             dictionaries.extend(self.get_nested_dictionaries(item))
 
-        return dictionaries
+    #     return dictionaries
         
     def update_query_formatter(self):
         configManager_object = ConfigManager(self.config, self.validation_object)
-        configManager_object.initialize_subtype_parameter()
-        logging.info("SUBTYPE_BOOLEAN_PARAM: %s", configManager_object.subtype_parameter)
+        subtype_parameter = configManager_object.initialize_subtype_parameter()
+        logging.info("SUBTYPE_BOOLEAN_PARAM: %s", subtype_parameter)
         
         try:
-            nested_dictionaries = self.get_nested_dictionaries(configManager_object.subtype_parameter)
-            if nested_dictionaries:
-                for dictionary in nested_dictionaries:
-                    if dictionary["PARAM_NAME"] == "FORCED_SUBTYPE_CHECK":
-                        if self.is_boolean(dictionary["PARAM_VALUE"]):
-                            self.forced_subtype_check = dictionary["PARAM_VALUE"].lower() == 'true'
-                    elif dictionary["PARAM_NAME"] == "RENEWAL_SUBTYPE_CHECK":
-                        if self.is_boolean(dictionary["PARAM_VALUE"]):
-                            self.renewal_subtype_check = dictionary["PARAM_VALUE"].lower() == 'true'
-                    elif dictionary["PARAM_NAME"] == "RESUME_SUBTYPE_FLOW":
-                        if self.is_boolean(dictionary["PARAM_VALUE"]):
-                            self.resume_subtype_flow = dictionary["PARAM_VALUE"].lower() == 'true'
-                    elif dictionary["PARAM_NAME"] == "DEACT_SUBTYPE_CHECK":
-                        if self.is_boolean(dictionary["PARAM_VALUE"]):
-                            self.deact_subtype_check = dictionary["PARAM_VALUE"].lower() == 'true'
+            # nested_dictionaries = self.get_nested_dictionaries(configManager_object.subtype_parameter)
+            # if nested_dictionaries:
+            if subtype_parameter:
+                for subType_enable_param_dict in subtype_parameter:
+                    if subType_enable_param_dict["PARAM_NAME"] == "FORCED_SUBTYPE_CHECK":
+                        if self.is_boolean(subType_enable_param_dict["PARAM_VALUE"]):
+                            self.forced_subtype_check = subType_enable_param_dict["PARAM_VALUE"].lower() == 'true'
+                    elif subType_enable_param_dict["PARAM_NAME"] == "RENEWAL_SUBTYPE_CHECK":
+                        if self.is_boolean(subType_enable_param_dict["PARAM_VALUE"]):
+                            self.renewal_subtype_check = subType_enable_param_dict["PARAM_VALUE"].lower() == 'true'
+                    elif subType_enable_param_dict["PARAM_NAME"] == "RESUME_SUBTYPE_FLOW":
+                        if self.is_boolean(subType_enable_param_dict["PARAM_VALUE"]):
+                            self.resume_subtype_flow = subType_enable_param_dict["PARAM_VALUE"].lower() == 'true'
+                    elif subType_enable_param_dict["PARAM_NAME"] == "DEACT_SUBTYPE_CHECK":
+                        if self.is_boolean(subType_enable_param_dict["PARAM_VALUE"]):
+                            self.deact_subtype_check = subType_enable_param_dict["PARAM_VALUE"].lower() == 'true'
                         
             logging.info("FORCED_SUBTYPE_CHECK: %s", self.forced_subtype_check)
             logging.info("RENEWAL_SUBTYPE_CHECK: %s", self.renewal_subtype_check)
