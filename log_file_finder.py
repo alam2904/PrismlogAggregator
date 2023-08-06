@@ -1,10 +1,8 @@
 from datetime import datetime, timedelta
-import glob
 import logging
 import os
 import re
 import socket
-from sys import prefix
 
 def extract_hour(filename):
     return int(filename.split('_')[-1].split('.')[0])

@@ -7,7 +7,7 @@ import subprocess
 from configManager import ConfigManager
 from outfile_writer import FileWriter
 from subscriptions_events import SubscriptionEventController
-from log_files import LogFileFinder
+from log_file_finder import LogFileFinder
 from tlog_accesslog_parser import TlogAccessLogParser
 
 class GENERIC_SERVER_PROCESSOR:

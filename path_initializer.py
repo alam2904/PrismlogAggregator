@@ -1,9 +1,6 @@
 from datetime import datetime
 import logging
-import re
 import xml.etree.ElementTree as ET
-import socket
-import os
 
 class LogPathFinder():
     """

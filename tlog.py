@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta
 import logging
-from re import sub
 import signal
 import subprocess
 import time
-from log_files import LogFileFinder
+from log_file_finder import LogFileFinder
 from collections import defaultdict
 from tlog_accesslog_parser import TlogAccessLogParser
 from collections import OrderedDict
