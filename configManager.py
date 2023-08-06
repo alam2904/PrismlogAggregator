@@ -17,7 +17,7 @@ class ConfigManager:
         self.subtype_parameter = []
         self.db_name, self.db_host = get_db_parameters(config)
     
-    def initialize_subtype_parameter(self):
+    def get_enabled_subtype_parameter(self):
         """
             initializes prism_config_params subtype boolean parameter
         """
