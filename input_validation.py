@@ -145,7 +145,7 @@ class InputValidation:
         op_time_zone_offset = ""
     
         try:
-            tz_offset = config[hostname]["server_facts"]["tz_offset"]
+            tz_offset = config[hostname]["server"]["gather"]["facts"]["tz_offset"]
             
             op_time_zone = self.time_zone.replace("/", "_")
             
