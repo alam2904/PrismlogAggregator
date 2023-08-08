@@ -21,7 +21,7 @@ def get_db_parameters(config):
             logging.info(err)
 
     try:  
-        config[hostname]["PRISM"]["PRISM_DEAMON"]["PRISM_DEAMON"]["DB_IP"]
+        db_host = config[hostname]["PRISM"]["PRISM_DEAMON"]["PRISM_DEAMON"]["DB_IP"]
     except KeyError as err:
         logging.info(err)
         try:
@@ -29,15 +29,16 @@ def get_db_parameters(config):
             for web_service in web_services:
                 db_host = config[hostname]["PRISM"]["PRISM_TOMCAT"][web_service]["DB_IP"]
                 if db_host:
-                    
                     break
         except KeyError as err:
             logging.info(err)
 
+    logging.info("DB_NAME: %s and DB_HOST: %s", db_name, db_host)
     return db_name, db_host
 
 def query_executor(db_name, db_host, query, query_type):
     data_map = None
+    # logging.info("QUERY: %s AND QUERY_TYPE: %s", query, query_type)
     
     if (db_name and str(db_name).strip()) and (db_host and str(db_host).strip()):
         
@@ -56,4 +57,5 @@ def query_executor(db_name, db_host, query, query_type):
     else:
         logging.debug("Eigther DB_NAME or DB_HOST is None or Empty in %s.json file", socket.gethostname())
     
+    logging.info("DATA_MAP: %s", data_map)
     return data_map

@@ -31,8 +31,9 @@ class ConfigManager:
             else:
                 query = """
                             SELECT * FROM PRISM_CONFIG_PARAMS
-                            WHERE SITE_ID = %s AND PARAM_NAME LIKE '%%SUBTYPE%%'
-                        """ % ("-1")
+                            WHERE SITE_ID = -1 AND PARAM_NAME LIKE '%%SUBTYPE%%'
+                        """
+                        # """ % ("-1")
 
             configMap = query_executor(self.db_name, self.db_host, query, "SELECT")
             
@@ -123,10 +124,12 @@ class ConfigManager:
         try:
             query = """
                         SELECT PARAM_VALUE FROM PRISM_CONFIG_PARAMS
-                        WHERE MODULE_NAME = %s AND SITE_ID = %s AND PARAM_NAME = %s
-                    """ % ('SYSTEM', -1, 'IS_SINGLE_INSTANCE')
+                        WHERE MODULE_NAME = 'SYSTEM' AND SITE_ID = -1 AND PARAM_NAME = 'IS_SINGLE_INSTANCE'
+                    """
+                    # """ % ('SYSTEM', -1, 'IS_SINGLE_INSTANCE')
 
             configMap = query_executor(self.db_name, self.db_host, query, "SELECT")
+            logging.info("CONFIG_MAP: %s", configMap)
             
             if configMap:
                 param_value = json.loads(configMap, object_pairs_hook=OrderedDict)
@@ -341,8 +344,8 @@ class ConfigManager:
                 query = """
                             SELECT FILE_ID, FILE_PREFIX, FILE_DATETIME_FMT,
                             FILE_SUFFIX, FILE_LOCAL_DIR FROM FILE_INFO
-                            WHERE FILE_ID in %s AND FILE_TYPE = %s
-                        """ % (tuple(file_ids), 'PUSH')
+                            WHERE FILE_ID in %s AND FILE_TYPE = 'PUSH'
+                        """ % (tuple(file_ids))
 
                 configMap = query_executor(self.db_name, self.db_host, query, "SELECT")
                 
