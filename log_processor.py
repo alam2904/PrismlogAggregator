@@ -123,8 +123,8 @@ class PROCESSOR:
                 
     def remove_old_process_folder(self, pname, folder):
             #removing process folder if already exists
-            logging.info('out directory already exists. Hence removing the old files of %s if exists.', self.hostname)
             if os.path.exists(folder):
+                logging.info('out directory already exists. Hence removing the old files of %s if exists.', self.hostname)
                 shutil.rmtree(folder)
             else:
                 logging.info('%s out folder does not exists:', pname)

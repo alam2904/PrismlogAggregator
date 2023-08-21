@@ -47,7 +47,7 @@ class Tlog:
         self.ctid_msisdn_map_dict = {}
         # self.ctid_map_dict = {}
         
-        self.tlog_record = []
+        self.record = []
         self.access_record = []
         self.is_backup_file = False
         
@@ -159,10 +159,10 @@ class Tlog:
             if self.access_files:
                 self.msisdn_based_accesslog_fetch(tlogAccessLogParser_object, pname, self.access_files)
         
-        logging.info('tlog record: %s', self.tlog_record)
-        if self.tlog_record:
+        logging.info('RECORD: %s', self.record)
+        if self.record:
             data_list = []
-            for data in self.tlog_record:
+            for data in self.record:
                 logging.info('data in tlog: %s', data)
                 for record in str(data).splitlines():
                     if record not in data_list:
@@ -198,7 +198,7 @@ class Tlog:
                 for file in files:
                     try:
                         data = subprocess.check_output("cat {0} | grep -a {1}".format(file, msisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                        self.tlog_record.append(data)
+                        self.record.append(data)
                     except Exception as ex:
                         logging.info(ex)
         except Exception as ex:
@@ -224,7 +224,7 @@ class Tlog:
                 for file in files:
                     try:
                         data = subprocess.check_output("cat {0} | grep -a {1}".format(file, thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                        self.tlog_record.append(data)
+                        self.record.append(data)
                     except Exception as ex:
                         logging.info(ex)
             except Exception as ex:
@@ -676,6 +676,7 @@ class Tlog:
             
             try:
                 events_data_dict = subscription_event_object.get_subscription_event("EVENTS", False)
+                logging.info("Events data dict is: %s", events_data_dict)
                 if events_data_dict:
                     subscription_event_data.extend(events_data_dict)
                     prism_events_dict = {"PRISM_EVENTS_ENTRY": events_data_dict}
@@ -838,7 +839,7 @@ class Tlog:
         for file in files:
             try:
                 data = subprocess.check_output("cat {0} | grep -a {1}".format(file, self.validation_object.fmsisdn), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-                self.tlog_record.append(data)
+                self.record.append(data)
             except Exception as ex:
                 logging.info(ex)
                 
@@ -857,7 +858,7 @@ class Tlog:
         self.tlog_files = []
         self.backup_tlog_files = []
         self.access_files = []
-        self.tlog_record = []
+        self.record = []
         self.access_record = []
         self.is_backup_file = False
         self.tlog_files_with_ctid_msisdn = []

@@ -107,240 +107,243 @@ class LogFileFinder:
             or pname == "PRISM_DAEMON_PERF_LOG" or pname == "GENERIC_SERVER":
             
             logging.info("TLOG_DIRECTORY: %s", self.tlog_dir)
-            path = os.path.join(self.tlog_dir)
-            fsuffix = ".log"
-            
-            if last_modified_time:
-                self.input_date.append(last_modified_time)    
-            else:
-                #method call to date range list
-                if not pname == "GENERIC_SERVER":
-                    self.input_date = self.date_range_list(self.s_date, self.e_date)
-                else:
-                    s_date = datetime.strptime(self.validation_object.non_converted_start_date, "%Y-%m-%d")
-                    e_date = datetime.strptime(self.validation_object.non_converted_end_date, "%Y-%m-%d")
-                    self.input_date = self.date_range_list(s_date, e_date)
-            
-            for date in self.input_date:
-                input_date_formatted = ""
+            if os.path.exists(self.tlog_dir):
+                path = os.path.join(self.tlog_dir)
+                fsuffix = ".log"
                 
                 if last_modified_time:
-                    input_date_formatted = datetime.strftime(datetime.strptime(last_modified_time, "%Y-%m-%d %H:%M:%S"), "%Y%m%d")
+                    self.input_date.append(last_modified_time)    
                 else:
-                    input_date_formatted = datetime.strftime(date, "%Y%m%d")
+                    #method call to date range list
+                    if not pname == "GENERIC_SERVER":
+                        self.input_date = self.date_range_list(self.s_date, self.e_date)
+                    else:
+                        s_date = datetime.strptime(self.validation_object.non_converted_start_date, "%Y-%m-%d")
+                        e_date = datetime.strptime(self.validation_object.non_converted_end_date, "%Y-%m-%d")
+                        self.input_date = self.date_range_list(s_date, e_date)
                 
-                logging.info("input date formated: %s", input_date_formatted)
-                dated_tlog_files = ""
+                for date in self.input_date:
+                    input_date_formatted = ""
+                    
+                    if last_modified_time:
+                        input_date_formatted = datetime.strftime(datetime.strptime(last_modified_time, "%Y-%m-%d %H:%M:%S"), "%Y%m%d")
+                    else:
+                        input_date_formatted = datetime.strftime(date, "%Y%m%d")
+                    
+                    logging.info("input date formated: %s", input_date_formatted)
+                    dated_tlog_files = ""
+                    
+                    try:
+                        if pname == "PRISM_TOMCAT":
+                            if self.validation_object.is_multitenant_system:
+                                fprefix = "TLOG_BILLING_REALTIME_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                 
-                try:
-                    if pname == "PRISM_TOMCAT":
-                        if self.validation_object.is_multitenant_system:
-                            fprefix = "TLOG_BILLING_REALTIME_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
-                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-            
-                        else:
-                            fprefix = "TLOG_BILLING_REALTIME_{}_".format(input_date_formatted)
-                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                            
-                    elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
-                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                            
-                        else:
-                            fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)
-                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                            
-                    elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            fprefix = "TLOG_REQUEST_RESPONSE_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
-                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                            
-                        else:
-                            fprefix = "TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)
+                            else:
+                                fprefix = "TLOG_BILLING_REALTIME_{}_".format(input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                                
+                        elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
+                            if self.validation_object.is_multitenant_system:
+                                fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                                
+                            else:
+                                fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                                
+                        elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
+                            if self.validation_object.is_multitenant_system:
+                                fprefix = "TLOG_REQUEST_RESPONSE_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                                
+                            else:
+                                fprefix = "TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                                
+                        elif pname == "PRISM_TOMCAT_REQ_RESP":
+                            fprefix = "TLOG_REQUEST_LOG_{}_".format(input_date_formatted)
                             dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                             
-                    elif pname == "PRISM_TOMCAT_REQ_RESP":
-                        fprefix = "TLOG_REQUEST_LOG_{}_".format(input_date_formatted)
-                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                        
-                    elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
-                        fprefix = "TLOG_CBCK-V2-REQ-RESPONSE_{}_" .format(input_date_formatted)
-                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                        
-                    elif pname == "PRISM_TOMCAT_PERF_LOG":
-                        fprefix = "TLOG_PERF_{}_".format(input_date_formatted)
-                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                        
-                    elif pname == "PRISM_DEAMON":
-                        if self.validation_object.is_multitenant_system:
-                            fprefix = "TLOG_BILLING_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
-                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-    
-                        else:
-                            fprefix = "TLOG_BILLING_{}_".format(input_date_formatted)
+                        elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
+                            fprefix = "TLOG_CBCK-V2-REQ-RESPONSE_{}_" .format(input_date_formatted)
                             dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                             
-                    elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                        elif pname == "PRISM_TOMCAT_PERF_LOG":
+                            fprefix = "TLOG_PERF_{}_".format(input_date_formatted)
                             dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
                             
-                        else:
-                            fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)
-                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                            
-                    elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            fprefix = "TLOG_REQUEST_RESPONSE_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
-                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                            
-                        else:
-                            fprefix = "TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)
-                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                            
-                    elif pname == "PRISM_DAEMON_REQ_RESP":
-                        fprefix = "TLOG_REQUEST_LOG_{}_".format(input_date_formatted)
-                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                        
-                    elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
-                        fprefix = "TLOG_CBCK-V2-REQ-RESPONSE_{}_".format(input_date_formatted)
-                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                        
-                    elif pname == "PRISM_DAEMON_PERF_LOG":
-                        fprefix = "TLOG_PERF_{}_".format(input_date_formatted)
-                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                    
-                    elif pname == "GENERIC_SERVER":
-                        fprefix = "TLOG_GENERIC_SERVER_REQUEST_BEAN_RESPONSE_{}_".format(input_date_formatted)
-                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                        
-                    elif pname == "PRISM_SMSD":
-                        fprefix = "TLOG_SMS_{}_".format(input_date_formatted)
-                        dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
-                        
-                except OSError as error:
-                    logging.warning(error)
-                
-                if bool(dated_tlog_files):
-                    for files in dated_tlog_files:
-                        self.tlog_files.append(str(files))
-                        
-                else:
-                    if pname == "PRISM_TOMCAT":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_BILLING_REALTIME_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_BILLING_REALTIME_{}_*..log file not present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_*..log file not present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_REQUEST_RESPONSE_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_REQUEST_RESPONSE_{}_*..log file not present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_TOMCAT_REQ_RESP":
-                        logging.info("TLOG_REQUEST_LOG_{}_*..log file not present".format(input_date_formatted))
-                    elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
-                        logging.info("TLOG_CBCK-V2-REQ-RESPONSE_{}_*..log file not present".format(input_date_formatted))
-                    elif pname == "PRISM_TOMCAT_PERF_LOG":
-                        logging.info("TLOG_PERF_{}_*..log file not present".format(input_date_formatted))
-                    
-                    elif pname == "PRISM_DEAMON":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_BILLING_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_BILLING_{}_*..log file not present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_*..log file not present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
-                        if self.validation_object.is_multitenant_system:
-                            logging.info("TLOG_REQUEST_RESPONSE_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
-                        else:
-                            logging.info("TLOG_REQUEST_RESPONSE_{}_*..log file not present".format(input_date_formatted))
-                            
-                    elif pname == "PRISM_DAEMON_REQ_RESP":
-                        logging.info("TLOG_REQUEST_LOG_{}_*..log file not present".format(input_date_formatted))
-                    elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
-                        logging.info("TLOG_CBCK-V2-REQ-RESPONSE_{}_*..log file not present".format(input_date_formatted))
-                    elif pname == "PRISM_DAEMON_PERF_LOG":
-                        logging.info("TLOG_PERF_{}_*..log file not present".format(input_date_formatted))
-                    
-                    elif pname == "GENERIC_SERVER":
-                        logging.info("TLOG_GENERIC_SERVER_REQUEST_BEAN_RESPONSE_{}_*..log file not present".format(input_date_formatted))
-                        
-                    elif pname == "PRISM_SMSD":
-                        logging.info("TLOG_SMS_{}_*..log file not present".format(input_date_formatted))
+                        elif pname == "PRISM_DEAMON":
+                            if self.validation_object.is_multitenant_system:
+                                fprefix = "TLOG_BILLING_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
         
-        #current tlog file
-        if pname == "PRISM_TOMCAT":
-            if self.validation_object.is_multitenant_system:
-                self.tlog_files.append('{0}_{1}/TLOG_BILLING_REALTIME_{2}_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"], self.validation_object.site_id, self.validation_object.site_id))
-            else:
-                self.tlog_files.append('{}/TLOG_BILLING_REALTIME_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"]))
-                
-        elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
-            if self.validation_object.is_multitenant_system:
-                self.tlog_files.append('{0}_{1}/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{2}_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_http_handler_req_resp_path"], self.validation_object.site_id, self.validation_object.site_id))
-            else:
-                self.tlog_files.append('{}/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_http_handler_req_resp_path"]))
-                
-        elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
-            if self.validation_object.is_multitenant_system:
-                self.tlog_files.append('{0}_{1}/TLOG_REQUEST_RESPONSE_{2}_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_soap_handler_req_resp_path"], self.validation_object.site_id, self.validation_object.site_id))
-            else:
-                self.tlog_files.append('{}/TLOG_REQUEST_RESPONSE_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_soap_handler_req_resp_path"]))
-                
-        elif pname == "PRISM_TOMCAT_REQ_RESP":
-            self.tlog_files.append('{}/TLOG_REQUEST_LOG_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_req_resp_path"]))
-        elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
-            self.tlog_files.append('{}/TLOG_CBCK-V2-REQ-RESPONSE_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_callbackV2_req_resp_path"]))                        
-        elif pname == "PRISM_TOMCAT_PERF_LOG":
-            self.tlog_files.append('{}/TLOG_PERF_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_perf_log_path"]))
-            
-        elif pname == "PRISM_DEAMON":
-            if self.validation_object.is_multitenant_system:
-                self.tlog_files.append('{0}_{1}/TLOG_BILLING_{2}_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"], self.validation_object.site_id, self.validation_object.site_id))
-            else:
-                self.tlog_files.append('{}/TLOG_BILLING_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"]))
-                
-        elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
-            if self.validation_object.is_multitenant_system:
-                self.tlog_files.append('{0}_{1}/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{2}_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_http_handler_req_resp_path"], self.validation_object.site_id, self.validation_object.site_id))
-            else:
-                self.tlog_files.append('{}/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_http_handler_req_resp_path"]))
-                
-        elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
-            if self.validation_object.is_multitenant_system:
-                self.tlog_files.append('{0}_{1}/TLOG_REQUEST_RESPONSE_{2}_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_soap_handler_req_resp_path"], self.validation_object.site_id, self.validation_object.site_id))
-            else:
-                self.tlog_files.append('{}/TLOG_REQUEST_RESPONSE_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_soap_handler_req_resp_path"]))
-                
-        elif pname == "PRISM_DAEMON_REQ_RESP":
-            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_req_resp_path"] + "/TLOG_REQUEST_LOG_*.tmp")    
-        elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
-            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_callbackV2_req_resp_path"] + '/TLOG_CBCK-V2-REQ-RESPONSE_*.tmp')
-        elif pname == "PRISM_DAEMON_PERF_LOG":
-            self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_perf_log_path"] + "/TLOG_PERF_*.tmp")
+                            else:
+                                fprefix = "TLOG_BILLING_{}_".format(input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                                
+                        elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
+                            if self.validation_object.is_multitenant_system:
+                                fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                                
+                            else:
+                                fprefix = "TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_".format(input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                                
+                        elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
+                            if self.validation_object.is_multitenant_system:
+                                fprefix = "TLOG_REQUEST_RESPONSE_{0}_{1}_".format(self.validation_object.site_id, input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                                
+                            else:
+                                fprefix = "TLOG_REQUEST_RESPONSE_{}_".format(input_date_formatted)
+                                dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                                
+                        elif pname == "PRISM_DAEMON_REQ_RESP":
+                            fprefix = "TLOG_REQUEST_LOG_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                            
+                        elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
+                            fprefix = "TLOG_CBCK-V2-REQ-RESPONSE_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                            
+                        elif pname == "PRISM_DAEMON_PERF_LOG":
+                            fprefix = "TLOG_PERF_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                        
+                        elif pname == "GENERIC_SERVER":
+                            fprefix = "TLOG_GENERIC_SERVER_REQUEST_BEAN_RESPONSE_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                            
+                        elif pname == "PRISM_SMSD":
+                            fprefix = "TLOG_SMS_{}_".format(input_date_formatted)
+                            dated_tlog_files = self.get_sorted_dated_tlog_files(path, fprefix, fsuffix)
+                            
+                    except OSError as error:
+                        logging.warning(error)
+                    
+                    if bool(dated_tlog_files):
+                        for files in dated_tlog_files:
+                            self.tlog_files.append(str(files))
+                            
+                    else:
+                        if pname == "PRISM_TOMCAT":
+                            if self.validation_object.is_multitenant_system:
+                                logging.info("TLOG_BILLING_REALTIME_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
+                            else:
+                                logging.info("TLOG_BILLING_REALTIME_{}_*..log file not present".format(input_date_formatted))
+                                
+                        elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
+                            if self.validation_object.is_multitenant_system:
+                                logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
+                            else:
+                                logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_*..log file not present".format(input_date_formatted))
+                                
+                        elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
+                            if self.validation_object.is_multitenant_system:
+                                logging.info("TLOG_REQUEST_RESPONSE_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
+                            else:
+                                logging.info("TLOG_REQUEST_RESPONSE_{}_*..log file not present".format(input_date_formatted))
+                                
+                        elif pname == "PRISM_TOMCAT_REQ_RESP":
+                            logging.info("TLOG_REQUEST_LOG_{}_*..log file not present".format(input_date_formatted))
+                        elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
+                            logging.info("TLOG_CBCK-V2-REQ-RESPONSE_{}_*..log file not present".format(input_date_formatted))
+                        elif pname == "PRISM_TOMCAT_PERF_LOG":
+                            logging.info("TLOG_PERF_{}_*..log file not present".format(input_date_formatted))
+                        
+                        elif pname == "PRISM_DEAMON":
+                            if self.validation_object.is_multitenant_system:
+                                logging.info("TLOG_BILLING_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
+                            else:
+                                logging.info("TLOG_BILLING_{}_*..log file not present".format(input_date_formatted))
+                                
+                        elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
+                            if self.validation_object.is_multitenant_system:
+                                logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
+                            else:
+                                logging.info("TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{}_*..log file not present".format(input_date_formatted))
+                                
+                        elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
+                            if self.validation_object.is_multitenant_system:
+                                logging.info("TLOG_REQUEST_RESPONSE_{0}_{1}_*..log file not present".format(self.validation_object.site_id, input_date_formatted))
+                            else:
+                                logging.info("TLOG_REQUEST_RESPONSE_{}_*..log file not present".format(input_date_formatted))
+                                
+                        elif pname == "PRISM_DAEMON_REQ_RESP":
+                            logging.info("TLOG_REQUEST_LOG_{}_*..log file not present".format(input_date_formatted))
+                        elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
+                            logging.info("TLOG_CBCK-V2-REQ-RESPONSE_{}_*..log file not present".format(input_date_formatted))
+                        elif pname == "PRISM_DAEMON_PERF_LOG":
+                            logging.info("TLOG_PERF_{}_*..log file not present".format(input_date_formatted))
+                        
+                        elif pname == "GENERIC_SERVER":
+                            logging.info("TLOG_GENERIC_SERVER_REQUEST_BEAN_RESPONSE_{}_*..log file not present".format(input_date_formatted))
+                            
+                        elif pname == "PRISM_SMSD":
+                            logging.info("TLOG_SMS_{}_*..log file not present".format(input_date_formatted))
         
-        elif pname == "GENERIC_SERVER":
-            self.tlog_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["generic_server_request_bean_response"] + "/TLOG_GENERIC_SERVER_REQUEST_BEAN_RESPONSE_*.tmp")
-            
-        elif pname == "PRISM_SMSD":
-            self.tlog_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_tlog_path"] + '/TLOG_SMS_*.tmp')
-            
-        logging.info('TLOG_FILES_PRESENT: %s', self.tlog_files)
+                #current tlog file
+                if pname == "PRISM_TOMCAT":
+                    if self.validation_object.is_multitenant_system:
+                        self.tlog_files.append('{0}_{1}/TLOG_BILLING_REALTIME_{2}_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"], self.validation_object.site_id, self.validation_object.site_id))
+                    else:
+                        self.tlog_files.append('{}/TLOG_BILLING_REALTIME_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"]))
+                        
+                elif pname == "PRISM_TOMCAT_GENERIC_HTTP_REQ_RESP":
+                    if self.validation_object.is_multitenant_system:
+                        self.tlog_files.append('{0}_{1}/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{2}_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_http_handler_req_resp_path"], self.validation_object.site_id, self.validation_object.site_id))
+                    else:
+                        self.tlog_files.append('{}/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_http_handler_req_resp_path"]))
+                        
+                elif pname == "PRISM_TOMCAT_GENERIC_SOAP_REQ_RESP":
+                    if self.validation_object.is_multitenant_system:
+                        self.tlog_files.append('{0}_{1}/TLOG_REQUEST_RESPONSE_{2}_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_soap_handler_req_resp_path"], self.validation_object.site_id, self.validation_object.site_id))
+                    else:
+                        self.tlog_files.append('{}/TLOG_REQUEST_RESPONSE_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_generic_soap_handler_req_resp_path"]))
+                        
+                elif pname == "PRISM_TOMCAT_REQ_RESP":
+                    self.tlog_files.append('{}/TLOG_REQUEST_LOG_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_req_resp_path"]))
+                elif pname == "PRISM_TOMCAT_CALLBACK_V2_REQ_RESP":
+                    self.tlog_files.append('{}/TLOG_CBCK-V2-REQ-RESPONSE_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_callbackV2_req_resp_path"]))                        
+                elif pname == "PRISM_TOMCAT_PERF_LOG":
+                    self.tlog_files.append('{}/TLOG_PERF_*.tmp'.format(self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_perf_log_path"]))
+                    
+                elif pname == "PRISM_DEAMON":
+                    if self.validation_object.is_multitenant_system:
+                        self.tlog_files.append('{0}_{1}/TLOG_BILLING_{2}_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"], self.validation_object.site_id, self.validation_object.site_id))
+                    else:
+                        self.tlog_files.append('{}/TLOG_BILLING_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_tlog_path"]))
+                        
+                elif pname == "PRISM_DAEMON_GENERIC_HTTP_REQ_RESP":
+                    if self.validation_object.is_multitenant_system:
+                        self.tlog_files.append('{0}_{1}/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_{2}_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_http_handler_req_resp_path"], self.validation_object.site_id, self.validation_object.site_id))
+                    else:
+                        self.tlog_files.append('{}/TLOG_REQUEST_RESPONSE_GENERIC_HTTP_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_http_handler_req_resp_path"]))
+                        
+                elif pname == "PRISM_DAEMON_GENERIC_SOAP_REQ_RESP":
+                    if self.validation_object.is_multitenant_system:
+                        self.tlog_files.append('{0}_{1}/TLOG_REQUEST_RESPONSE_{2}_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_soap_handler_req_resp_path"], self.validation_object.site_id, self.validation_object.site_id))
+                    else:
+                        self.tlog_files.append('{}/TLOG_REQUEST_RESPONSE_*.tmp'.format(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_generic_soap_handler_req_resp_path"]))
+                    
+                elif pname == "PRISM_DAEMON_REQ_RESP":
+                    self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_req_resp_path"] + "/TLOG_REQUEST_LOG_*.tmp")    
+                elif pname == "PRISM_DAEMON_CALLBACK_V2_REQ_RESP":
+                    self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_callbackV2_req_resp_path"] + '/TLOG_CBCK-V2-REQ-RESPONSE_*.tmp')
+                elif pname == "PRISM_DAEMON_PERF_LOG":
+                    self.tlog_files.append(self.initializedPath_object.prism_daemon_log_path_dict["prism_daemon_perf_log_path"] + "/TLOG_PERF_*.tmp")
+                
+                elif pname == "GENERIC_SERVER":
+                    self.tlog_files.append(self.initializedPath_object.prism_tomcat_log_path_dict["generic_server_request_bean_response"] + "/TLOG_GENERIC_SERVER_REQUEST_BEAN_RESPONSE_*.tmp")
+                    
+                elif pname == "PRISM_SMSD":
+                    self.tlog_files.append(self.initializedPath_object.prism_smsd_log_path_dict["prism_smsd_tlog_path"] + '/TLOG_SMS_*.tmp')
+                
+                logging.info('TLOG_FILES_PRESENT: %s', self.tlog_files)
+            else:
+                logging.info("%s directory does not exists", self.tlog_dir)
         
         return self.tlog_files
     

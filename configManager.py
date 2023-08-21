@@ -261,7 +261,7 @@ class ConfigManager:
                                 SELECT * FROM HANDLER_INFO
                                 WHERE HANDLER_ID = %s
                             """ % (handler_id)
-                    
+                    logging.info("QUERY: %s", query)
                     configMap = query_executor(self.db_name, self.db_host, query, "SELECT")
                     
                     if configMap:

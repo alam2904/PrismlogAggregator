@@ -58,4 +58,8 @@ def query_executor(db_name, db_host, query, query_type):
         logging.debug("Eigther DB_NAME or DB_HOST is None or Empty in %s.json file", socket.gethostname())
     
     logging.info("DATA_MAP: %s", data_map)
-    return data_map
+    logging.info("DATA_MAP_TYPE: %s", type(data_map))
+    if data_map:
+        return data_map
+    else:
+        return None

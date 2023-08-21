@@ -251,7 +251,7 @@ class DaemonLogProcessor:
                                 else:
                                     logging.info("Thread not found in: %s", bkfile)
                             else:
-                                logging.info("An error occurred while running the command.")
+                                logging.info("returnCode returned non-zero")
                             
                         except subprocess.CalledProcessError as e:
                             # An error occurred while running the command
