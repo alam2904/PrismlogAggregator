@@ -55,6 +55,8 @@ class FileWriter:
         #write complete thread log
         thread_outfile = ""
         logging.info("THIS METHOD CALLED: %s", thread)
+        if http_error_code[0] == "-":
+            http_error_code = http_error_code[1:]
         
         if pname == "PRISM_TOMCAT":           
             thread_outfile = "{0}/{1}_{2}_prism_access_tomcat.log".format(folder, http_error_code, thread)

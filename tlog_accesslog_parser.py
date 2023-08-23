@@ -12,7 +12,7 @@ class TlogAccessLogParser:
     """
     def __init__(self, config, initializedPath_object, outputDirectory_object, validation_object, log_mode, oarm_uid,\
                     prism_daemon_tlog_thread_dict, prism_tomcat_tlog_thread_dict, issue_task_types,\
-                    sbn_thread_dict):
+                    sbn_thread_dict, non_issue_sbn_thread_dict):
         
         self.config = config
         self.initializedPath_object = initializedPath_object
@@ -41,7 +41,7 @@ class TlogAccessLogParser:
         self.issue_access_req_resp_threads = []
         self.is_daemon_log = False
         self.sbn_thread_dict = sbn_thread_dict
-        # self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
+        self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
         self.process_subs_data = True
         self.subscriptions_data = None
     
@@ -281,6 +281,8 @@ class TlogAccessLogParser:
                 logging.info("sbn not present in map")
         else:
             self.sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
+        
+        self.non_issue_sbn_thread_dict = self.sbn_thread_dict
         
                                
     def create_process_folder(self, pname, folder):

@@ -38,7 +38,7 @@ class SubscriptionEventController:
                                 """ % (sbn_event_Id)
                         
                     query_type = "SELECT"
-                    logging.info('SELECT_QUERY: %s', query)
+                    # logging.info('SELECT_QUERY: %s', query)
                     
                     transaction_object = query_executor(self.db_name, self.db_host, query, query_type)
                     

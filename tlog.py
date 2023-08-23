@@ -115,7 +115,7 @@ class Tlog:
         tlogAccessLogParser_object = TlogAccessLogParser(self.config, self.initializedPath_object, self.outputDirectory_object,\
                                         self.validation_object, self.log_mode, self.oarm_uid,\
                                         self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict,\
-                                        self.issue_task_types, self.sbn_thread_dict)
+                                        self.issue_task_types, self.sbn_thread_dict, self.non_issue_sbn_thread_dict)
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             self.constructor_parameter_reinitialize()
@@ -660,8 +660,8 @@ class Tlog:
     def get_subscription_event_details(self):
         #fetch subscriptions
         logging.info("NON_ISSUE_SBN_THREAD_DICT: %s", self.non_issue_sbn_thread_dict)
+        subscription_event_data = []
         if self.non_issue_sbn_thread_dict:
-            subscription_event_data = []
             subscription_event_object = SubscriptionEventController(self.config, None, self.validation_object, self.non_issue_sbn_thread_dict, True)
             try:
                 subscriptions_data_dict = subscription_event_object.get_subscription_event("SUBSCRIPTIONS", False)
