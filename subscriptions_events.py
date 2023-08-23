@@ -40,12 +40,13 @@ class SubscriptionEventController:
                     query_type = "SELECT"
                     logging.info('SELECT_QUERY: %s', query)
                     
-                    transaction_json_object = query_executor(self.db_name, self.db_host, query, query_type)
+                    transaction_object = query_executor(self.db_name, self.db_host, query, query_type)
                     
-                    if transaction_json_object:
-                        logging.info("subscription json object: %s", transaction_json_object)
+                    if transaction_object:
+                        logging.info("subscription json object: %s", transaction_object)
                         
-                        self.transaction_data.append(json.loads(transaction_json_object, object_pairs_hook=OrderedDict))
+                        self.transaction_data.append(transaction_object)
+                        # self.transaction_data.append(json.loads(transaction_object, object_pairs_hook=OrderedDict))
                         
                         if is_reprocessing_required and self.transaction_data:
                             transaction_record = self.get_subscription_event_dict(transaction_table)
@@ -56,12 +57,13 @@ class SubscriptionEventController:
                 query_type = "SELECT"
                 query = "SELECT * FROM SUBSCRIPTIONS WHERE SBN_ID = %s" % (reprocess_sbnId)
                 
-                subscription_json_object = query_executor(self.db_name, self.db_host, query, query_type)
+                subscription_object = query_executor(self.db_name, self.db_host, query, query_type)
                 
-                if subscription_json_object:
-                    logging.info("subscription json object after update: %s", subscription_json_object)
+                if subscription_object:
+                    logging.info("subscription json object after update: %s", subscription_object)
                     self.constructor_parameter_reinitialize()
-                    self.transaction_data.append(json.loads(subscription_json_object, object_pairs_hook=OrderedDict))
+                    self.transaction_data.append(subscription_object)
+                    # self.transaction_data.append(json.loads(subscription_object, object_pairs_hook=OrderedDict))
             
             return self.transaction_data
         except Exception as ex:
@@ -78,6 +80,7 @@ class SubscriptionEventController:
         
     def execute_update(self, sbn_Id, transaction_record):
         query_type = "UPDATE"
+        result = False
         updateCriteria_object = UpdateQueryCriteria(self.config, self.validation_object, transaction_record, sbn_Id)
         logging.info("SUBSCRIPTIONS_SUB_STATUS: %s", transaction_record["sub_status"])
         

@@ -252,10 +252,9 @@ class GENERIC_SERVER_PROCESSOR:
             gs_req_resp_log_path = self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_{}_log".format(gs_req_resp_logger_name)]
             logging.info("GS_REQ_RESP_LOG_PATH: %s", gs_req_resp_log_path)
             
-            try:
-                for gs_thread in self.gs_tlog_thread:
+            for gs_thread in self.gs_tlog_thread:
+                try:
                     temp = []
-    
                     data_bytes = subprocess.check_output("cat {0} | grep -a {1}".format(gs_req_resp_log_path, gs_thread), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                     data_str = data_bytes.decode("utf-8")
                     self.gs_req_resp_record.append(data_str)
@@ -274,9 +273,10 @@ class GENERIC_SERVER_PROCESSOR:
                         if temp:
                             self.thread_data_dict[gs_thread] = temp
                             
-                logging.info('GS_THREAD_DATA_DICT: %s', self.thread_data_dict)
-            except Exception as ex:
-                logging.info(ex)
+                except Exception as ex:
+                    logging.info(ex)
+        
+        logging.info('GS_THREAD_DATA_DICT: %s', self.thread_data_dict)
         
         if self.thread_data_dict:
             gs_thread_req_resp_dict = {"GENERIC_SERVER_REQUEST_RESPONSE": self.thread_data_dict}

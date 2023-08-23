@@ -68,14 +68,14 @@ class PROCESSOR:
         
         for pname in self.config[self.hostname]:  
             if pname == 'PRISM':
-                folder = os.path.join(self.outputDirectory_object, '{}_issue_prism_tomcat'.format(self.hostname))
-                self.remove_old_process_folder(pname, folder)
+                # folder = os.path.join(self.outputDirectory_object, '{}_issue_prism_tomcat'.format(self.hostname))
+                # self.remove_old_process_folder(pname, folder)
                 
-                folder = os.path.join(self.outputDirectory_object, '{}_issue_prism_daemon'.format(self.hostname))
-                self.remove_old_process_folder(pname, folder)
+                # folder = os.path.join(self.outputDirectory_object, '{}_issue_prism_daemon'.format(self.hostname))
+                # self.remove_old_process_folder(pname, folder)
                 
-                folder = os.path.join(self.outputDirectory_object, '{}_issue_prism_smsd'.format(self.hostname))
-                self.remove_old_process_folder(pname, folder)
+                # folder = os.path.join(self.outputDirectory_object, '{}_issue_prism_smsd'.format(self.hostname))
+                # self.remove_old_process_folder(pname, folder)
                 
                 try:
                     if self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"]:
@@ -121,10 +121,10 @@ class PROCESSOR:
             if self.log_mode == "txn" or self.log_mode == "error":
                 fileWriter_object.write_json_tlog_data(self.prism_data_dict)
                 
-    def remove_old_process_folder(self, pname, folder):
-            #removing process folder if already exists
-            if os.path.exists(folder):
-                logging.info('out directory already exists. Hence removing the old files of %s if exists.', self.hostname)
-                shutil.rmtree(folder)
-            else:
-                logging.info('%s out folder does not exists:', pname)
+    # def remove_old_process_folder(self, pname, folder):
+    #         #removing process folder if already exists
+    #         if os.path.exists(folder):
+    #             logging.info('out directory already exists. Hence removing the old files of %s if exists.', self.hostname)
+    #             shutil.rmtree(folder)
+    #         else:
+    #             logging.info('%s out folder does not exists:', pname)

@@ -1,3 +1,5 @@
+from collections import OrderedDict
+import json
 import socket
 import logging
 import oarm_modules
@@ -38,13 +40,13 @@ def get_db_parameters(config):
 
 def query_executor(db_name, db_host, query, query_type):
     data_map = None
-    # logging.info("QUERY: %s AND QUERY_TYPE: %s", query, query_type)
+    logging.info("QUERY: %s AND QUERY_TYPE: %s", query, query_type)
     
     if (db_name and str(db_name).strip()) and (db_host and str(db_host).strip()):
         
         if query_type == "SELECT":
             try:
-                data_map = oarm_modules.oarm_database_select(db_name, db_host, query)
+                data_map = json.loads(oarm_modules.oarm_database_select(db_name, db_host, query), object_pairs_hook=OrderedDict)
             except Exception as ex:
                 logging.error(ex)            
         
@@ -57,9 +59,19 @@ def query_executor(db_name, db_host, query, query_type):
     else:
         logging.debug("Eigther DB_NAME or DB_HOST is None or Empty in %s.json file", socket.gethostname())
     
-    logging.info("DATA_MAP: %s", data_map)
-    logging.info("DATA_MAP_TYPE: %s", type(data_map))
-    if data_map:
-        return data_map
-    else:
-        return None
+    logging.info("OARM_DB_MODULE RESPONSE: %s", data_map)
+    # logging.info("OARM_DB_MODULE RESPONSE TYPE: %s", type(data_map))
+    try:
+        if data_map and data_map["STATUS"] == "SUCCESS":
+            if query_type == "UPDATE":
+                return True
+            else:
+                if data_map["STATUS"] == "SUCCESS":
+                    return data_map["OUTPUT"]
+                else:
+                    logging.info("Query Execution Failed")
+                    return None
+        else:
+            return None
+    except KeyError as err:
+        logging.error(err)
