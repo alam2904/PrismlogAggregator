@@ -155,6 +155,13 @@ class PrismFlowId(object):
     R = ["2", "9", "10"]
     U = ["4"]
     D = ["3"]
+    
+class PrismFlowType(object):
+    #charge type flow type mapping
+    GRACE = ["7", "9"]
+    SUS = ["10"]
+    NULL = ["1", "2", "3"]
+    # NO_FLOW = ["1", "2", "3"]
 
 class TimeZoneGmtOffsetValue(object):
     #offset value in UTC

@@ -1,6 +1,6 @@
 import logging
 from configManager import ConfigManager
-from status_tags import PrismFlowId
+from status_tags import PrismFlowId, PrismFlowType
 import xml.etree.ElementTree as ET
 
 class UpdateQueryCriteria:
@@ -18,6 +18,7 @@ class UpdateQueryCriteria:
         self.transaction_srv_id = ""
         self.transaction_pmt_status = ""
         self.charge_type = ""
+        self.flow_type = ""
         self.update_query = ""
         self.generic_flow_handler_files = []
     
@@ -37,10 +38,10 @@ class UpdateQueryCriteria:
         subtype_parameter = configManager_object.get_enabled_subtype_parameter()
         logging.info("SUBTYPE_BOOLEAN_PARAM: %s", subtype_parameter)
         
-        try:
-            # nested_dictionaries = self.get_nested_dictionaries(configManager_object.subtype_parameter)
-            # if nested_dictionaries:
-            if subtype_parameter:
+        # nested_dictionaries = self.get_nested_dictionaries(configManager_object.subtype_parameter)
+        # if nested_dictionaries:
+        if subtype_parameter:
+            try:
                 for subType_enable_param_dict in subtype_parameter:
                     if subType_enable_param_dict["PARAM_NAME"] == "FORCED_SUBTYPE_CHECK":
                         if self.is_boolean(subType_enable_param_dict["PARAM_VALUE"]):
@@ -54,14 +55,14 @@ class UpdateQueryCriteria:
                     elif subType_enable_param_dict["PARAM_NAME"] == "DEACT_SUBTYPE_CHECK":
                         if self.is_boolean(subType_enable_param_dict["PARAM_VALUE"]):
                             self.deact_subtype_check = subType_enable_param_dict["PARAM_VALUE"].lower() == 'true'
-                        
-            logging.info("FORCED_SUBTYPE_CHECK: %s", self.forced_subtype_check)
-            logging.info("RENEWAL_SUBTYPE_CHECK: %s", self.renewal_subtype_check)
-            logging.info("RESUME_SUBTYPE_FLOW: %s", self.resume_subtype_flow)
-            logging.info("DEACT_SUBTYPE_CHECK: %s", self.deact_subtype_check)
+            except KeyError as err:
+                logging.info(err)
+                    
+        logging.info("FORCED_SUBTYPE_CHECK: %s", self.forced_subtype_check)
+        logging.info("RENEWAL_SUBTYPE_CHECK: %s", self.renewal_subtype_check)
+        logging.info("RESUME_SUBTYPE_FLOW: %s", self.resume_subtype_flow)
+        logging.info("DEACT_SUBTYPE_CHECK: %s", self.deact_subtype_check)
 
-        except KeyError as err:
-            logging.info(err)
         
         if self.transaction_record:
             self.transaction_flow_id = str(self.transaction_record["system_info"]).split("flowId:")[1].split("|")[0]
@@ -70,32 +71,38 @@ class UpdateQueryCriteria:
             self.transaction_pmt_status = self.transaction_record["pmt_status"]
             logging.info('TRANSACTION_TASK_TYPE: %s', self.transaction_task_type)
             
-            self.get_charge_type()
+            self.get_charge_type_and_flow_type()
             self.set_update_query(configManager_object)
               
-    def get_charge_type(self):
+    def get_charge_type_and_flow_type(self):
         for status_chargeType, status_flowId in PrismFlowId.__dict__.items():
             if not status_chargeType.startswith("__"):
                 for sflowId in status_flowId:
                     if self.transaction_flow_id == sflowId:
                         self.charge_type = status_chargeType
+                        for pflow_type, pflow_id in PrismFlowType.__dict__.items():
+                            if not pflow_type.startswith("__"):
+                                logging.info("STATUS_FLOW_TYPE: %s AND STATUS_FLOW_ID: %s", pflow_type, pflow_id)
+                                if self.transaction_flow_id in pflow_id:
+                                    self.flow_type = pflow_type
+                                    break
                         break
     
     def set_update_query(self, configManager_object):
         #check for generic flow handler for retry next task type
-        logging.info("NEXT_TASK_TYPE: %s", self.next_task_type)
         next_task_type = self.get_next_task_type(configManager_object)
+        logging.info("NEXT_TASK_TYPE: %s", next_task_type)
         
         if next_task_type:
             if self.transaction_pmt_status != 1:
                 self.update_query = """
-                                        UPDATE SUBSCRIPTIONS SET queue_id = 99, task_type = %s,
+                                        UPDATE SUBSCRIPTIONS SET queue_id = 99, task_type = '%s',
                                         task_status = 0, remote_status = 127, pmt_status = 0, cycle_status = 'R',
                                         charge_schedule = now() WHERE sbn_id = %s
                                     """ % (next_task_type, self.sbn_Id)
             else:
                 self.update_query = """
-                                        UPDATE SUBSCRIPTIONS SET queue_id = 99, task_type = %s,
+                                        UPDATE SUBSCRIPTIONS SET queue_id = 99, task_type = '%s',
                                         task_status = 0, remote_status = 127, cycle_status = 'R',
                                         charge_schedule = now() WHERE sbn_id = %s
                                     """ % (next_task_type, self.sbn_Id)
@@ -234,7 +241,10 @@ class UpdateQueryCriteria:
         if flow_handler_map:
             for data in flow_handler_map:
                 
-                if self.charge_type == data["TRANSACTION_TYPE"]:
+                logging.info("FLOW_HANDLER_DATA: %s", data)
+                logging.info("FLOW_TYPE: %s AND DATA_FLOW: %s", self.flow_type, data["FLOW_TYPE"])
+                if self.charge_type == data["TRANSACTION_TYPE"] and self.flow_type == data["FLOW_TYPE"]:
+                    logging.info("FLOW_HANDLER_PARAMS: %s", data["PARAMS"])
                     flow_handler_params.append(data["PARAMS"])
                     
         if flow_handler_params:
@@ -247,7 +257,7 @@ class UpdateQueryCriteria:
                 logging.debug(ex)
         
         if self.generic_flow_handler_files:
-            # logging.info("XML_FILES: %s", self.generic_flow_handler_files)
+            logging.info("XML_FILES: %s", self.generic_flow_handler_files)
             for xml_file in self.generic_flow_handler_files:
                 tree = ET.parse(xml_file)
                 root = tree.getroot()
@@ -257,7 +267,8 @@ class UpdateQueryCriteria:
                     initial_task_element = root.find('initialTask')
 
                     # Get the value of the value attribute
-                    next_task_type = initial_task_element.get('value')
+                    if initial_task_element is not None:
+                        next_task_type = initial_task_element.get('value')
                 else:
                     retry_element = root.find(".//retry")
                     task_case_elements = retry_element.findall("taskCase")
@@ -271,7 +282,7 @@ class UpdateQueryCriteria:
                             next_task = task_case_element.get("nextTask")
                             next_task_type = next_task
                             
-        logging.info("CURRENT_TASK_TYPE: %s AND NEXT_TASK_TYPE: %s", self.transaction_task_type, self.next_task_type)
+        logging.info("CURRENT_TASK_TYPE: %s AND NEXT_TASK_TYPE: %s", self.transaction_task_type, next_task_type)
         return next_task_type
                         
     def is_boolean(self, arg):

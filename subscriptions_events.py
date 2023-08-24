@@ -49,7 +49,7 @@ class SubscriptionEventController:
                         # self.transaction_data.append(json.loads(transaction_object, object_pairs_hook=OrderedDict))
                         
                         if is_reprocessing_required and self.transaction_data:
-                            transaction_record = self.get_subscription_event_dict(transaction_table)
+                            transaction_record = self.get_subscription_event_dict()
                             if transaction_record:
                                 self.execute_update(sbn_event_Id, transaction_record)
                            

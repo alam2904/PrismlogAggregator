@@ -45,7 +45,7 @@ class TlogAccessLogParser:
         self.process_subs_data = True
         self.subscriptions_data = None
     
-    def parse_tlog(self, pname, tlog_header_data_dict, ctid_map=None, reprocessed_thread=None):
+    def parse_tlog(self, pname, tlog_header_data_dict, ctid_map=None, reprocessed_thread=None, reprocess_thread_based_reprocessing=None):
         """
             tlog parser method
         """
@@ -66,7 +66,7 @@ class TlogAccessLogParser:
         latest_thread = "" 
         try:
             if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-                if not reprocessed_thread:
+                if not reprocessed_thread and not reprocess_thread_based_reprocessing:
                     thread_list = []
                     if pname == "PRISM_TOMCAT":
                         thread_list = self.prism_tomcat_tlog_thread_dict["PRISM_TOMCAT_THREAD"]

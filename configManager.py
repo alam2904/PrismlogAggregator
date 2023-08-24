@@ -35,6 +35,15 @@ class ConfigManager:
                         """
 
             subType_Map = query_executor(self.db_name, self.db_host, query, "SELECT")
+            
+            if not subType_Map:
+                query = """
+                            SELECT * FROM PRISM_CONFIG_PARAMS
+                            WHERE SITE_ID = -1 AND PARAM_NAME LIKE '%%SUBTYPE%%'
+                        """
+                subType_Map = query_executor(self.db_name, self.db_host, query, "SELECT")
+                
+                
         except Exception as ex:
             logging.error(ex)
         
@@ -135,17 +144,17 @@ class ConfigManager:
         try:
             if self.validation_object.is_multitenant_system:
                 query = """
-                            SELECT hm.TRANSACTION_TYPE, hi.PARAMS FROM HANDLER_PROCESSOR_INFO hi
+                            SELECT hm.TRANSACTION_TYPE, hi.PARAMS, hm.FLOW_TYPE FROM HANDLER_PROCESSOR_INFO hi
                             INNER JOIN HANDLER_PROCESSOR_MAP hm ON hi.HANDLER_ID = hm.HANDLER_ID
                             WHERE hi.HANDLER_NAME = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler'
-                            AND hm.SITE_ID = %s GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE
+                            AND hm.SITE_ID = %s GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE, hm.FLOW_TYPE
                         """ % (self.validation_object.site_id)
             else:
                 query = """
-                            SELECT hm.TRANSACTION_TYPE, hi.PARAMS FROM HANDLER_PROCESSOR_INFO hi
+                            SELECT hm.TRANSACTION_TYPE, hi.PARAMS, hm.FLOW_TYPE FROM HANDLER_PROCESSOR_INFO hi
                             INNER JOIN HANDLER_PROCESSOR_MAP hm ON hi.HANDLER_ID = hm.HANDLER_ID
                             WHERE hi.HANDLER_NAME = 'com.onmobile.prism.generic.flowHandler.GenericFlowHandler'
-                            AND hm.SITE_ID = -1 GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE
+                            AND hm.SITE_ID = -1 GROUP BY hi.PARAMS, hm.TRANSACTION_TYPE, hm.FLOW_TYPE
                         """
                 
             configMap = query_executor(self.db_name, self.db_host, query, "SELECT")

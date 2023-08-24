@@ -248,6 +248,7 @@ class Tlog:
         
         logging.info('process name: %s', pname)
         reprocessed_thread = []
+        reprocess_thread_based_reprocessing = False
            
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             for data in data_list:
@@ -257,6 +258,7 @@ class Tlog:
                 index_count = 28
                 if last_modified_time:
                     reprocessed_thread = self.reprocessed_thread
+                    reprocess_thread_based_reprocessing = True
                     self.reprocessed_constructor_parameter_reinitialize()
                     input_date_formatted = datetime.strftime(datetime.strptime(last_modified_time, "%Y-%m-%d %H:%M:%S"), "%Y-%m-%d")
                     logging.info("last modified input date formated: %s", input_date_formatted)
@@ -312,8 +314,9 @@ class Tlog:
             if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
                 if self.msisdn_data_dict:
                     logging.info("reached here: %s", self.is_record_reprocessed)
+                    logging.info("reprocessed thread: %s", reprocessed_thread)
                     if not self.is_record_reprocessed:
-                        self.subscriptions_data = tlogAccessLogParser_object.parse_tlog(pname, self.msisdn_data_dict, None, reprocessed_thread)
+                        self.subscriptions_data = tlogAccessLogParser_object.parse_tlog(pname, self.msisdn_data_dict, None, reprocessed_thread, reprocess_thread_based_reprocessing)
                     
                     if not tlogAccessLogParser_object.is_daemon_log and self.subscriptions_data:
                         self.is_record_reprocessed = True
@@ -353,6 +356,7 @@ class Tlog:
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             logging.info('subscriptions data is: %s', self.subscriptions_data)
+            last_modified_time = None
             
             for subscriptions in self.subscriptions_data:
                 for subscription in subscriptions:
@@ -391,8 +395,9 @@ class Tlog:
                     temp = data.splitlines()  # Split the data into individual lines/records
                     for record in temp:
                         if str(record).split("|")[0].split(",")[0] >= str(last_modified_time):
-                            self.reprocessed_thread.append(str(record).split("|")[1])
-                            logging.info('latest tlog timestamp: %s and thread: %s', str(record).split("|")[0].split(",")[0], self.reprocessed_thread)
+                            if not str(record).split("|")[1] in self.reprocessed_thread:
+                                self.reprocessed_thread.append(str(record).split("|")[1])
+                                logging.info('latest tlog timestamp: %s and thread: %s', str(record).split("|")[0].split(",")[0], self.reprocessed_thread)
                             self.reprocessed_tlog_record.append(record)
                 except Exception as ex:
                     logging.info(ex)
@@ -867,7 +872,7 @@ class Tlog:
     
     def reprocessed_constructor_parameter_reinitialize(self):
         self.reprocessed_tlog_record = []
-        self.reprocessed_thread = []
+        # self.reprocessed_thread = []
         self.is_record_reprocessed = False
         self.subscriptions_data = None
             
