@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from datetime import datetime
 import logging
 import os
 import signal
@@ -58,7 +59,7 @@ class GENERIC_SERVER_PROCESSOR:
         tlogAccessLogParser_object = TlogAccessLogParser(self.config, self.initializedPath_object, self.outputDirectory_object,\
                                         self.validation_object, self.log_mode, self.oarm_uid,\
                                         None, None, None, None, None)
-        
+        gs_bean_timeStamp = []
         try:
             for pthread, ptlog in process_tlog.items():
                 self.is_processed_by_generic_server = False
@@ -102,12 +103,16 @@ class GENERIC_SERVER_PROCESSOR:
                                 for record in str(data).splitlines():
                                     if record not in data_list:
                                         self.gs_tlog_thread.append(record.split("|")[1])
+                                        gs_bean_timeStamp.append(self.to_access_time_formatter(
+                                                            record.split("|")[0]
+                                                            .split(",")[0]
+                                                            ))
                                         data_list.append(record)
                             logging.info("GENERIC_REQUEST_BEAN_RESPONSE_RECORD: %s", data_list)
                             logging.info("GENERIC_REQUEST_BEAN_RESPONSE_THREAD: %s", self.gs_tlog_thread)
                             
                 if self.gs_tlog_thread:
-                    self.generic_server_access_header_data_map(logfile_object, tlogAccessLogParser_object)
+                    self.generic_server_access_header_data_map(logfile_object, tlogAccessLogParser_object, gs_bean_timeStamp)
                     self.generic_server_request_response_header_map(configManager_object, tlogAccessLogParser_object)
                     self.get_generic_server_files(configManager_object)
                     logging.info("All the dated REQUEST_BEAN_RESPONSE have been already parsed so breaking the loop")
@@ -182,15 +187,15 @@ class GENERIC_SERVER_PROCESSOR:
                     self.gs_tlog_record.append(data)
                 except Exception as ex:
                     logging.info(ex)
-                
-                if not self.gs_tlog_record:
                     try:
                         data = subprocess.check_output("cat {0} | grep -a '|{1}|' | grep -a {2} | grep -a {3}".format(file, site_id, opUrl, self.charging_ref_id), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                         self.gs_tlog_record.append(data)
                     except Exception as ex:
                         logging.info(ex)
+                    
+                # if not self.gs_tlog_record:
     
-    def generic_server_access_header_data_map(self, logfile_object, tlogAccessLogParser_object):
+    def generic_server_access_header_data_map(self, logfile_object, tlogAccessLogParser_object, gs_bean_timeStamp):
         access_files = []
         counter = 0
         if self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_access_path"]:
@@ -205,26 +210,30 @@ class GENERIC_SERVER_PROCESSOR:
                 access_record = []
                 try:
                     for opUrl in self.operator_url:
-                        data = subprocess.check_output("cat {0} | grep -a {1}".format(file, opUrl), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                        for thread in self.gs_tlog_thread:
+                            thread = str(thread).split("_@")[0]
+                            for gs_time in gs_bean_timeStamp:
+                                logging.info('GS_TIME: %s AND THREAD: %s', gs_time, thread)
+                                data = subprocess.check_output("cat {0} | grep -a {1} | grep -a {2} | grep -a {3}".format(file, gs_time, thread, opUrl), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+                                
+                                access_record.append(data)
+            
+                                for data in access_record:
+                                    for record in str(data).splitlines():
+                                        if record:
+                                            data_dict = OrderedDict()
+                                            access_data_split = record.split(' ')
+                                
+                                            for index, element in enumerate(access_data_split):
+                                                # logging.info("index: %s and element: %s", index, element)
+                                                if index == 1:
+                                                    element = element.split("[")[1]
+                                                elif index == 2:
+                                                    element = element.split("]")[0]
                         
-                        access_record.append(data)
-    
-                        for data in access_record:
-                            for record in str(data).splitlines():
-                                if record:
-                                    data_dict = OrderedDict()
-                                    access_data_split = record.split(' ')
-                        
-                                    for index, element in enumerate(access_data_split):
-                                        # logging.info("index: %s and element: %s", index, element)
-                                        if index == 1:
-                                            element = element.split("[")[1]
-                                        elif index == 2:
-                                            element = element.split("]")[0]
-                
-                                        data_dict[header[index]] = element
-                                    counter += 1
-                                    self.gs_access_data_dict["{}_{}".format(data_dict["THREAD"], counter)] = data_dict
+                                                data_dict[header[index]] = element
+                                            counter += 1
+                                            self.gs_access_data_dict["{}_{}".format(data_dict["THREAD"], counter)] = data_dict
                 except Exception as ex:
                     logging.info(ex)
             logging.info("ACCESS_COUNTER: %s", counter)
@@ -363,6 +372,11 @@ class GENERIC_SERVER_PROCESSOR:
         
     def is_boolean(self, arg):
         return arg.lower() in ['true', 'false']
+    
+    def to_access_time_formatter(self, gs_bean_timestamp):
+        parsed_timestamp = datetime.strptime(gs_bean_timestamp, "%Y-%m-%d %H:%M:%S")
+        formatted_timestamp = parsed_timestamp.strftime("%d/%b/%Y:%H:%M")
+        return formatted_timestamp
     
     def create_folder(self, folder):
         try:
