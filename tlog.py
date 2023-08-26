@@ -789,7 +789,7 @@ class Tlog:
             cdr_data = {}
             cdr_data["CDR_DATA"] = [record for data in cdrs for record in data]
             logging.info("CDRS: %s", cdr_data)
-            self.prism_data_dict_list.append(cdr_data)  
+            self.prism_data_dict_list.append(cdr_data)
     
     def task_perf_handler_mapping(self, srv_id, flow_id):
         for perf_data in self.combined_perf_data: 

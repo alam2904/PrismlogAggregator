@@ -187,6 +187,10 @@ class GENERIC_SERVER_PROCESSOR:
                     self.gs_tlog_record.append(data)
                 except Exception as ex:
                     logging.info(ex)
+        
+        if not self.gs_tlog_record:          
+            for file in self.gs_tlog_files:
+                for opUrl in self.operator_url:
                     try:
                         data = subprocess.check_output("cat {0} | grep -a '|{1}|' | grep -a {2} | grep -a {3}".format(file, site_id, opUrl, self.charging_ref_id), shell=True, preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL))
                         self.gs_tlog_record.append(data)
