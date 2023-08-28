@@ -169,8 +169,8 @@ class TlogAccessLogParser:
                 try:
                     if not gs_error_msg.startswith("__"):
                         for item in data_dict:
-                            logging.info("GS_ERR_CODE: %s AND DATA_DICT_STATUS: %s", gs_err_code, item["STATUS"])
-                            if gs_err_code == item["STATUS"]:
+                            logging.info("GS_ERR_CODE: %s AND GS_RESPONSE_CODE: %s", gs_err_code, item["RESPONSE_CODE"])
+                            if gs_err_code == item["RESPONSE_CODE"]:
                                 self.issue_access_req_resp_threads.append(item["THREAD_ID"])
                                 break
                         if self.issue_access_req_resp_threads:
@@ -182,7 +182,7 @@ class TlogAccessLogParser:
                     try:
                         if not error_msg.startswith("__"):
                             for item in data_dict:
-                                if err_code == item["STATUS"]:
+                                if err_code == item["RESPONSE_CODE"]:
                                     self.issue_access_req_resp_threads.append(item["THREAD_ID"])
                                     break
                             break
