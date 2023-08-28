@@ -253,7 +253,7 @@ class GENERIC_SERVER_PROCESSOR:
     
     def generic_server_request_response_header_map(self, configManager_object, tlogAccessLogParser_object):
         header = [
-                    "TIMESTAMP", "THREAD_ID", "ACTION", "REQUEST", "RESPONSE", "STATUS", "TIME_TAKEN"
+                    "TIMESTAMP", "THREAD_ID", "ACTION", "REQUEST", "RESPONSE", "RESPONSE_CODE", "RESPONSE_TIME"
                 ]
         #check for site specific logger name and field & value separator else -1 site id
         if self.validation_object.is_multitenant_system:

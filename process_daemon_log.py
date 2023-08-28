@@ -306,7 +306,7 @@ class DaemonLogProcessor:
             else:
                 for item in data_dict:
                     data_thread = item["THREAD_ID"]
-                    status_code = item["STATUS"]
+                    status_code = item["RESPONSE_CODE"]
                 date_formatted = None
                 
             if thread == data_thread:
