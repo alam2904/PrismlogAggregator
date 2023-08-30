@@ -14,26 +14,34 @@ def get_db_parameters(config):
     except KeyError as err:
         logging.info(err)
         try:
-            web_services = [webService for webService in config[hostname]["PRISM"]["PRISM_TOMCAT"]]
-            for web_service in web_services:
-                db_name = config[hostname]["PRISM"]["PRISM_TOMCAT"][web_service]["DB_NAME"]
-                if db_name:
-                    break
+            db_name = config[hostname]["PRISM"]["PRISM_SMSD"]["PRISM_SMSD"]["DB_NAME"]
         except KeyError as err:
             logging.info(err)
+            try:
+                web_services = [webService for webService in config[hostname]["PRISM"]["PRISM_TOMCAT"]]
+                for web_service in web_services:
+                    db_name = config[hostname]["PRISM"]["PRISM_TOMCAT"][web_service]["DB_NAME"]
+                    if db_name:
+                        break
+            except KeyError as err:
+                logging.info(err)
 
     try:  
         db_host = config[hostname]["PRISM"]["PRISM_DEAMON"]["PRISM_DEAMON"]["DB_IP"]
     except KeyError as err:
         logging.info(err)
         try:
-            web_services = [webService for webService in config[hostname]["PRISM"]["PRISM_TOMCAT"]]
-            for web_service in web_services:
-                db_host = config[hostname]["PRISM"]["PRISM_TOMCAT"][web_service]["DB_IP"]
-                if db_host:
-                    break
+            db_host = config[hostname]["PRISM"]["PRISM_SMSD"]["PRISM_SMSD"]["DB_IP"]
         except KeyError as err:
             logging.info(err)
+            try:
+                web_services = [webService for webService in config[hostname]["PRISM"]["PRISM_TOMCAT"]]
+                for web_service in web_services:
+                    db_host = config[hostname]["PRISM"]["PRISM_TOMCAT"][web_service]["DB_IP"]
+                    if db_host:
+                        break
+            except KeyError as err:
+                logging.info(err)
 
     logging.info("DB_NAME: %s and DB_HOST: %s", db_name, db_host)
     return db_name, db_host
