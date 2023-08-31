@@ -47,6 +47,7 @@ class PROCESSOR:
         self.stop_prism_process = False
         self.hostname = socket.gethostname()
         self.non_issue_sbn_thread_dict = {}
+        self.is_subs_fetched_before_update = False
     
     def process(self):
         tlogProcessor_object = TlogProcessor(self.initializedPath_object, self.outputDirectory_object,\
@@ -63,20 +64,11 @@ class PROCESSOR:
                                         self.prism_tomcat_perf_log_dict, self.prism_daemon_perf_log_dict,\
                                         self.prism_handler_info_dict, self.issue_task_types, self.issue_handler_task_type_map,\
                                         self.prism_smsd_tlog_dict, self.non_issue_sbn_thread_dict,\
-                                        self.subscription_event_data, self.oarm_uid)
+                                        self.subscription_event_data, self.oarm_uid, self.is_subs_fetched_before_update)
         
         
         for pname in self.config[self.hostname]:  
             if pname == 'PRISM':
-                # folder = os.path.join(self.outputDirectory_object, '{}_issue_prism_tomcat'.format(self.hostname))
-                # self.remove_old_process_folder(pname, folder)
-                
-                # folder = os.path.join(self.outputDirectory_object, '{}_issue_prism_daemon'.format(self.hostname))
-                # self.remove_old_process_folder(pname, folder)
-                
-                # folder = os.path.join(self.outputDirectory_object, '{}_issue_prism_smsd'.format(self.hostname))
-                # self.remove_old_process_folder(pname, folder)
-                
                 try:
                     if self.initializedPath_object.prism_tomcat_log_path_dict["prism_tomcat_tlog_path"]:
                         logging.debug('%s tomcat tlog path exists', pname)
@@ -120,11 +112,3 @@ class PROCESSOR:
             
             if self.log_mode == "txn" or self.log_mode == "error":
                 fileWriter_object.write_json_tlog_data(self.prism_data_dict)
-                
-    # def remove_old_process_folder(self, pname, folder):
-    #         #removing process folder if already exists
-    #         if os.path.exists(folder):
-    #             logging.info('out directory already exists. Hence removing the old files of %s if exists.', self.hostname)
-    #             shutil.rmtree(folder)
-    #         else:
-    #             logging.info('%s out folder does not exists:', pname)

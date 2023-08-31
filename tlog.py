@@ -10,6 +10,7 @@ from collections import OrderedDict
 from configManager import ConfigManager
 from status_tags import PrismTasks
 from subscriptions_events import SubscriptionEventController
+import prism_utils
 
 class Tlog:
     """
@@ -25,7 +26,8 @@ class Tlog:
                     prism_daemon_handler_generic_soap_req_resp_dict, prism_tomcat_request_log_dict,\
                     prism_daemon_request_log_dict, prism_tomcat_callbackV2_log_dict, prism_daemon_callbackV2_log_dict,\
                     prism_tomcat_perf_log_dict, prism_daemon_perf_log_dict, combined_perf_data, prism_handler_info_dict,\
-                    issue_task_types, issue_handler_task_type_map, prism_smsd_tlog_dict, non_issue_sbn_thread_dict, oarm_uid):
+                    issue_task_types, issue_handler_task_type_map, prism_smsd_tlog_dict, non_issue_sbn_thread_dict,\
+                    oarm_uid, is_subs_fetched_before_update, subscription_event_data):
         
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
@@ -103,6 +105,9 @@ class Tlog:
         self.reprocessed_thread = []
         self.sbn_thread_dict = {}
         self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
+        self.is_subs_fetched_before_update = is_subs_fetched_before_update
+        self.subscription_event_data = subscription_event_data
+        self.is_record_updated = prism_utils.check_updated()
         
     
     def get_tlog(self, pname):
@@ -112,10 +117,11 @@ class Tlog:
         
         logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
         
-        tlogAccessLogParser_object = TlogAccessLogParser(self.config, self.initializedPath_object, self.outputDirectory_object,\
-                                        self.validation_object, self.log_mode, self.oarm_uid,\
-                                        self.prism_daemon_tlog_thread_dict, self.prism_tomcat_tlog_thread_dict,\
-                                        self.issue_task_types, self.sbn_thread_dict, self.non_issue_sbn_thread_dict)
+        tlogAccessLogParser_object = TlogAccessLogParser(self.config, self.initializedPath_object,\
+                                        self.outputDirectory_object, self.validation_object, self.log_mode,\
+                                        self.oarm_uid, self.prism_daemon_tlog_thread_dict,\
+                                        self.prism_tomcat_tlog_thread_dict, self.issue_task_types,\
+                                        self.sbn_thread_dict)
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
             self.constructor_parameter_reinitialize()
@@ -159,7 +165,7 @@ class Tlog:
             if self.access_files:
                 self.msisdn_based_accesslog_fetch(tlogAccessLogParser_object, pname, self.access_files)
         
-        logging.info('RECORD: %s', self.record)
+        # logging.info('RECORD: %s', self.record)
         if self.record:
             data_list = []
             for data in self.record:
@@ -276,12 +282,11 @@ class Tlog:
                             logging.info("tlog timestamp: %s did not match with input date: %s", datetime.strftime(datetime.strptime(splitted_data[0].split(" ")[0], "%Y-%m-%d"), "%Y%m%d"), input_date_formatted)
 
         if pname == "PRISM_TOMCAT":
-            logging.info('msisdn data dict: %s', self.msisdn_data_dict)
+            # logging.info('msisdn data dict: %s', self.msisdn_data_dict)
             for thread, data in self.msisdn_data_dict.items():
                 self.sbn_thread_map(dict(data))
                 self.prism_tomcat_tlog_thread_dict["PRISM_TOMCAT_THREAD"].append(thread)
-            logging.info('prism tomcat thread: %s', self.prism_tomcat_tlog_thread_dict)
-                
+            # logging.info('prism tomcat thread: %s', self.prism_tomcat_tlog_thread_dict)       
         
         elif pname == "PRISM_DEAMON":
             if last_modified_time:
@@ -291,13 +296,13 @@ class Tlog:
                 for thread, data in self.msisdn_data_dict.items():
                     self.sbn_thread_map(dict(data))
                     self.prism_daemon_tlog_thread_dict["PRISM_DEAMON_THREAD"].append(thread)
-            logging.info('prism daemon thread: %s', self.prism_daemon_tlog_thread_dict)
+            # logging.info('prism daemon thread: %s', self.prism_daemon_tlog_thread_dict)
                     
-                        
+                  
         if pname == "PRISM_TOMCAT":
             self.prism_tomcat_tlog_dict = {"PRISM_TOMCAT_BILLING_TLOG": self.msisdn_data_dict}
             self.prism_data_dict_list.append(self.prism_tomcat_tlog_dict)
-            logging.info('prism realtime billing tlogs: %s', str(self.prism_tomcat_tlog_dict).replace("'", '"'))
+            # logging.info('prism realtime billing tlogs: %s', str(self.prism_tomcat_tlog_dict).replace("'", '"'))
         
         elif pname == "PRISM_DEAMON":
             if last_modified_time:
@@ -307,21 +312,27 @@ class Tlog:
             else:
                 self.prism_daemon_tlog_dict = {"PRISM_DAEMON_TLOG": self.msisdn_data_dict}
                 self.prism_data_dict_list.append(self.prism_daemon_tlog_dict)
-            logging.info('prism billing tlogs: %s', str(self.prism_daemon_tlog_dict).replace("'", '"'))
+                # logging.info('prism billing tlogs: %s', str(self.prism_daemon_tlog_dict).replace("'", '"'))
+        
+        if not self.is_subs_fetched_before_update:
+            logging.info("IS_SUB_FETCHED_BEFORE: %s", self.is_subs_fetched_before_update)
+            self.get_subscription_event_details(pname)
+            if self.subscription_event_data:
+                logging.info("SUBSCRIPTIONS_OR_EVENTS_DATA_BEFORE_UPDATE: %s", self.subscription_event_data)
         
         # parse tlog for error
         if self.log_mode == "error":
             if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
                 if self.msisdn_data_dict:
-                    logging.info("reached here: %s", self.is_record_reprocessed)
-                    logging.info("reprocessed thread: %s", reprocessed_thread)
+                    logging.info("IS_RECORD_REPROCESSED: %s", self.is_record_reprocessed)
+                    logging.info("REPROCESS_THREAD: %s", reprocessed_thread)
                     if not self.is_record_reprocessed:
                         self.subscriptions_data = tlogAccessLogParser_object.parse_tlog(pname, self.msisdn_data_dict, None, reprocessed_thread, reprocess_thread_based_reprocessing)
                     
                     if not tlogAccessLogParser_object.is_daemon_log and self.subscriptions_data:
                         self.is_record_reprocessed = True
                         logging.info('daemon log not present')
-                        time.sleep(15)
+                        time.sleep(30)
                         if pname == "PRISM_DEAMON":
                             self.get_reprocessed_tlog(pname, tlogAccessLogParser_object)
     
@@ -355,7 +366,7 @@ class Tlog:
         logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
         
         if pname == "PRISM_TOMCAT" or pname == "PRISM_DEAMON":
-            logging.info('subscriptions data is: %s', self.subscriptions_data)
+            # logging.info('subscriptions data is: %s', self.subscriptions_data)
             last_modified_time = None
             
             for subscriptions in self.subscriptions_data:
@@ -529,7 +540,7 @@ class Tlog:
                         self.msisdn_sms_data_list.append(data_dict)
                 except IndexError as error:
                     logging.exception(error)
-            logging.info('sms tlog data dict: %s', self.msisdn_sms_data_list)
+            # logging.info('sms tlog data dict: %s', self.msisdn_sms_data_list)
     
         if pname == "PRISM_SMSD":
             # self.prism_smsd_tlog_dict = {"PRISM_SMSD_TLOG": dict(self.msisdn_sms_data_dict)}
@@ -662,38 +673,63 @@ class Tlog:
             self.prism_data_dict_list.append(self.prism_daemon_perf_log_dict)
             logging.info('prism daemon perf log: %s', self.prism_daemon_perf_log_dict)
     
-    def get_subscription_event_details(self):
+    def get_subscription_event_details(self, pname):
         #fetch subscriptions
         logging.info("NON_ISSUE_SBN_THREAD_DICT: %s", self.non_issue_sbn_thread_dict)
-        subscription_event_data = []
-        if self.non_issue_sbn_thread_dict:
-            subscription_event_object = SubscriptionEventController(self.config, None, self.validation_object, self.non_issue_sbn_thread_dict, True)
-            try:
-                subscriptions_data_dict = subscription_event_object.get_subscription_event("SUBSCRIPTIONS", False)
-                if subscriptions_data_dict:
-                    subscription_event_data.extend(subscriptions_data_dict)
-                    prism_subscriptions_dict = {"PRISM_SUBSCRIPTIONS_ENTRY": subscriptions_data_dict}
-                    self.prism_data_dict_list.append(prism_subscriptions_dict)
-                else:
-                    logging.info("Subscriptions record could not be found")
-            except Exception as ex:
-                logging.info(ex)
-            
-            try:
-                events_data_dict = subscription_event_object.get_subscription_event("EVENTS", False)
-                logging.info("Events data dict is: %s", events_data_dict)
-                if events_data_dict:
-                    subscription_event_data.extend(events_data_dict)
-                    prism_events_dict = {"PRISM_EVENTS_ENTRY": events_data_dict}
-                    self.prism_data_dict_list.append(prism_events_dict)
-                else:
-                    logging.info("Events record could not be found")
-                
-            except Exception as ex:
-                logging.info(ex)
+        logging.info("PNAME IN TLOG: %s AND IS_RECORD_UPDATED: %s", pname, self.is_record_updated)
+        updated_subscription_event_data = []
         
-        logging.info("SUBSCRIPTIONS_EVENTS_DATA: %s", subscription_event_data)
-        return subscription_event_data
+        if self.non_issue_sbn_thread_dict:
+            if not self.is_record_updated and not pname == "DATABASE":
+                try:
+                    subscription_event_object = SubscriptionEventController(self.config, None, self.validation_object, self.non_issue_sbn_thread_dict, True)
+                    subscriptions_data_dict = subscription_event_object.get_subscription_event("SUBSCRIPTIONS", False)
+                    if subscriptions_data_dict:
+                        self.subscription_event_data.extend(subscriptions_data_dict)
+                        prism_subscriptions_dict = {"PRISM_SUBSCRIPTIONS_ENTRY": subscriptions_data_dict}    
+                        self.prism_data_dict_list.append(prism_subscriptions_dict)
+                        self.is_subs_fetched_before_update = True
+                    else:
+                        logging.info("Subscriptions record could not be found. Will try to see if it is a event record")
+                        try:
+                            events_data_dict = subscription_event_object.get_subscription_event("EVENTS", False)
+                            logging.info("Events data dict is: %s", events_data_dict)
+                            if events_data_dict:
+                                self.subscription_event_data.extend(events_data_dict)
+                                prism_events_dict = {"PRISM_EVENTS_ENTRY": events_data_dict}
+                                self.prism_data_dict_list.append(prism_events_dict)
+                            else:
+                                logging.info("Events record could not be found")
+                        except Exception as ex:
+        
+                            logging.info(ex)
+                except Exception as ex:
+                    logging.info(ex)
+            
+            elif self.is_record_updated:
+                try:
+                    subscription_event_object = SubscriptionEventController(self.config, None, self.validation_object, self.non_issue_sbn_thread_dict, True)
+                    subscriptions_data_dict = subscription_event_object.get_subscription_event("SUBSCRIPTIONS", False)
+                    if subscriptions_data_dict:
+                        updated_subscription_event_data.extend(subscriptions_data_dict)
+                        prism_subscriptions_dict = {"PRISM_SUBSCRIPTIONS_ENTRY_UPDATED": subscriptions_data_dict}    
+                        self.prism_data_dict_list.append(prism_subscriptions_dict)
+                    else:
+                        logging.info("Updated subscriptions record could not be found. Will try to see if it is a event record")
+                        try:
+                            events_data_dict = subscription_event_object.get_subscription_event("EVENTS", False)
+                            if events_data_dict:
+                                updated_subscription_event_data.extend(events_data_dict)
+                                prism_events_dict = {"PRISM_EVENTS_ENTRY": events_data_dict}
+                                self.prism_data_dict_list.append(prism_events_dict)
+                            else:
+                                logging.info("Updated events record could not be found")
+                        except Exception as ex:
+                            logging.info(ex)
+                except Exception as ex:
+                    logging.info(ex)
+                
+        return updated_subscription_event_data
         
     def get_issue_handler_details(self, subscription_event_data):
         #handler info and map    
@@ -702,12 +738,14 @@ class Tlog:
             
             flow_id = []
             srv_id = []
+            subscription_site_id = []
             
             if subscription_event_data:
                 for tRecords in subscription_event_data:
                     for record in tRecords:
                         flow_id.append(str(record["system_info"]).split("flowId:")[1].split("|")[0])
                         srv_id.append(record["srv_id"])
+                        subscription_site_id.append(record["site_id"])
                         logging.info('srv_id: %s and sys_info flow_id: %s', srv_id, flow_id)
             
             if self.issue_task_types:
@@ -727,7 +765,7 @@ class Tlog:
                 handler_info_details["HANDLER_INFO"] = configManager_object.handler_info
                 handler_details.append(handler_info_details)
             
-            configManager_object.get_handler_map(self.issue_handler_task_type_map)
+            configManager_object.get_handler_map(self.issue_handler_task_type_map, subscription_site_id)
             if configManager_object.handler_map:
                 logging.info('handler map details: %s', configManager_object.handler_map)
                 handler_map_details["HANDLER_MAP"] = configManager_object.handler_map
@@ -807,13 +845,7 @@ class Tlog:
                                 if not ptask_name.startswith("__"):
                                     if ptask_name == task_name:
                                         task_type = ptask_value
-                            
-                            # if not flow_id:
-                            #     for ch_type, f_id in PrismFlowId.__dict__.items():
-                            #         if charge_type == str(ch_type):
-                            #             flow_id = f_id
-                            
-                            #task type and handler id mapping
+                                        
                             task_handler_map = (task_type, handler_id, sub_type, srv_id, flow_id)
                             
                             if task_handler_map not in self.issue_handler_task_type_map:

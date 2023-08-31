@@ -2,7 +2,7 @@ from collections import OrderedDict
 import logging
 import json
 from update_query_criteria import UpdateQueryCriteria
-from prism_utils import get_db_parameters, query_executor
+from prism_utils import get_db_parameters, query_executor, set_updated
 
 
 class SubscriptionEventController:
@@ -95,12 +95,13 @@ class SubscriptionEventController:
         if updateCriteria_object.update_query:
             query = updateCriteria_object.update_query
                 
-            logging.info("UPDATE QUERY: %s", query)
+            # logging.info("UPDATE QUERY: %s", query)
             result = query_executor(self.db_name, self.db_host, query, query_type)
             
             if result:
                 logging.info('is update success: %s', result)
                 self.process_subs_data = False
+                set_updated(True)
                 self.get_subscription_event("SUBSCRIPTIONS", False, sbn_Id)
             else:
                 self.transaction_data = None

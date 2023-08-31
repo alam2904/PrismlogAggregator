@@ -58,7 +58,7 @@ class GENERIC_SERVER_PROCESSOR:
         logfile_object = LogFileFinder(self.initializedPath_object, self.validation_object, self.config)
         tlogAccessLogParser_object = TlogAccessLogParser(self.config, self.initializedPath_object, self.outputDirectory_object,\
                                         self.validation_object, self.log_mode, self.oarm_uid,\
-                                        None, None, None, None, None)
+                                        None, None, None, None)
         gs_bean_timeStamp = []
         try:
             for pthread, ptlog in process_tlog.items():

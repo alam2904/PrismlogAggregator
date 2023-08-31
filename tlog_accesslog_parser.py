@@ -12,7 +12,7 @@ class TlogAccessLogParser:
     """
     def __init__(self, config, initializedPath_object, outputDirectory_object, validation_object, log_mode, oarm_uid,\
                     prism_daemon_tlog_thread_dict, prism_tomcat_tlog_thread_dict, issue_task_types,\
-                    sbn_thread_dict, non_issue_sbn_thread_dict):
+                    sbn_thread_dict):
         
         self.config = config
         self.initializedPath_object = initializedPath_object
@@ -22,7 +22,6 @@ class TlogAccessLogParser:
         self.oarm_uid = oarm_uid
         self.prism_daemon_tlog_thread_dict = prism_daemon_tlog_thread_dict
         self.prism_tomcat_tlog_thread_dict = prism_tomcat_tlog_thread_dict
-        
         self.hostname = socket.gethostname()
         
         #out folder parameters
@@ -41,7 +40,6 @@ class TlogAccessLogParser:
         self.issue_access_req_resp_threads = []
         self.is_daemon_log = False
         self.sbn_thread_dict = sbn_thread_dict
-        self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
         self.process_subs_data = True
         self.subscriptions_data = None
     
@@ -79,8 +77,6 @@ class TlogAccessLogParser:
                     #re-initializing self.task_types for each threads
                     self.reinitialize_constructor_parameters()
                     for key, value in dict(tlog_header_data_dict).items():
-                        # logging.info('tlog key: %s value: %s', key, value['THREAD'])
-        
                         if self.log_mode == "error" and thread == value['THREAD']:
                             if self.check_for_issue_in_prism_tlog(
                                                                     pname, folder, value,
@@ -98,11 +94,10 @@ class TlogAccessLogParser:
                                     self.is_daemon_log = daemonLogProcessor_object.process_daemon_log_init(pname, thread, None, self.task_types, tlog_header_data_dict[thread]["SUB_TYPE"], self.input_tags)
                                     
                                     self.is_query_reprocessing_required(self.is_daemon_log, value)
-                
+                    
                 if self.sbn_thread_dict and self.validation_object.is_sub_reprocess_required:    
                     logging.info('IS_SUB_REPROCESS_REQUIRED: %s', self.validation_object.is_sub_reprocess_required)
                     logging.info('SBN-THREAD DICT: %s', self.sbn_thread_dict)
-                    
                     subscription_object = SubscriptionEventController(self.config, pname, self.validation_object, self.sbn_thread_dict, self.process_subs_data)
                     self.subscriptions_data = subscription_object.get_subscription_event("SUBSCRIPTIONS", self.validation_object.is_sub_reprocess_required)
                     self.validation_object.is_sub_reprocess_required = False
@@ -114,8 +109,6 @@ class TlogAccessLogParser:
                         for var_name, var_value in PrismTlogSmsTag.__dict__.items():
                             if not var_name.startswith("__"):
                                 if var_value == sms_tlog["STATUS"]:
-                        # for status in PrismTlogSmsTag:
-                            # if status.value == sms_tlog["STATUS"]:
                                     if not self.prism_smsd_out_folder:
                                         self.create_process_folder(pname, folder)
                                     daemonLogProcessor_object.process_daemon_log_init(pname, sms_tlog["THREAD"], None, None, None, None)
@@ -281,9 +274,6 @@ class TlogAccessLogParser:
                 logging.info("sbn not present in map")
         else:
             self.sbn_thread_dict[tlog_dict["SBN_OR_EVT_ID"]] = tlog_dict["THREAD"]
-        
-        self.non_issue_sbn_thread_dict = self.sbn_thread_dict
-        
                                
     def create_process_folder(self, pname, folder):
         """

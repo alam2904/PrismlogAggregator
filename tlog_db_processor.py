@@ -19,7 +19,8 @@ class TlogProcessor:
                     prism_tomcat_callbackV2_log_dict, prism_daemon_callbackV2_log_dict,\
                     prism_tomcat_perf_log_dict, prism_daemon_perf_log_dict,\
                     prism_handler_info_dict, issue_task_types, issue_handler_task_type_map,\
-                    prism_smsd_tlog_dict, non_issue_sbn_thread_dict, subscription_event_data, oarm_uid):
+                    prism_smsd_tlog_dict, non_issue_sbn_thread_dict, subscription_event_data, oarm_uid,\
+                    is_subs_fetched_before_update):
         
         self.initializedPath_object = initializedPath_object
         self.outputDirectory_object = outputDirectory_object
@@ -54,6 +55,7 @@ class TlogProcessor:
         self.non_issue_sbn_thread_dict = non_issue_sbn_thread_dict
         self.subscription_event_data = subscription_event_data
         self.oarm_uid = oarm_uid
+        self.is_subs_fetched_before_update = is_subs_fetched_before_update
         
         self.combined_perf_data = []
         
@@ -72,10 +74,12 @@ class TlogProcessor:
                             self.prism_tomcat_callbackV2_log_dict, self.prism_daemon_callbackV2_log_dict,\
                             self.prism_tomcat_perf_log_dict, self.prism_daemon_perf_log_dict, self.combined_perf_data,\
                             self.prism_handler_info_dict, self.issue_task_types, self.issue_handler_task_type_map,\
-                            self.prism_smsd_tlog_dict, self.non_issue_sbn_thread_dict, self.oarm_uid)
+                            self.prism_smsd_tlog_dict, self.non_issue_sbn_thread_dict, self.oarm_uid,\
+                            self.is_subs_fetched_before_update, self.subscription_event_data)
         
         if pname == "PRISM_TOMCAT":
             # fetching prism tomcat access and tlog
+            # logging.info("IS_SUBS_FETCHED_BEFORE: %s", self.is_subs_fetched_before_update)
             self.prism_tomcat_tlog_dict = tlog_object.get_tlog(pname)
             
             if self.prism_tomcat_tlog_dict:
@@ -108,6 +112,7 @@ class TlogProcessor:
                 
         elif pname == "PRISM_DEAMON":
             # fetching prism daemon tlog
+            # logging.info("IS_SUBS_FETCHED_BEFORE: %s", self.is_subs_fetched_before_update)
             self.prism_daemon_tlog_dict = tlog_object.get_tlog(pname)
             
             if self.prism_daemon_tlog_dict:
@@ -140,12 +145,15 @@ class TlogProcessor:
                 logging.info("NO NON-REALTIME TLOG PRESENT")
                 
         elif pname == "DATABASE":
-            self.subscription_event_data = tlog_object.get_subscription_event_details()
+            updated_subscription_event_data = tlog_object.get_subscription_event_details(pname)
             
             logging.info('issue tasks are: %s', self.issue_task_types)
             if self.issue_task_types:
-                handler_info = tlog_object.get_issue_handler_details(self.subscription_event_data)
-                
+                if updated_subscription_event_data:
+                    handler_info = tlog_object.get_issue_handler_details(updated_subscription_event_data)
+                elif self.subscription_event_data:
+                    handler_info = tlog_object.get_issue_handler_details(self.subscription_event_data)
+                    
                 if handler_info:
                     handlerfile_object = HandlerFileProcessor(self.config, handler_info, self.outputDirectory_object, self.oarm_uid)
                     handlerfile_object.getHandler_files()
@@ -154,5 +162,6 @@ class TlogProcessor:
             tlog_object.processing_cdr_file(self.subscription_event_data)
                     
         elif pname == "PRISM_SMSD":
+            # logging.info("IS_SUBS_FETCHED_BEFORE: %s", self.is_subs_fetched_before_update)
             tlog_object.get_tlog(pname)
             

@@ -266,16 +266,19 @@ class ConfigManager:
         
         logging.info("handler_info: %s", self.handler_info)
     
-    def get_handler_map(self, issue_handler_task_type_map):
+    def get_handler_map(self, issue_handler_task_type_map, subscription_site_id):
         """
             gets handler map
         """
+        subs_site_id = tuple(subscription_site_id)
+        
         for params in issue_handler_task_type_map:
             try:
                 task_type, handler_id, sub_type, srv_id, flow_id = params
                 
                 srv_id = srv_id if len(srv_id) > 1 else "(" + str(srv_id[0]) + ")"
                 flow_id = flow_id if len(flow_id) > 1 else "(" + str(flow_id[0]) + ")"
+                subs_site_id = subs_site_id if len(subs_site_id) > 1 else "(" + str(subs_site_id[0]) + ")"
                 
                 logging.info("srv_id: %s AND flow_id: %s", str(srv_id).split(), flow_id)
 
@@ -297,15 +300,15 @@ class ConfigManager:
                     else:
                         query_srv = """
                                         SELECT * FROM HANDLER_MAP
-                                        WHERE SITE_ID = -1 AND TASK_TYPE = '%s' AND HANDLER_ID LIKE '%s'
+                                        WHERE (SITE_ID in %s OR SITE_ID = -1) AND TASK_TYPE = '%s' AND HANDLER_ID LIKE '%s'
                                         AND SUB_TYPE = '%s' AND SRV_ID in %s
-                                    """ % (task_type, handler_id, sub_type, srv_id)
+                                    """ % (subs_site_id, task_type, handler_id, sub_type, srv_id)
                         
                         query = """
                                     SELECT * FROM HANDLER_MAP
-                                    WHERE SITE_ID = -1 AND TASK_TYPE = '%s' AND HANDLER_ID LIKE '%s'
+                                    WHERE (SITE_ID in %s OR SITE_ID = -1) AND TASK_TYPE = '%s' AND HANDLER_ID LIKE '%s'
                                     AND SUB_TYPE = '%s' AND (FLOW_ID in %s OR FLOW_ID = -1)
-                                """ % (task_type, handler_id, sub_type, flow_id)
+                                """ % (subs_site_id, task_type, handler_id, sub_type, flow_id)
                     
                     configMap = query_executor(self.db_name, self.db_host, query_srv, "SELECT")
                     

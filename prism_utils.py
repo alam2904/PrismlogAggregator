@@ -4,6 +4,17 @@ import socket
 import logging
 import oarm_modules
 
+is_record_updated = False
+
+def set_updated(value):
+    global is_record_updated
+    is_record_updated = value
+
+def check_updated():
+    global is_record_updated
+    return is_record_updated
+    
+
 def get_db_parameters(config):
     db_name = None
     db_host = None
