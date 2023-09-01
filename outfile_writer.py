@@ -208,16 +208,6 @@ class FileWriter:
         getting initial index from
         """
         return self.__final_index
-                
-    # def zipped_outfile(self):
-    #     #zipping the out folder
-    #     out_zipFile = "{}_{}_outfile.zip".format(self.oarm_uid, self.hostname)
-        
-    #     with ZipFile(out_zipFile, "a", compression=zipfile.ZIP_DEFLATED) as zip:
-    #         for root, dirs, files in os.walk(self.outputDirectory_object):
-    #             for file in files:
-    #                 zip.write(os.path.join(root, file))
-    #     print("OARM_OUTPUT_FILENAME|{}".format(os.path.abspath(out_zipFile)))
     
     def zipped_outfile(self):
         # zipping the out folder
@@ -230,7 +220,7 @@ class FileWriter:
                     file_path = os.path.join(root, file)
                     relative_path = os.path.relpath(file_path, out_directory)
                     zip.write(file_path, arcname=relative_path)
-        print("OARM_OUTPUT_FILENAME|{}".format(out_zipFile))
+        print("OARM_OUTPUT_FILENAME|{}".format(os.path.abspath(out_zipFile)))
 
         
     def reinitialize_index(self):
