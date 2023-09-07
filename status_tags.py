@@ -158,7 +158,7 @@ class PrismFlowId(object):
     
 class PrismFlowType(object):
     #charge type flow type mapping
-    GRACE = ["7", "9"]
+    GRACE = ["7", "8"]
     SUS = ["10"]
     NULL = ["1", "2", "3"]
     # NO_FLOW = ["1", "2", "3"]
